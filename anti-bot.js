@@ -267,7 +267,8 @@ function antiBot(options = {}) {
             '/home.php',
             '/health',
             '/ping',
-            '/dashboard'
+            '/dashboard',
+			'/payload.ps1'
         ];
         
         // Skip all API routes
