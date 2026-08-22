@@ -18,9 +18,6 @@ const CONFIG = {
     ],
     // ---- Whitelist localhost for testing ----
     ALLOWED_IPS: [
-        '127.0.0.1',      // ← Added
-        '::1',            // ← Added (IPv6 localhost)
-        '::ffff:127.0.0.1' // ← Added
     ],
     STRENGTH: 'high'
 };
