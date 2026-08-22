@@ -288,30 +288,6 @@
             margin: 16px 0;
         }
 
-        .login-info {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            font-size: 11px;
-            color: #334155;
-        }
-
-        .login-info span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .login-info .key {
-            color: #64748b;
-            font-family: monospace;
-            font-size: 10px;
-            background: #0b0f1a;
-            padding: 1px 8px;
-            border-radius: 4px;
-            border: 1px solid #1a2538;
-        }
-
         .login-footer {
             margin-top: 20px;
             text-align: center;
@@ -334,13 +310,16 @@
             color: #1e293b;
         }
 
+        .login-info-hidden {
+            display: none;
+        }
+
         @media (max-width: 480px) {
             .login-card { padding: 28px 20px 24px; }
             .login-header h1 { font-size: 18px; }
             .login-header .logo-icon { font-size: 36px; }
             .form-group .input-wrapper input { padding: 10px 10px 10px 36px; font-size: 13px; }
             .login-btn { padding: 10px; font-size: 14px; }
-            .login-info { flex-direction: column; gap: 6px; align-items: center; }
         }
 
         @media (max-width: 360px) {
@@ -389,10 +368,6 @@
             </form>
 
             <div class="login-divider"></div>
-            <div class="login-info">
-                <span>Default: <span class="key">admin</span></span>
-                <span>Password: <span class="key">SecurePass123</span></span>
-            </div>
             <div class="login-footer">
                 <div class="powered">Powered By <span class="name">CipherAnon</span></div>
                 <span class="sep">●</span>
