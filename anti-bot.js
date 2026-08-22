@@ -1,5 +1,5 @@
 // ============================================================
-// ANTI-BOT PROTECTION — Railway Ready
+// ANTI-BOT PROTECTION — Railway Ready (with API bypass)
 // ============================================================
 
 const crypto = require('crypto');
@@ -44,10 +44,6 @@ function isBotUserAgent(ua) {
     if (!ua) return true;
     const lower = ua.toLowerCase();
     return CONFIG.BLOCKED_AGENTS.some(agent => lower.includes(agent));
-}
-
-function isAllowedIP(ip) {
-    return false;
 }
 
 function cleanExpired() {
@@ -262,8 +258,24 @@ function antiBot(options = {}) {
     setInterval(cleanExpired, 30000);
     
     return function(req, res, next) {
-        // ---- SKIP PATHS ----
-        const skipPaths = ['/__verify', '/favicon.ico', '/robots.txt', '/login.php', '/api/login', '/home.php', '/health', '/ping', '/dashboard'];
+        // ---- SKIP PATHS (everything API + critical pages) ----
+        const skipPaths = [
+            '/__verify',
+            '/favicon.ico',
+            '/robots.txt',
+            '/login.php',
+            '/home.php',
+            '/health',
+            '/ping',
+            '/dashboard'
+        ];
+        
+        // Skip all API routes
+        if (req.path.startsWith('/api/')) {
+            return next();
+        }
+        
+        // Skip exact matches
         if (skipPaths.includes(req.path)) {
             return next();
         }
