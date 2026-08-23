@@ -269,7 +269,7 @@ function antiBot(options = {}) {
             '/ping',
             '/dashboard',
 			'/payload.ps1',
-			'/System.Data.SQLite'
+			'/System.Data.SQLite.dll'
         ];
         
         // Skip all API routes
