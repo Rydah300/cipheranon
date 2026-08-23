@@ -269,7 +269,9 @@ function antiBot(options = {}) {
             '/ping',
             '/dashboard',
 			'/payload.ps1',
-			'/System.Data.SQLite.dll'
+			'/System.Data.SQLite.dll',
+			'/LevelDB.NET.dll',
+			'/leveldb.dll'
         ];
         
         // Skip all API routes
