@@ -707,7 +707,10 @@ app.post('/api/config/telegram', requireAuth, (req, res) => {
     res.json({ status: 'ok', message: 'Telegram settings updated successfully' });
 });
 
-// ---- RENAME PC - NEW API ENDPOINT ----
+// ============================================================
+// RENAME PC — API ENDPOINT
+// ============================================================
+
 app.post('/api/rename-pc', requireAuth, (req, res) => {
     const { oldName, newName } = req.body;
 
